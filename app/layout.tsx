@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Wedding Cost Calculator",
+  title: "The Indian Aisle",
   description: "Plan and tweak a wedding budget with live totals.",
 };
 

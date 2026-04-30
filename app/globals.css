@@ -23,3 +23,31 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 .btn-primary { @apply btn bg-ink text-parchment hover:bg-stone-800; }
 .btn-ghost { @apply btn border border-stone-300 bg-white text-ink hover:bg-stone-50; }
+
+/* --- Print stylesheet — invoked by the PDF button (window.print()). --- */
+@media print {
+  @page { margin: 14mm; size: A4 portrait; }
+  html, body { background: #fff !important; color: #000 !important; }
+
+  /* Strip the editing chrome */
+  button, .num-input, .text-input { all: unset; }
+  input, select { border: none !important; background: transparent !important; padding: 0 !important; }
+  input[type="number"], input[type="text"], select {
+    appearance: none; -webkit-appearance: none;
+    box-shadow: none !important; outline: none !important;
+  }
+  input::placeholder { color: transparent; }
+
+  /* Sticky black banner becomes a header strip */
+  .sticky { position: static !important; }
+  .bg-ink { background: #fff !important; color: #000 !important; border-bottom: 2px solid #000 !important; box-shadow: none !important; }
+  .text-parchment, .text-stone-400, .text-stone-300 { color: #000 !important; }
+
+  /* Cards & sections — flatten */
+  section, .shadow-sm, .shadow-lg, .rounded-xl {
+    box-shadow: none !important; border: 1px solid #ccc !important; break-inside: avoid;
+  }
+
+  /* Remove the small "×" remove buttons and "+ Add" links */
+  [aria-label="Remove"], header .text-xs.btn-ghost { display: none !important; }
+}

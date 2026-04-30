@@ -7,7 +7,9 @@ import {
   MealConfig,
   RoomCategory,
   contingencyTotal,
+  coupleDisplayName,
   defaultBudget,
+  formatDateRange,
   formatINR,
   formatINRCompact,
   grandTotal,
@@ -16,16 +18,52 @@ import {
   subtotalBeforeContingency,
 } from "@/lib/budget";
 import { saveBudgetAction } from "@/app/actions";
+import { exportToExcel, printAsPDF } from "@/lib/export";
 
 type Props = {
   initialBudget?: Budget;
   airtableReady?: boolean;
 };
 
+type LineSectionKey =
+  | "decor"
+  | "entertainment"
+  | "photography"
+  | "attire"
+  | "travel"
+  | "rituals"
+  | "gifting"
+  | "misc";
+
+type SectionId =
+  | "details"
+  | "rooms"
+  | "meals"
+  | LineSectionKey
+  | "contingency"
+  | "summary";
+
+const NAV: { id: SectionId; n: number; title: string }[] = [
+  { id: "details", n: 0, title: "Wedding details" },
+  { id: "rooms", n: 1, title: "Rooms" },
+  { id: "meals", n: 2, title: "Meals" },
+  { id: "decor", n: 3, title: "Decor & florals" },
+  { id: "entertainment", n: 4, title: "Entertainment, music & AV" },
+  { id: "photography", n: 5, title: "Photography & videography" },
+  { id: "attire", n: 6, title: "Attire & beauty" },
+  { id: "travel", n: 7, title: "Travel & logistics" },
+  { id: "rituals", n: 8, title: "Rituals & ceremonies" },
+  { id: "gifting", n: 9, title: "Invitations & gifting" },
+  { id: "misc", n: 10, title: "Miscellaneous" },
+  { id: "contingency", n: 11, title: "Contingency" },
+  { id: "summary", n: 12, title: "Summary" },
+];
+
 export default function Calculator({ initialBudget, airtableReady = false }: Props) {
   const [budget, setBudget] = useState<Budget>(initialBudget ?? defaultBudget());
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [active, setActive] = useState<SectionId>("details");
 
   const total = grandTotal(budget);
   const sub = subtotalBeforeContingency(budget);
@@ -125,185 +163,347 @@ export default function Calculator({ initialBudget, airtableReady = false }: Pro
     }
   };
 
+  const sectionTotalFor = (id: SectionId): number | null => {
+    if (id === "details") return null;
+    if (id === "contingency") return cont;
+    if (id === "summary") return total;
+    return sectionTotal(budget, id);
+  };
+
+  const visible = (id: SectionId) =>
+    active === id ? "" : "hidden print:block";
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* header */}
-      <header className="mb-8">
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Wedding Cost Calculator</h1>
-        <p className="mt-2 text-stone-600">
-          Edit any field — totals update live. Defaults reproduce the {budget.meta.coupleNames} v5 budget.
-        </p>
-      </header>
-
-      {/* meta */}
-      <Card title="Wedding details">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Field label="Couple">
-            <input className="text-input" value={budget.meta.coupleNames}
-              onChange={(e) => setMeta("coupleNames", e.target.value)} />
-          </Field>
-          <Field label="Venue">
-            <input className="text-input" value={budget.meta.venue}
-              onChange={(e) => setMeta("venue", e.target.value)} />
-          </Field>
-          <Field label="Dates">
-            <input className="text-input" value={budget.meta.dateRange}
-              onChange={(e) => setMeta("dateRange", e.target.value)} />
-          </Field>
-          <Field label="Guests">
-            <NumInput value={budget.meta.guests} onChange={(v) => setMeta("guests", v)} />
-          </Field>
-          <Field label="Events">
-            <NumInput value={budget.meta.events} onChange={(v) => setMeta("events", v)} />
-          </Field>
+    <div className="flex min-h-screen flex-col lg:flex-row">
+      {/* Sidebar */}
+      <aside className="flex flex-col border-b border-stone-200 bg-white/70 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r print:hidden">
+        <div className="px-5 py-6">
+          <h1 className="font-serif text-3xl tracking-tight">The Indian Aisle</h1>
+          <p className="mt-1 text-xs text-stone-500">
+            {coupleDisplayName(budget.meta)}
+            {formatDateRange(budget.meta.startDate, budget.meta.endDate) &&
+              ` · ${formatDateRange(budget.meta.startDate, budget.meta.endDate)}`}
+          </p>
         </div>
-      </Card>
 
-      {/* sticky total */}
-      <div className="sticky top-0 z-10 my-6 -mx-4 sm:-mx-6 lg:-mx-8">
-        <div className="mx-4 sm:mx-6 lg:mx-8 rounded-xl border border-stone-300 bg-ink text-parchment shadow-lg">
-          <div className="flex flex-wrap items-baseline justify-between gap-3 px-5 py-4">
-            <div>
-              <div className="text-xs uppercase tracking-widest text-stone-400">Grand total</div>
-              <div className="font-serif text-3xl">{formatINR(total)}</div>
-              <div className="text-xs text-stone-400">{formatINRCompact(total)} · {budget.meta.guests} guests · {budget.meta.events} events</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="btn-ghost" onClick={onReset}>Reset</button>
-              <button className="btn-primary" onClick={onSave} disabled={saving || !airtableReady}>
-                {saving ? "Saving…" : "Save to Airtable"}
-              </button>
-            </div>
-          </div>
-          {saveMsg && (
-            <div className="border-t border-stone-700 px-5 py-2 text-xs text-stone-300">{saveMsg}</div>
-          )}
-          {!airtableReady && (
-            <div className="border-t border-stone-700 px-5 py-2 text-xs text-stone-400">
-              AIRTABLE_PAT env var not set — save disabled. See README for setup.
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 1. Rooms */}
-      <Section
-        n={1}
-        title="Rooms"
-        total={sectionTotal(budget, "rooms")}
-        onAdd={addRoomCategory}
-      >
-        <div className="mb-3 flex flex-wrap items-end gap-4">
-          <Field label="Nights">
-            <NumInput value={budget.rooms.nights} onChange={(v) => setRooms({ nights: v })} />
-          </Field>
-          <Field label="GST %">
-            <NumInput value={budget.rooms.gstPct} onChange={(v) => setRooms({ gstPct: v })} step={0.5} />
-          </Field>
-        </div>
-        <Table headers={["Category", "Count", "Rate / night", "GST", "Total", ""]}>
-          {budget.rooms.categories.map((c, idx) => {
-            const taxed = c.ratePerNight * (1 + budget.rooms.gstPct / 100);
-            const total = taxed * c.count * budget.rooms.nights;
+        <nav className="px-2 pb-4">
+          {NAV.map((item) => {
+            const t = sectionTotalFor(item.id);
+            const isActive = active === item.id;
             return (
-              <tr key={c.id} className="border-t">
-                <td className="py-2 pr-2">
-                  <input className="text-input" value={c.label}
-                    onChange={(e) => updateRoomCategory(idx, { label: e.target.value })} />
-                </td>
-                <td className="py-2 pr-2">
-                  <NumInput value={c.count} onChange={(v) => updateRoomCategory(idx, { count: v })} />
-                </td>
-                <td className="py-2 pr-2">
-                  <NumInput value={c.ratePerNight} onChange={(v) => updateRoomCategory(idx, { ratePerNight: v })} />
-                </td>
-                <td className="py-2 pr-2 text-right tabular-nums text-stone-500">{formatINR(taxed)}</td>
-                <td className="py-2 pr-2 text-right tabular-nums font-medium">{formatINR(total)}</td>
-                <td className="py-2 pr-2 text-right">
-                  <RemoveBtn onClick={() => removeRoomCategory(idx)} />
-                </td>
-              </tr>
+              <button
+                key={item.id}
+                onClick={() => setActive(item.id)}
+                className={`mb-0.5 flex w-full items-baseline justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition ${
+                  isActive
+                    ? "bg-ink text-parchment"
+                    : "text-stone-700 hover:bg-stone-100"
+                }`}
+              >
+                <span className="flex items-baseline gap-2 truncate">
+                  <span
+                    className={`tabular-nums text-xs ${
+                      isActive ? "text-stone-400" : "text-stone-400"
+                    }`}
+                  >
+                    {item.n.toString().padStart(2, "0")}
+                  </span>
+                  <span className="truncate">{item.title}</span>
+                </span>
+                {t !== null && (
+                  <span
+                    className={`tabular-nums text-xs ${
+                      isActive ? "text-stone-300" : "text-stone-500"
+                    }`}
+                  >
+                    {formatINRCompact(t)}
+                  </span>
+                )}
+              </button>
             );
           })}
-        </Table>
-      </Section>
+        </nav>
 
-      {/* 2. Meals */}
-      <Section n={2} title="Meals" total={sectionTotal(budget, "meals")} onAdd={addMeal}>
-        <Table headers={["Meal", "Pax", "Rate", "Tax %", "Sittings", "Total", ""]}>
-          {budget.meals.map((m, idx) => (
-            <tr key={m.id} className="border-t">
-              <td className="py-2 pr-2">
-                <input className="text-input" value={m.label}
-                  onChange={(e) => updateMeal(idx, { label: e.target.value })} />
-              </td>
-              <td className="py-2 pr-2"><NumInput value={m.pax} onChange={(v) => updateMeal(idx, { pax: v })} /></td>
-              <td className="py-2 pr-2"><NumInput value={m.ratePerHead} onChange={(v) => updateMeal(idx, { ratePerHead: v })} /></td>
-              <td className="py-2 pr-2"><NumInput value={m.taxPct} onChange={(v) => updateMeal(idx, { taxPct: v })} step={0.5} /></td>
-              <td className="py-2 pr-2"><NumInput value={m.sittings} onChange={(v) => updateMeal(idx, { sittings: v })} /></td>
-              <td className="py-2 pr-2 text-right tabular-nums font-medium">{formatINR(mealLineTotal(m))}</td>
-              <td className="py-2 pr-2 text-right"><RemoveBtn onClick={() => removeMeal(idx)} /></td>
-            </tr>
-          ))}
-        </Table>
-      </Section>
-
-      {/* 3-10. simple line-item sections */}
-      <LineSection n={3} title="Decor & florals" k="decor" budget={budget} update={updateLine} add={addLine} remove={removeLine} />
-      <LineSection n={4} title="Entertainment, music & AV" k="entertainment" budget={budget} update={updateLine} add={addLine} remove={removeLine} />
-      <LineSection n={5} title="Photography & videography" k="photography" budget={budget} update={updateLine} add={addLine} remove={removeLine} />
-      <LineSection n={6} title="Attire & beauty" k="attire" budget={budget} update={updateLine} add={addLine} remove={removeLine} />
-      <LineSection n={7} title="Travel & logistics" k="travel" budget={budget} update={updateLine} add={addLine} remove={removeLine} />
-      <LineSection n={8} title="Rituals & ceremonies" k="rituals" budget={budget} update={updateLine} add={addLine} remove={removeLine} />
-      <LineSection n={9} title="Invitations & gifting" k="gifting" budget={budget} update={updateLine} add={addLine} remove={removeLine} />
-      <LineSection n={10} title="Miscellaneous" k="misc" budget={budget} update={updateLine} add={addLine} remove={removeLine} />
-
-      {/* contingency */}
-      <Card title={`Contingency (${budget.contingencyPct}%)`}>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <Field label="Contingency %">
-            <NumInput value={budget.contingencyPct}
-              onChange={(v) => setBudget((b) => ({ ...b, contingencyPct: v }))} step={0.5} />
-          </Field>
-          <div className="text-right">
-            <div className="text-xs text-stone-500">Applied to {formatINR(sub)} subtotal</div>
-            <div className="font-serif text-2xl">{formatINR(cont)}</div>
+        <div className="mt-auto border-t border-stone-200 px-5 py-4">
+          <div className="text-xs uppercase tracking-widest text-stone-400">Grand total</div>
+          <div className="font-serif text-3xl">{formatINR(total)}</div>
+          <div className="mt-1 text-xs text-stone-500">
+            {budget.meta.guests} guests · {budget.meta.events} events
           </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button className="btn-ghost text-xs" onClick={() => exportToExcel(budget)} title="Download .xlsx">
+              Excel
+            </button>
+            <button className="btn-ghost text-xs" onClick={printAsPDF} title="Print all sections">
+              PDF
+            </button>
+            <button className="btn-ghost text-xs" onClick={onReset}>
+              Reset
+            </button>
+            <button
+              className="btn-primary text-xs"
+              onClick={onSave}
+              disabled={saving || !airtableReady}
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
+          {saveMsg && <div className="mt-2 text-xs text-stone-600">{saveMsg}</div>}
+          {!airtableReady && (
+            <div className="mt-2 text-xs text-stone-500">
+              AIRTABLE_PAT not set — save disabled.
+            </div>
+          )}
         </div>
-      </Card>
+      </aside>
 
-      {/* summary */}
-      <Card title="Summary">
-        <SummaryRow label="Rooms" value={sectionTotal(budget, "rooms")} />
-        <SummaryRow label="Meals" value={sectionTotal(budget, "meals")} />
-        <SummaryRow label="Decor & florals" value={sectionTotal(budget, "decor")} />
-        <SummaryRow label="Entertainment, music & AV" value={sectionTotal(budget, "entertainment")} />
-        <SummaryRow label="Photography & videography" value={sectionTotal(budget, "photography")} />
-        <SummaryRow label="Attire & beauty" value={sectionTotal(budget, "attire")} />
-        <SummaryRow label="Travel & logistics" value={sectionTotal(budget, "travel")} />
-        <SummaryRow label="Rituals & ceremonies" value={sectionTotal(budget, "rituals")} />
-        <SummaryRow label="Invitations & gifting" value={sectionTotal(budget, "gifting")} />
-        <SummaryRow label="Miscellaneous" value={sectionTotal(budget, "misc")} />
-        <SummaryRow label={`Contingency (${budget.contingencyPct}%)`} value={cont} />
-        <div className="mt-3 flex items-baseline justify-between border-t pt-3">
-          <span className="font-serif text-2xl">Grand total</span>
-          <span className="font-serif text-2xl tabular-nums">{formatINR(total)}</span>
+      {/* Main content */}
+      <main className="flex-1 px-4 py-6 sm:px-8 lg:px-10 lg:py-10">
+        <div className="mx-auto max-w-4xl">
+          {/* details */}
+          <div className={visible("details")}>
+            <Card title="Wedding details">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Field label="Bride">
+                  <input
+                    className="text-input"
+                    value={budget.meta.brideName}
+                    onChange={(e) => setMeta("brideName", e.target.value)}
+                  />
+                </Field>
+                <Field label="Groom">
+                  <input
+                    className="text-input"
+                    value={budget.meta.groomName}
+                    onChange={(e) => setMeta("groomName", e.target.value)}
+                  />
+                </Field>
+                <Field label="Venue">
+                  <input
+                    className="text-input"
+                    value={budget.meta.venue}
+                    onChange={(e) => setMeta("venue", e.target.value)}
+                  />
+                </Field>
+                <Field label="Start date">
+                  <input
+                    type="date"
+                    className="text-input"
+                    value={budget.meta.startDate}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setBudget((b) => ({
+                        ...b,
+                        meta: {
+                          ...b.meta,
+                          startDate: v,
+                          endDate: b.meta.endDate && b.meta.endDate >= v ? b.meta.endDate : v,
+                        },
+                      }));
+                    }}
+                  />
+                </Field>
+                <Field label="End date">
+                  <input
+                    type="date"
+                    className="text-input"
+                    value={budget.meta.endDate}
+                    min={budget.meta.startDate || undefined}
+                    onChange={(e) => setMeta("endDate", e.target.value)}
+                  />
+                </Field>
+                <Field label="Guests">
+                  <NumInput value={budget.meta.guests} onChange={(v) => setMeta("guests", v)} />
+                </Field>
+                <Field label="Events">
+                  <NumInput value={budget.meta.events} onChange={(v) => setMeta("events", v)} />
+                </Field>
+              </div>
+            </Card>
+          </div>
+
+          {/* rooms */}
+          <div className={visible("rooms")}>
+            <Section n={1} title="Rooms" total={sectionTotal(budget, "rooms")} onAdd={addRoomCategory}>
+              <div className="mb-3 flex flex-wrap items-end gap-4">
+                <Field label="Nights">
+                  <NumInput value={budget.rooms.nights} onChange={(v) => setRooms({ nights: v })} />
+                </Field>
+                <Field label="GST %">
+                  <NumInput
+                    value={budget.rooms.gstPct}
+                    onChange={(v) => setRooms({ gstPct: v })}
+                    step={0.5}
+                  />
+                </Field>
+              </div>
+              <Table headers={["Category", "Count", "Rate / night", "GST", "Total", ""]}>
+                {budget.rooms.categories.map((c, idx) => {
+                  const taxed = c.ratePerNight * (1 + budget.rooms.gstPct / 100);
+                  const rowTotal = taxed * c.count * budget.rooms.nights;
+                  return (
+                    <tr key={c.id} className="border-t">
+                      <td className="py-2 pr-2">
+                        <input
+                          className="text-input"
+                          value={c.label}
+                          onChange={(e) => updateRoomCategory(idx, { label: e.target.value })}
+                        />
+                      </td>
+                      <td className="py-2 pr-2">
+                        <NumInput value={c.count} onChange={(v) => updateRoomCategory(idx, { count: v })} />
+                      </td>
+                      <td className="py-2 pr-2">
+                        <NumInput
+                          value={c.ratePerNight}
+                          onChange={(v) => updateRoomCategory(idx, { ratePerNight: v })}
+                        />
+                      </td>
+                      <td className="py-2 pr-2 text-right tabular-nums text-stone-500">
+                        {formatINR(taxed)}
+                      </td>
+                      <td className="py-2 pr-2 text-right tabular-nums font-medium">
+                        {formatINR(rowTotal)}
+                      </td>
+                      <td className="py-2 pr-2 text-right">
+                        <RemoveBtn onClick={() => removeRoomCategory(idx)} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </Table>
+            </Section>
+          </div>
+
+          {/* meals */}
+          <div className={visible("meals")}>
+            <Section n={2} title="Meals" total={sectionTotal(budget, "meals")} onAdd={addMeal}>
+              <Table headers={["Meal", "Pax", "Rate", "Tax %", "Sittings", "Total", ""]}>
+                {budget.meals.map((m, idx) => (
+                  <tr key={m.id} className="border-t">
+                    <td className="py-2 pr-2">
+                      <input
+                        className="text-input"
+                        value={m.label}
+                        onChange={(e) => updateMeal(idx, { label: e.target.value })}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <NumInput value={m.pax} onChange={(v) => updateMeal(idx, { pax: v })} />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <NumInput
+                        value={m.ratePerHead}
+                        onChange={(v) => updateMeal(idx, { ratePerHead: v })}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <NumInput
+                        value={m.taxPct}
+                        onChange={(v) => updateMeal(idx, { taxPct: v })}
+                        step={0.5}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <NumInput value={m.sittings} onChange={(v) => updateMeal(idx, { sittings: v })} />
+                    </td>
+                    <td className="py-2 pr-2 text-right tabular-nums font-medium">
+                      {formatINR(mealLineTotal(m))}
+                    </td>
+                    <td className="py-2 pr-2 text-right">
+                      <RemoveBtn onClick={() => removeMeal(idx)} />
+                    </td>
+                  </tr>
+                ))}
+              </Table>
+            </Section>
+          </div>
+
+          {/* line-item sections */}
+          {(
+            [
+              { n: 3, title: "Decor & florals", k: "decor" },
+              { n: 4, title: "Entertainment, music & AV", k: "entertainment" },
+              { n: 5, title: "Photography & videography", k: "photography" },
+              { n: 6, title: "Attire & beauty", k: "attire" },
+              { n: 7, title: "Travel & logistics", k: "travel" },
+              { n: 8, title: "Rituals & ceremonies", k: "rituals" },
+              { n: 9, title: "Invitations & gifting", k: "gifting" },
+              { n: 10, title: "Miscellaneous", k: "misc" },
+            ] as const
+          ).map(({ n, title, k }) => (
+            <div key={k} className={visible(k)}>
+              <LineSection
+                n={n}
+                title={title}
+                k={k}
+                budget={budget}
+                update={updateLine}
+                add={addLine}
+                remove={removeLine}
+              />
+            </div>
+          ))}
+
+          {/* contingency */}
+          <div className={visible("contingency")}>
+            <Card title={`Contingency (${budget.contingencyPct}%)`}>
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <Field label="Contingency %">
+                  <NumInput
+                    value={budget.contingencyPct}
+                    onChange={(v) => setBudget((b) => ({ ...b, contingencyPct: v }))}
+                    step={0.5}
+                  />
+                </Field>
+                <div className="text-right">
+                  <div className="text-xs text-stone-500">Applied to {formatINR(sub)} subtotal</div>
+                  <div className="font-serif text-2xl">{formatINR(cont)}</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* summary */}
+          <div className={visible("summary")}>
+            <Card title="Summary">
+              <SummaryRow label="Rooms" value={sectionTotal(budget, "rooms")} />
+              <SummaryRow label="Meals" value={sectionTotal(budget, "meals")} />
+              <SummaryRow label="Decor & florals" value={sectionTotal(budget, "decor")} />
+              <SummaryRow label="Entertainment, music & AV" value={sectionTotal(budget, "entertainment")} />
+              <SummaryRow label="Photography & videography" value={sectionTotal(budget, "photography")} />
+              <SummaryRow label="Attire & beauty" value={sectionTotal(budget, "attire")} />
+              <SummaryRow label="Travel & logistics" value={sectionTotal(budget, "travel")} />
+              <SummaryRow label="Rituals & ceremonies" value={sectionTotal(budget, "rituals")} />
+              <SummaryRow label="Invitations & gifting" value={sectionTotal(budget, "gifting")} />
+              <SummaryRow label="Miscellaneous" value={sectionTotal(budget, "misc")} />
+              <SummaryRow label={`Contingency (${budget.contingencyPct}%)`} value={cont} />
+              <div className="mt-3 flex items-baseline justify-between border-t pt-3">
+                <span className="font-serif text-2xl">Grand total</span>
+                <span className="font-serif text-2xl tabular-nums">{formatINR(total)}</span>
+              </div>
+            </Card>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-stone-500 print:mt-10">
+            {coupleDisplayName(budget.meta)} · {budget.meta.venue}
+          </p>
         </div>
-      </Card>
-
-      <p className="mt-6 text-center text-xs text-stone-500">
-        Built for Kash + Arjun · Storii by ITC Hotels — Naina Tikkar
-      </p>
+      </main>
     </div>
   );
 }
 
 // ----- helpers/components ---------------------------------------------------
 
-type LineSectionKey = "decor" | "entertainment" | "photography" | "attire" | "travel" | "rituals" | "gifting" | "misc";
-
 function LineSection({
-  n, title, k, budget, update, add, remove,
+  n,
+  title,
+  k,
+  budget,
+  update,
+  add,
+  remove,
 }: {
   n: number;
   title: string;
@@ -321,8 +521,11 @@ function LineSection({
         {items.map((it, idx) => (
           <tr key={it.id} className="border-t">
             <td className="py-2 pr-2">
-              <input className="text-input" value={it.label}
-                onChange={(e) => update(k, idx, { label: e.target.value })} />
+              <input
+                className="text-input"
+                value={it.label}
+                onChange={(e) => update(k, idx, { label: e.target.value })}
+              />
             </td>
             <td className="py-2 pr-2">
               <select
@@ -337,7 +540,9 @@ function LineSection({
             <td className="py-2 pr-2">
               <NumInput value={it.amount} onChange={(v) => update(k, idx, { amount: v })} />
             </td>
-            <td className="py-2 pr-2 text-right"><RemoveBtn onClick={() => remove(k, idx)} /></td>
+            <td className="py-2 pr-2 text-right">
+              <RemoveBtn onClick={() => remove(k, idx)} />
+            </td>
           </tr>
         ))}
       </Table>
@@ -345,20 +550,34 @@ function LineSection({
   );
 }
 
-function Section({ n, title, total, onAdd, children }: {
-  n: number; title: string; total: number; onAdd?: () => void; children: React.ReactNode;
+function Section({
+  n,
+  title,
+  total,
+  onAdd,
+  children,
+}: {
+  n: number;
+  title: string;
+  total: number;
+  onAdd?: () => void;
+  children: React.ReactNode;
 }) {
   return (
     <section className="mb-6 rounded-xl border border-stone-200 bg-white shadow-sm">
       <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-stone-200 px-5 py-3">
         <div className="flex items-baseline gap-3">
-          <span className="text-sm text-stone-400 tabular-nums">{n.toString().padStart(2, "0")}</span>
+          <span className="text-sm text-stone-400 tabular-nums">
+            {n.toString().padStart(2, "0")}
+          </span>
           <h2 className="font-serif text-2xl">{title}</h2>
         </div>
         <div className="flex items-center gap-3">
           <span className="font-serif text-xl tabular-nums">{formatINR(total)}</span>
           {onAdd && (
-            <button className="btn-ghost text-xs" onClick={onAdd}>+ Add</button>
+            <button className="btn-ghost text-xs" onClick={onAdd}>
+              + Add
+            </button>
           )}
         </div>
       </header>
@@ -385,7 +604,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function NumInput({ value, onChange, step = 1 }: { value: number; onChange: (v: number) => void; step?: number }) {
+function NumInput({
+  value,
+  onChange,
+  step = 1,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  step?: number;
+}) {
   return (
     <input
       type="number"
@@ -407,7 +634,12 @@ function Table({ headers, children }: { headers: string[]; children: React.React
         <thead>
           <tr className="text-left text-xs uppercase tracking-wide text-stone-500">
             {headers.map((h, i) => (
-              <th key={i} className={`pb-2 pr-2 font-medium ${i >= headers.length - 2 ? "text-right" : ""}`}>{h}</th>
+              <th
+                key={i}
+                className={`pb-2 pr-2 font-medium ${i >= headers.length - 2 ? "text-right" : ""}`}
+              >
+                {h}
+              </th>
             ))}
           </tr>
         </thead>
@@ -419,7 +651,9 @@ function Table({ headers, children }: { headers: string[]; children: React.React
 
 function RemoveBtn({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} aria-label="Remove" className="text-stone-400 hover:text-rose">×</button>
+    <button onClick={onClick} aria-label="Remove" className="text-stone-400 hover:text-rose">
+      ×
+    </button>
   );
 }
 

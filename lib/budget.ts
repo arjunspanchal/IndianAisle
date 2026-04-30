@@ -30,9 +30,11 @@ export type MealConfig = {
 
 export type Budget = {
   meta: {
-    coupleNames: string;
+    brideName: string;
+    groomName: string;
     venue: string;
-    dateRange: string;
+    startDate: string; // ISO yyyy-mm-dd
+    endDate: string;   // ISO yyyy-mm-dd
     guests: number;
     events: number;
   };
@@ -55,9 +57,11 @@ export type Budget = {
 
 export const defaultBudget = (): Budget => ({
   meta: {
-    coupleNames: "Kash + Arjun",
+    brideName: "Kash",
+    groomName: "Arjun",
     venue: "Storii by ITC Hotels — Naina Tikkar",
-    dateRange: "Dec 6–8, 2026",
+    startDate: "2026-12-06",
+    endDate: "2026-12-08",
     guests: 91,
     events: 5,
   },
@@ -186,6 +190,30 @@ export const grandTotal = (b: Budget) =>
 
 export const formatINR = (n: number) =>
   "₹" + Math.round(n).toLocaleString("en-IN");
+
+export const coupleDisplayName = (meta: Budget["meta"]): string => {
+  const b = meta.brideName.trim();
+  const g = meta.groomName.trim();
+  if (b && g) return `${b} + ${g}`;
+  return b || g || "";
+};
+
+export const formatDateRange = (startISO: string, endISO: string): string => {
+  if (!startISO || !endISO) return "";
+  const start = new Date(startISO + "T00:00:00");
+  const end = new Date(endISO + "T00:00:00");
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "";
+  const monthFmt = new Intl.DateTimeFormat("en-US", { month: "short" });
+  const sM = monthFmt.format(start);
+  const eM = monthFmt.format(end);
+  const sD = start.getDate();
+  const eD = end.getDate();
+  const sY = start.getFullYear();
+  const eY = end.getFullYear();
+  if (sY === eY && sM === eM) return `${sM} ${sD}–${eD}, ${eY}`;
+  if (sY === eY) return `${sM} ${sD} – ${eM} ${eD}, ${eY}`;
+  return `${sM} ${sD}, ${sY} – ${eM} ${eD}, ${eY}`;
+};
 
 export const formatINRCompact = (n: number) => {
   const r = Math.round(n);

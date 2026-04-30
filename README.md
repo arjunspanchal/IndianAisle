@@ -1,4 +1,4 @@
-# Wedding Cost Calculator
+# The Indian Aisle
 
 Live calculator UI on top of an Airtable base. Edit any field — totals update instantly. Click **Save to Airtable** to write the changes back.
 
