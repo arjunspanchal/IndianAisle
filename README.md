@@ -17,6 +17,7 @@ Browser ──▶ Next.js (Vercel) ──▶ Airtable REST API (server-side, wit
 - **Read**: server component on `/` calls `getBudget()`, fetches all rows from the 3 data tables, maps them into a single `Budget` JSON shape, and renders the calculator with that as the initial state.
 - **Edit**: pure client state. Every input updates totals immediately — no network round-trip.
 - **Save**: server action diffs the current `Budget` against Airtable's live state and applies create/update/delete on the 3 tables. The Personal Access Token never leaves the server.
+- **Export**: client-side. **Excel** generates a multi-sheet `.xlsx` (Summary / Rooms / Meals / Line Items) via SheetJS. **PDF** opens the browser print dialog with a print stylesheet that hides editing chrome — pick "Save as PDF" from the dialog.
 
 ## Airtable base
 
