@@ -174,88 +174,68 @@ export default function Calculator({ initialBudget, airtableReady = false }: Pro
     active === id ? "" : "hidden print:block";
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      {/* Sidebar */}
-      <aside className="flex flex-col border-b border-stone-200 bg-white/70 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r print:hidden">
-        <div className="px-5 py-6">
-          <h1 className="font-serif text-3xl tracking-tight">The Indian Aisle</h1>
-          <p className="mt-1 text-xs text-stone-500">
-            {coupleDisplayName(budget.meta)}
-            {formatDateRange(budget.meta.startDate, budget.meta.endDate) &&
-              ` · ${formatDateRange(budget.meta.startDate, budget.meta.endDate)}`}
-          </p>
+    <div className="flex min-h-screen flex-col">
+      {/* Header bar with totals + actions */}
+      <header className="sticky top-0 z-10 border-b border-stone-200 bg-parchment/95 backdrop-blur print:hidden">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-baseline justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <div>
+            <h1 className="font-serif text-2xl leading-none">Calculator</h1>
+            <p className="mt-1 text-xs text-stone-500">
+              {coupleDisplayName(budget.meta)} · {budget.meta.guests} guests · {budget.meta.events} events
+              {formatDateRange(budget.meta.startDate, budget.meta.endDate) &&
+                ` · ${formatDateRange(budget.meta.startDate, budget.meta.endDate)}`}
+            </p>
+          </div>
+          <div className="flex items-baseline gap-3">
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-widest text-stone-500">Grand total</div>
+              <div className="font-serif text-2xl tabular-nums">{formatINR(total)}</div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button className="btn-ghost text-xs" onClick={() => exportToExcel(budget)} title="Download .xlsx">Excel</button>
+              <button className="btn-ghost text-xs" onClick={printAsPDF} title="Print / save as PDF">PDF</button>
+              <button className="btn-ghost text-xs" onClick={onReset}>Reset</button>
+              <button className="btn-primary text-xs" onClick={onSave} disabled={saving || !airtableReady}>
+                {saving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
         </div>
+        {(saveMsg || !airtableReady) && (
+          <div className="mx-auto max-w-5xl px-4 pb-2 text-xs text-stone-500 sm:px-6 lg:px-8">
+            {saveMsg ?? "AIRTABLE_PAT not set — save disabled."}
+          </div>
+        )}
 
-        <nav className="px-2 pb-4">
-          {NAV.map((item) => {
-            const t = sectionTotalFor(item.id);
-            const isActive = active === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActive(item.id)}
-                className={`mb-0.5 flex w-full items-baseline justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition ${
-                  isActive
-                    ? "bg-ink text-parchment"
-                    : "text-stone-700 hover:bg-stone-100"
-                }`}
-              >
-                <span className="flex items-baseline gap-2 truncate">
-                  <span
-                    className={`tabular-nums text-xs ${
-                      isActive ? "text-stone-400" : "text-stone-400"
-                    }`}
-                  >
+        {/* Section tabs (horizontal scroll on small screens) */}
+        <nav className="mx-auto max-w-5xl overflow-x-auto px-4 pb-2 sm:px-6 lg:px-8">
+          <div className="flex gap-1 whitespace-nowrap">
+            {NAV.map((item) => {
+              const t = sectionTotalFor(item.id);
+              const isActive = active === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActive(item.id)}
+                  className={`flex shrink-0 items-baseline gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition ${
+                    isActive ? "bg-ink text-parchment" : "text-stone-700 hover:bg-stone-100"
+                  }`}
+                >
+                  <span className={`tabular-nums ${isActive ? "text-stone-400" : "text-stone-400"}`}>
                     {item.n.toString().padStart(2, "0")}
                   </span>
-                  <span className="truncate">{item.title}</span>
-                </span>
-                {t !== null && (
-                  <span
-                    className={`tabular-nums text-xs ${
-                      isActive ? "text-stone-300" : "text-stone-500"
-                    }`}
-                  >
-                    {formatINRCompact(t)}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                  <span>{item.title}</span>
+                  {t !== null && (
+                    <span className={`tabular-nums ${isActive ? "text-stone-300" : "text-stone-500"}`}>
+                      · {formatINRCompact(t)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </nav>
-
-        <div className="mt-auto border-t border-stone-200 px-5 py-4">
-          <div className="text-xs uppercase tracking-widest text-stone-400">Grand total</div>
-          <div className="font-serif text-3xl">{formatINR(total)}</div>
-          <div className="mt-1 text-xs text-stone-500">
-            {budget.meta.guests} guests · {budget.meta.events} events
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button className="btn-ghost text-xs" onClick={() => exportToExcel(budget)} title="Download .xlsx">
-              Excel
-            </button>
-            <button className="btn-ghost text-xs" onClick={printAsPDF} title="Print all sections">
-              PDF
-            </button>
-            <button className="btn-ghost text-xs" onClick={onReset}>
-              Reset
-            </button>
-            <button
-              className="btn-primary text-xs"
-              onClick={onSave}
-              disabled={saving || !airtableReady}
-            >
-              {saving ? "Saving…" : "Save"}
-            </button>
-          </div>
-          {saveMsg && <div className="mt-2 text-xs text-stone-600">{saveMsg}</div>}
-          {!airtableReady && (
-            <div className="mt-2 text-xs text-stone-500">
-              AIRTABLE_PAT not set — save disabled.
-            </div>
-          )}
-        </div>
-      </aside>
+      </header>
 
       {/* Main content */}
       <main className="flex-1 px-4 py-6 sm:px-8 lg:px-10 lg:py-10">
