@@ -1,47 +1,17 @@
 // Server-only Airtable client for the shared Properties directory.
 // Reuses the BASE_ID + PAT from lib/airtable.ts. Stores in a table named
-// "Properties" (referenced by name).
+// "Properties" (referenced by name so no table-id constant needs to change).
 //
 // Expected Airtable schema for table "Properties":
-//   Name                        — single-line text (primary)
-//   Location                    — single-line text   (city / region)
-//   Address                     — single-line text
-//   Website                     — URL
-//   Contact name                — single-line text
-//   Contact phone               — phone
-//   Contact email               — email
-//   Rooms                       — number (integer)
-//   Max guests                  — number (integer)
-//   Event spaces                — number (integer)
-//   Tier                        — number (1–3)  OR single-select "1"/"2"/"3"
-//   Banquet                     — checkbox
-//   Lawn                        — checkbox
-//   Poolside                    — checkbox
-//   Mandap                      — checkbox
-//   Bridal suite                — checkbox
-//   Air conditioned             — checkbox
-//   In-house catering           — checkbox
-//   Outside catering allowed    — checkbox
-//   Outside decor allowed       — checkbox
-//   Liquor license              — checkbox
-//   Avg room rate               — currency / number (₹)
-//   Banquet rental              — currency / number (₹)
-//   Per plate cost              — currency / number (₹)
-//   Buyout cost                 — currency / number (₹)
-//   Parking spots               — number (integer)
-//   Airport km                  — number (decimal)
-//   Status                      — single-select  (Not contacted, Inquired, Visited, Shortlisted, Booked, Rejected)
-//   Rating                      — rating (0–5) or number
-//   Visited                     — checkbox
-//   Notes                       — long text
+//   Name      — single-line text   (primary)
+//   Location  — single-line text
+//   Rooms     — number (integer)
+//   Tier      — number (integer 1-3)   OR single-select with options "1" "2" "3"
+//   Banquet   — checkbox (boolean)
+//   Notes     — long text
 
 import "server-only";
-import {
-  PROPERTY_STATUS_OPTIONS,
-  type Property,
-  type PropertyStatus,
-  type PropertyTier,
-} from "./properties";
+import type { Property, PropertyTier } from "./properties";
 
 const BASE_ID = "appX3GYmlf0OQGXc7";
 const TABLE = "Properties";
@@ -52,34 +22,9 @@ type AirtableList<F = Record<string, unknown>> = { records: AirtableRecord<F>[];
 type PropertyFields = {
   Name?: string;
   Location?: string;
-  Address?: string;
-  Website?: string;
-  "Contact name"?: string;
-  "Contact phone"?: string;
-  "Contact email"?: string;
   Rooms?: number;
-  "Max guests"?: number;
-  "Event spaces"?: number;
   Tier?: number | string;
   Banquet?: boolean;
-  Lawn?: boolean;
-  Poolside?: boolean;
-  Mandap?: boolean;
-  "Bridal suite"?: boolean;
-  "Air conditioned"?: boolean;
-  "In-house catering"?: boolean;
-  "Outside catering allowed"?: boolean;
-  "Outside decor allowed"?: boolean;
-  "Liquor license"?: boolean;
-  "Avg room rate"?: number;
-  "Banquet rental"?: number;
-  "Per plate cost"?: number;
-  "Buyout cost"?: number;
-  "Parking spots"?: number;
-  "Airport km"?: number;
-  Status?: string;
-  Rating?: number;
-  Visited?: boolean;
   Notes?: string;
 };
 
@@ -113,97 +58,28 @@ function normaliseTier(raw: number | string | undefined): PropertyTier {
   return n === 1 || n === 2 || n === 3 ? (n as PropertyTier) : 2;
 }
 
-function normaliseStatus(raw: string | undefined): PropertyStatus | undefined {
-  if (!raw) return undefined;
-  return (PROPERTY_STATUS_OPTIONS as readonly string[]).includes(raw)
-    ? (raw as PropertyStatus)
-    : undefined;
-}
-
 function fromRecord(r: AirtableRecord<PropertyFields>): Property {
-  const f = r.fields;
   return {
     id: r.id,
     airtableId: r.id,
-    name: f.Name ?? "",
-    location: f.Location ?? "",
-    address: f.Address ?? "",
-    website: f.Website ?? "",
-    contactName: f["Contact name"] ?? "",
-    contactPhone: f["Contact phone"] ?? "",
-    contactEmail: f["Contact email"] ?? "",
-    rooms: f.Rooms ?? 0,
-    maxGuests: f["Max guests"],
-    eventSpaces: f["Event spaces"],
-    tier: normaliseTier(f.Tier),
-    banquet: Boolean(f.Banquet),
-    lawn: Boolean(f.Lawn),
-    poolside: Boolean(f.Poolside),
-    mandap: Boolean(f.Mandap),
-    bridalSuite: Boolean(f["Bridal suite"]),
-    airConditioned: Boolean(f["Air conditioned"]),
-    inHouseCatering: Boolean(f["In-house catering"]),
-    outsideCateringAllowed: Boolean(f["Outside catering allowed"]),
-    outsideDecorAllowed: Boolean(f["Outside decor allowed"]),
-    liquorLicense: Boolean(f["Liquor license"]),
-    avgRoomRate: f["Avg room rate"],
-    banquetRental: f["Banquet rental"],
-    perPlateCost: f["Per plate cost"],
-    buyoutCost: f["Buyout cost"],
-    parkingSpots: f["Parking spots"],
-    airportKm: f["Airport km"],
-    status: normaliseStatus(f.Status),
-    rating: f.Rating ?? 0,
-    visited: Boolean(f.Visited),
-    notes: f.Notes ?? "",
+    name: r.fields.Name ?? "",
+    location: r.fields.Location ?? "",
+    rooms: r.fields.Rooms ?? 0,
+    tier: normaliseTier(r.fields.Tier),
+    banquet: Boolean(r.fields.Banquet),
+    notes: r.fields.Notes ?? "",
   };
 }
 
-// Drop empty optionals so we don't write blanks back to Airtable.
-function pruned<T extends object>(o: T): Partial<T> {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(o)) {
-    if (v === undefined || v === null) continue;
-    if (typeof v === "string" && v.trim() === "") continue;
-    out[k] = v;
-  }
-  return out as Partial<T>;
-}
-
 function toFields(p: Property): PropertyFields {
-  return pruned<PropertyFields>({
+  return {
     Name: p.name,
     Location: p.location,
-    Address: p.address,
-    Website: p.website,
-    "Contact name": p.contactName,
-    "Contact phone": p.contactPhone,
-    "Contact email": p.contactEmail,
     Rooms: p.rooms,
-    "Max guests": p.maxGuests,
-    "Event spaces": p.eventSpaces,
     Tier: p.tier,
     Banquet: p.banquet,
-    Lawn: p.lawn,
-    Poolside: p.poolside,
-    Mandap: p.mandap,
-    "Bridal suite": p.bridalSuite,
-    "Air conditioned": p.airConditioned,
-    "In-house catering": p.inHouseCatering,
-    "Outside catering allowed": p.outsideCateringAllowed,
-    "Outside decor allowed": p.outsideDecorAllowed,
-    "Liquor license": p.liquorLicense,
-    "Avg room rate": p.avgRoomRate,
-    "Banquet rental": p.banquetRental,
-    "Per plate cost": p.perPlateCost,
-    "Buyout cost": p.buyoutCost,
-    "Parking spots": p.parkingSpots,
-    "Airport km": p.airportKm,
-    Status: p.status,
-    Rating: p.rating,
-    Visited: p.visited,
-    Notes: p.notes,
-  });
+    Notes: p.notes ?? "",
+  };
 }
 
 export async function listProperties(): Promise<Property[]> {
