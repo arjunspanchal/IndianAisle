@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap");
+
+html, body { background: #faf6f0; color: #1a1410; }
+body { font-family: "Inter", system-ui, sans-serif; }
+h1, h2, h3, h4 { font-family: "Cormorant Garamond", Georgia, serif; }
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+.num-input {
+  @apply w-32 rounded-md border border-stone-300 bg-white px-2 py-1 text-right tabular-nums text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold;
+}
+.text-input {
+  @apply w-full rounded-md border border-stone-300 bg-white px-2 py-1 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold;
+}
+.btn {
+  @apply inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition;
+}
+.btn-primary { @apply btn bg-ink text-parchment hover:bg-stone-800; }
+.btn-ghost { @apply btn border border-stone-300 bg-white text-ink hover:bg-stone-50; }
