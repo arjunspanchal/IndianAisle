@@ -4,48 +4,53 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type AuthResult =
-  | { ok: true; redirectTo?: string; info?: string }
+export type SendCodeResult =
+  | { ok: true }
   | { ok: false; error: string };
 
-export async function signInAction(formData: FormData): Promise<AuthResult> {
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/weddings");
+export type VerifyCodeResult =
+  | { ok: true; redirectTo: string }
+  | { ok: false; error: string };
 
-  if (!email || !password) return { ok: false, error: "Email and password are required" };
+const isValidEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
-  const sb = createSupabaseServerClient();
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) return { ok: false, error: error.message };
+const safeNext = (next: string | null | undefined): string => {
+  if (!next || typeof next !== "string") return "/";
+  if (!next.startsWith("/")) return "/";
+  if (next.startsWith("//")) return "/";
+  if (next.startsWith("/login")) return "/";
+  return next;
+};
 
-  await ensureProfileRow();
-  revalidatePath("/", "layout");
-  return { ok: true, redirectTo: next || "/weddings" };
-}
-
-export async function signUpAction(formData: FormData): Promise<AuthResult> {
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const displayName = String(formData.get("displayName") ?? "").trim();
-
-  if (!email || !password) return { ok: false, error: "Email and password are required" };
-  if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters" };
+export async function sendOtpAction(formData: FormData): Promise<SendCodeResult> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email) return { ok: false, error: "Email is required" };
+  if (!isValidEmail(email)) return { ok: false, error: "Enter a valid email address" };
 
   const sb = createSupabaseServerClient();
-  const { data, error } = await sb.auth.signUp({
+  const { error } = await sb.auth.signInWithOtp({
     email,
-    password,
-    options: { data: { display_name: displayName || email.split("@")[0] } },
+    options: { shouldCreateUser: true },
   });
   if (error) return { ok: false, error: error.message };
 
-  await ensureProfileRow();
-  revalidatePath("/", "layout");
+  return { ok: true };
+}
 
-  // If session is set (email confirmation off), go to /weddings; else show "check your inbox".
-  if (data.session) return { ok: true, redirectTo: "/weddings" };
-  return { ok: true, info: "Account created. If email confirmation is enabled, check your inbox to confirm, then sign in." };
+export async function verifyOtpAction(formData: FormData): Promise<VerifyCodeResult> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const token = String(formData.get("token") ?? "").trim();
+  const next = safeNext(String(formData.get("next") ?? "/"));
+
+  if (!email || !token) return { ok: false, error: "Email and code are required" };
+  if (!/^\d{6}$/.test(token)) return { ok: false, error: "Enter the 6-digit code" };
+
+  const sb = createSupabaseServerClient();
+  const { error } = await sb.auth.verifyOtp({ email, token, type: "email" });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/", "layout");
+  return { ok: true, redirectTo: next };
 }
 
 export async function signOutAction(): Promise<void> {
@@ -53,17 +58,4 @@ export async function signOutAction(): Promise<void> {
   await sb.auth.signOut();
   revalidatePath("/", "layout");
   redirect("/login");
-}
-
-async function ensureProfileRow(): Promise<void> {
-  const sb = createSupabaseServerClient();
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
-  await sb.from("wedding_profiles").upsert(
-    {
-      id: user.id,
-      display_name: (user.user_metadata?.display_name as string | undefined) ?? user.email?.split("@")[0] ?? "",
-    },
-    { onConflict: "id", ignoreDuplicates: true },
-  );
 }

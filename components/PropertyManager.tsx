@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import {
   blankProperty,
   FEATURE_FLAGS,
@@ -29,7 +29,7 @@ export default function PropertyManager({ initial, airtableReady, loadError }: P
   const [filterStatus, setFilterStatus] = useState<PropertyStatus | "all">("all");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusMsg>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -76,25 +76,30 @@ export default function PropertyManager({ initial, airtableReady, loadError }: P
       setStatus({ kind: "ok", text: "Saved locally (Airtable not configured)." });
       return;
     }
-    startTransition(async () => {
-      const res = await saveProperty(editing);
-      if (!res.ok) {
-        setStatus({ kind: "err", text: `Save failed: ${res.error}` });
-        return;
-      }
-      const saved = res.data;
-      setItems((prev) => {
-        const idx = prev.findIndex((x) => x.airtableId === saved.airtableId || x.id === editing.id);
-        if (idx >= 0) {
-          const next = prev.slice();
-          next[idx] = saved;
-          return next;
+    void (async () => {
+      setPending(true);
+      try {
+        const res = await saveProperty(editing);
+        if (!res.ok) {
+          setStatus({ kind: "err", text: `Save failed: ${res.error}` });
+          return;
         }
-        return [...prev, saved];
-      });
-      setEditing(null);
-      setStatus({ kind: "ok", text: "Saved." });
-    });
+        const saved = res.data;
+        setItems((prev) => {
+          const idx = prev.findIndex((x) => x.airtableId === saved.airtableId || x.id === editing.id);
+          if (idx >= 0) {
+            const next = prev.slice();
+            next[idx] = saved;
+            return next;
+          }
+          return [...prev, saved];
+        });
+        setEditing(null);
+        setStatus({ kind: "ok", text: "Saved." });
+      } finally {
+        setPending(false);
+      }
+    })();
   };
 
   const onDelete = (p: Property) => {
@@ -108,15 +113,20 @@ export default function PropertyManager({ initial, airtableReady, loadError }: P
       setItems((prev) => prev.filter((x) => x.id !== p.id));
       return;
     }
-    startTransition(async () => {
-      const res = await removeProperty(p.airtableId!);
-      if (!res.ok) {
-        setStatus({ kind: "err", text: `Delete failed: ${res.error}` });
-        return;
+    void (async () => {
+      setPending(true);
+      try {
+        const res = await removeProperty(p.airtableId!);
+        if (!res.ok) {
+          setStatus({ kind: "err", text: `Delete failed: ${res.error}` });
+          return;
+        }
+        setItems((prev) => prev.filter((x) => x.airtableId !== p.airtableId));
+        setStatus({ kind: "ok", text: "Deleted." });
+      } finally {
+        setPending(false);
       }
-      setItems((prev) => prev.filter((x) => x.airtableId !== p.airtableId));
-      setStatus({ kind: "ok", text: "Deleted." });
-    });
+    })();
   };
 
   return (

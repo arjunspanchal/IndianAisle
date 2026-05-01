@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Budget,
   LineItem,
@@ -19,10 +19,22 @@ import {
 } from "@/lib/budget";
 import { saveBudgetAction } from "@/app/actions";
 import { exportToExcel, printAsPDF } from "@/lib/export";
+import CalculatorSectionNav, { type SectionNavItem } from "@/components/CalculatorSectionNav";
+import Field from "@/components/ui/Field";
+import Input from "@/components/ui/Input";
+import DateField from "@/components/ui/DateField";
+import Select from "@/components/ui/Select";
+import NumberInput from "@/components/ui/NumberInput";
+import Button from "@/components/ui/Button";
+import IconButton from "@/components/ui/IconButton";
+
+export type VenueOption = { id: string; name: string };
 
 type Props = {
   initialBudget?: Budget;
   airtableReady?: boolean;
+  weddingId?: string;
+  venueOptions?: VenueOption[];
 };
 
 type LineSectionKey =
@@ -43,8 +55,8 @@ type SectionId =
   | "contingency"
   | "summary";
 
-const NAV: { id: SectionId; n: number; title: string }[] = [
-  { id: "details", n: 0, title: "Wedding details" },
+const SECTION_DEFS: { id: SectionId; n: number; title: string; description?: string }[] = [
+  { id: "details", n: 0, title: "Wedding details", description: "The basics — names, dates, scale." },
   { id: "rooms", n: 1, title: "Rooms" },
   { id: "meals", n: 2, title: "Meals" },
   { id: "decor", n: 3, title: "Decor & florals" },
@@ -55,21 +67,67 @@ const NAV: { id: SectionId; n: number; title: string }[] = [
   { id: "rituals", n: 8, title: "Rituals & ceremonies" },
   { id: "gifting", n: 9, title: "Invitations & gifting" },
   { id: "misc", n: 10, title: "Miscellaneous" },
-  { id: "contingency", n: 11, title: "Contingency" },
-  { id: "summary", n: 12, title: "Summary" },
+  {
+    id: "contingency",
+    n: 11,
+    title: "Contingency",
+    description: "A cushion for the unforeseen, applied to the subtotal above.",
+  },
+  { id: "summary", n: 12, title: "Summary", description: "All sections at a glance." },
 ];
 
-export default function Calculator({ initialBudget, airtableReady = false }: Props) {
+const LINE_SECTIONS: { id: LineSectionKey; title: string }[] = [
+  { id: "decor", title: "Decor & florals" },
+  { id: "entertainment", title: "Entertainment, music & AV" },
+  { id: "photography", title: "Photography & videography" },
+  { id: "attire", title: "Attire & beauty" },
+  { id: "travel", title: "Travel & logistics" },
+  { id: "rituals", title: "Rituals & ceremonies" },
+  { id: "gifting", title: "Invitations & gifting" },
+  { id: "misc", title: "Miscellaneous" },
+];
+
+// Header height used both for sticky offset and scroll-margin on sections.
+const HEADER_OFFSET_PX = 96;
+
+export default function Calculator({
+  initialBudget,
+  airtableReady = false,
+  venueOptions = [],
+}: Props) {
   const [budget, setBudget] = useState<Budget>(initialBudget ?? defaultBudget());
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
-  const [active, setActive] = useState<SectionId>("details");
+
+  useEffect(() => {
+    if (!saveMsg) return;
+    const t = setTimeout(() => setSaveMsg(null), 4500);
+    return () => clearTimeout(t);
+  }, [saveMsg]);
 
   const total = grandTotal(budget);
   const sub = subtotalBeforeContingency(budget);
   const cont = contingencyTotal(budget);
 
-  // --- mutators ---
+  const navItems: SectionNavItem[] = SECTION_DEFS.map((s) => {
+    let t: number | undefined;
+    switch (s.id) {
+      case "details":
+        t = undefined;
+        break;
+      case "summary":
+        t = total;
+        break;
+      case "contingency":
+        t = cont;
+        break;
+      default:
+        t = sectionTotal(budget, s.id);
+    }
+    return { id: s.id, n: s.n, title: s.title, total: t };
+  });
+
+  // ---- mutators ----
   const setMeta = <K extends keyof Budget["meta"]>(k: K, v: Budget["meta"][K]) =>
     setBudget((b) => ({ ...b, meta: { ...b.meta, [k]: v } }));
 
@@ -136,7 +194,7 @@ export default function Calculator({ initialBudget, airtableReady = false }: Pro
   const removeLine = (key: LineSectionKey, idx: number) =>
     setBudget((b) => ({ ...b, [key]: (b[key] as LineItem[]).filter((_, i) => i !== idx) }));
 
-  // --- save ---
+  // ---- save ----
   const onSave = async () => {
     if (!airtableReady) {
       setSaveMsg("Airtable not configured — set AIRTABLE_PAT to enable save.");
@@ -147,7 +205,7 @@ export default function Calculator({ initialBudget, airtableReady = false }: Pro
     try {
       const result = await saveBudgetAction(budget);
       if (!result.ok) throw new Error(result.error);
-      setSaveMsg(`Saved to Airtable at ${new Date().toLocaleTimeString()}.`);
+      setSaveMsg(`Saved at ${new Date().toLocaleTimeString()}.`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setSaveMsg(`Save failed: ${msg}`);
@@ -163,115 +221,128 @@ export default function Calculator({ initialBudget, airtableReady = false }: Pro
     }
   };
 
-  const sectionTotalFor = (id: SectionId): number | null => {
-    if (id === "details") return null;
-    if (id === "contingency") return cont;
-    if (id === "summary") return total;
-    return sectionTotal(budget, id);
-  };
-
-  const visible = (id: SectionId) =>
-    active === id ? "" : "hidden print:block";
+  const couple = coupleDisplayName(budget.meta);
+  const dateRange = formatDateRange(budget.meta.startDate, budget.meta.endDate);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Header bar with totals + actions */}
-      <header className="sticky top-0 z-10 border-b border-stone-200 bg-parchment/95 backdrop-blur print:hidden">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-baseline justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-          <div>
-            <h1 className="font-serif text-2xl leading-none">Calculator</h1>
-            <p className="mt-1 text-xs text-stone-500">
-              {coupleDisplayName(budget.meta)} · {budget.meta.guests} guests · {budget.meta.events} events
-              {formatDateRange(budget.meta.startDate, budget.meta.endDate) &&
-                ` · ${formatDateRange(budget.meta.startDate, budget.meta.endDate)}`}
+    <div className="flex min-h-screen flex-col bg-parchment">
+      {/* ----- Sticky page header ----- */}
+      <header
+        className="sticky top-0 z-20 border-b border-gold-line bg-parchment/95 backdrop-blur print:static print:bg-white print:backdrop-blur-none"
+        style={{ ["--cal-header-h" as string]: `${HEADER_OFFSET_PX}px` }}
+      >
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 lg:flex-nowrap lg:gap-6 lg:px-10 lg:py-3.5">
+          <div className="min-w-0 flex-1">
+            <p className="hidden font-display text-base italic leading-none text-ink lg:block print:hidden">
+              The Indian Aisle
+            </p>
+            <p className="truncate text-[10px] uppercase tracking-[0.22em] text-ink-mute lg:mt-1.5">
+              {couple || "Untitled wedding"}
+              {dateRange && <span className="text-ink-mute/70"> · {dateRange}</span>}
             </p>
           </div>
-          <div className="flex items-baseline gap-3">
+
+          <div className="flex shrink-0 items-end gap-4 lg:gap-6">
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-widest text-stone-500">Grand total</div>
-              <div className="font-serif text-2xl tabular-nums">{formatINR(total)}</div>
+              <div className="text-[10px] uppercase tracking-[0.22em] text-ink-mute">Total</div>
+              <div className="font-display text-2xl tabular leading-none text-ink lg:text-3xl">
+                {formatINR(total)}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <button className="btn-ghost text-xs" onClick={() => exportToExcel(budget)} title="Download .xlsx">Excel</button>
-              <button className="btn-ghost text-xs" onClick={printAsPDF} title="Print / save as PDF">PDF</button>
-              <button className="btn-ghost text-xs" onClick={onReset}>Reset</button>
-              <button className="btn-primary text-xs" onClick={onSave} disabled={saving || !airtableReady}>
+            <div className="hidden items-center gap-1.5 sm:flex print:hidden">
+              <Button variant="secondary" onClick={() => exportToExcel(budget)} title="Download .xlsx">
+                Excel
+              </Button>
+              <Button variant="secondary" onClick={printAsPDF} title="Print / save as PDF">
+                PDF
+              </Button>
+              <Button variant="ghost" onClick={onReset}>
+                Reset
+              </Button>
+              <Button
+                variant="primary"
+                onClick={onSave}
+                disabled={saving || !airtableReady}
+                title={!airtableReady ? "Airtable not configured" : undefined}
+              >
                 {saving ? "Saving…" : "Save"}
-              </button>
+              </Button>
             </div>
+          </div>
+
+          {/* Mobile actions row */}
+          <div className="flex w-full items-center justify-end gap-1.5 sm:hidden print:hidden">
+            <Button variant="ghost" onClick={() => exportToExcel(budget)}>
+              Excel
+            </Button>
+            <Button variant="ghost" onClick={printAsPDF}>
+              PDF
+            </Button>
+            <Button variant="ghost" onClick={onReset}>
+              Reset
+            </Button>
+            <Button
+              variant="primary"
+              onClick={onSave}
+              disabled={saving || !airtableReady}
+            >
+              {saving ? "Saving…" : "Save"}
+            </Button>
           </div>
         </div>
-        {(saveMsg || !airtableReady) && (
-          <div className="mx-auto max-w-5xl px-4 pb-2 text-xs text-stone-500 sm:px-6 lg:px-8">
-            {saveMsg ?? "AIRTABLE_PAT not set — save disabled."}
-          </div>
-        )}
-
-        {/* Section tabs (horizontal scroll on small screens) */}
-        <nav className="mx-auto max-w-5xl overflow-x-auto px-4 pb-2 sm:px-6 lg:px-8">
-          <div className="flex gap-1 whitespace-nowrap">
-            {NAV.map((item) => {
-              const t = sectionTotalFor(item.id);
-              const isActive = active === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActive(item.id)}
-                  className={`flex shrink-0 items-baseline gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition ${
-                    isActive ? "bg-ink text-parchment" : "text-stone-700 hover:bg-stone-100"
-                  }`}
-                >
-                  <span className={`tabular-nums ${isActive ? "text-stone-400" : "text-stone-400"}`}>
-                    {item.n.toString().padStart(2, "0")}
-                  </span>
-                  <span>{item.title}</span>
-                  {t !== null && (
-                    <span className={`tabular-nums ${isActive ? "text-stone-300" : "text-stone-500"}`}>
-                      · {formatINRCompact(t)}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </nav>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 px-4 py-6 sm:px-8 lg:px-10 lg:py-10">
-        <div className="mx-auto max-w-4xl">
-          {/* details */}
-          <div className={visible("details")}>
-            <Card title="Wedding details">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* ----- Body: section nav + main column ----- */}
+      <div className="flex flex-1">
+        <aside
+          className="hidden border-r border-gold-line bg-parchment-deep lg:block lg:w-64 lg:shrink-0 print:hidden"
+          style={{
+            position: "sticky",
+            top: HEADER_OFFSET_PX,
+            alignSelf: "flex-start",
+            maxHeight: `calc(100vh - ${HEADER_OFFSET_PX}px)`,
+            overflowY: "auto",
+          }}
+        >
+          <CalculatorSectionNav
+            items={navItems}
+            offsetTop={HEADER_OFFSET_PX}
+            formatTotal={formatINRCompact}
+          />
+        </aside>
+
+        <main className="flex-1 px-5 sm:px-8 lg:px-12">
+          <div className="mx-auto max-w-3xl">
+            {/* 00 details */}
+            <SectionWrapper
+              id="details"
+              n={0}
+              title="Wedding details"
+              description="The basics — names, dates, scale."
+            >
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
                 <Field label="Bride">
-                  <input
-                    className="text-input"
+                  <Input
                     value={budget.meta.brideName}
                     onChange={(e) => setMeta("brideName", e.target.value)}
                   />
                 </Field>
                 <Field label="Groom">
-                  <input
-                    className="text-input"
+                  <Input
                     value={budget.meta.groomName}
                     onChange={(e) => setMeta("groomName", e.target.value)}
                   />
                 </Field>
-                <Field label="Venue">
-                  <input
-                    className="text-input"
-                    value={budget.meta.venue}
-                    onChange={(e) => setMeta("venue", e.target.value)}
-                  />
-                </Field>
+                <VenueField
+                  value={budget.meta.venue}
+                  options={venueOptions}
+                  onChange={(name) => setMeta("venue", name)}
+                />
                 <Field label="Start date">
-                  <input
-                    type="date"
-                    className="text-input"
+                  <DateField
                     value={budget.meta.startDate}
-                    onChange={(e) => {
-                      const v = e.target.value;
+                    ariaLabel="Start date"
+                    onChange={(v) => {
                       setBudget((b) => ({
                         ...b,
                         meta: {
@@ -284,339 +355,342 @@ export default function Calculator({ initialBudget, airtableReady = false }: Pro
                   />
                 </Field>
                 <Field label="End date">
-                  <input
-                    type="date"
-                    className="text-input"
+                  <DateField
                     value={budget.meta.endDate}
                     min={budget.meta.startDate || undefined}
-                    onChange={(e) => setMeta("endDate", e.target.value)}
+                    ariaLabel="End date"
+                    onChange={(v) => setMeta("endDate", v)}
                   />
                 </Field>
                 <Field label="Guests">
-                  <NumInput value={budget.meta.guests} onChange={(v) => setMeta("guests", v)} />
+                  <NumberInput value={budget.meta.guests} onChange={(v) => setMeta("guests", v)} />
                 </Field>
                 <Field label="Events">
-                  <NumInput value={budget.meta.events} onChange={(v) => setMeta("events", v)} />
+                  <NumberInput value={budget.meta.events} onChange={(v) => setMeta("events", v)} />
                 </Field>
               </div>
-            </Card>
-          </div>
+            </SectionWrapper>
 
-          {/* rooms */}
-          <div className={visible("rooms")}>
-            <Section n={1} title="Rooms" total={sectionTotal(budget, "rooms")} onAdd={addRoomCategory}>
-              <div className="mb-3 flex flex-wrap items-end gap-4">
+            <Divider />
+
+            {/* 01 rooms */}
+            <SectionWrapper id="rooms" n={1} title="Rooms" total={sectionTotal(budget, "rooms")}>
+              <div className="mb-6 grid grid-cols-2 gap-x-6 gap-y-5 sm:max-w-md">
                 <Field label="Nights">
-                  <NumInput value={budget.rooms.nights} onChange={(v) => setRooms({ nights: v })} />
+                  <NumberInput value={budget.rooms.nights} onChange={(v) => setRooms({ nights: v })} />
                 </Field>
                 <Field label="GST %">
-                  <NumInput
+                  <NumberInput
                     value={budget.rooms.gstPct}
                     onChange={(v) => setRooms({ gstPct: v })}
                     step={0.5}
                   />
                 </Field>
               </div>
-              <Table headers={["Category", "Count", "Rate / night", "GST", "Total", ""]}>
+              <ProgrammeTable headers={["Category", "Count", "Rate / night", "GST", "Total", ""]}>
                 {budget.rooms.categories.map((c, idx) => {
                   const taxed = c.ratePerNight * (1 + budget.rooms.gstPct / 100);
                   const rowTotal = taxed * c.count * budget.rooms.nights;
                   return (
-                    <tr key={c.id} className="border-t">
-                      <td className="py-2 pr-2">
-                        <input
-                          className="text-input"
+                    <tr key={c.id} className="border-t border-parchment-line align-middle">
+                      <td className="py-3 pr-3">
+                        <Input
                           value={c.label}
                           onChange={(e) => updateRoomCategory(idx, { label: e.target.value })}
                         />
                       </td>
-                      <td className="py-2 pr-2">
-                        <NumInput value={c.count} onChange={(v) => updateRoomCategory(idx, { count: v })} />
+                      <td className="py-3 pr-3 w-24">
+                        <NumberInput
+                          value={c.count}
+                          onChange={(v) => updateRoomCategory(idx, { count: v })}
+                        />
                       </td>
-                      <td className="py-2 pr-2">
-                        <NumInput
+                      <td className="py-3 pr-3 w-32">
+                        <NumberInput
                           value={c.ratePerNight}
                           onChange={(v) => updateRoomCategory(idx, { ratePerNight: v })}
                         />
                       </td>
-                      <td className="py-2 pr-2 text-right tabular-nums text-stone-500">
+                      <td className="py-3 pr-3 text-right tabular text-sm text-ink-mute">
                         {formatINR(taxed)}
                       </td>
-                      <td className="py-2 pr-2 text-right tabular-nums font-medium">
+                      <td className="py-3 pr-3 text-right tabular text-sm font-medium text-ink">
                         {formatINR(rowTotal)}
                       </td>
-                      <td className="py-2 pr-2 text-right">
-                        <RemoveBtn onClick={() => removeRoomCategory(idx)} />
+                      <td className="py-3 pr-0 text-right">
+                        <IconButton label="Remove" onClick={() => removeRoomCategory(idx)}>
+                          ×
+                        </IconButton>
                       </td>
                     </tr>
                   );
                 })}
-              </Table>
-            </Section>
-          </div>
+              </ProgrammeTable>
+              <AddRow label="Add room category" onClick={addRoomCategory} />
+            </SectionWrapper>
 
-          {/* meals */}
-          <div className={visible("meals")}>
-            <Section n={2} title="Meals" total={sectionTotal(budget, "meals")} onAdd={addMeal}>
-              <Table headers={["Meal", "Pax", "Rate", "Tax %", "Sittings", "Total", ""]}>
+            <Divider />
+
+            {/* 02 meals */}
+            <SectionWrapper id="meals" n={2} title="Meals" total={sectionTotal(budget, "meals")}>
+              <ProgrammeTable headers={["Meal", "Pax", "Rate", "Tax %", "Sittings", "Total", ""]}>
                 {budget.meals.map((m, idx) => (
-                  <tr key={m.id} className="border-t">
-                    <td className="py-2 pr-2">
-                      <input
-                        className="text-input"
+                  <tr key={m.id} className="border-t border-parchment-line align-middle">
+                    <td className="py-3 pr-3">
+                      <Input
                         value={m.label}
                         onChange={(e) => updateMeal(idx, { label: e.target.value })}
                       />
                     </td>
-                    <td className="py-2 pr-2">
-                      <NumInput value={m.pax} onChange={(v) => updateMeal(idx, { pax: v })} />
+                    <td className="py-3 pr-3 w-20">
+                      <NumberInput value={m.pax} onChange={(v) => updateMeal(idx, { pax: v })} />
                     </td>
-                    <td className="py-2 pr-2">
-                      <NumInput
+                    <td className="py-3 pr-3 w-28">
+                      <NumberInput
                         value={m.ratePerHead}
                         onChange={(v) => updateMeal(idx, { ratePerHead: v })}
                       />
                     </td>
-                    <td className="py-2 pr-2">
-                      <NumInput
+                    <td className="py-3 pr-3 w-20">
+                      <NumberInput
                         value={m.taxPct}
                         onChange={(v) => updateMeal(idx, { taxPct: v })}
                         step={0.5}
                       />
                     </td>
-                    <td className="py-2 pr-2">
-                      <NumInput value={m.sittings} onChange={(v) => updateMeal(idx, { sittings: v })} />
+                    <td className="py-3 pr-3 w-20">
+                      <NumberInput
+                        value={m.sittings}
+                        onChange={(v) => updateMeal(idx, { sittings: v })}
+                      />
                     </td>
-                    <td className="py-2 pr-2 text-right tabular-nums font-medium">
+                    <td className="py-3 pr-3 text-right tabular text-sm font-medium text-ink">
                       {formatINR(mealLineTotal(m))}
                     </td>
-                    <td className="py-2 pr-2 text-right">
-                      <RemoveBtn onClick={() => removeMeal(idx)} />
+                    <td className="py-3 pr-0 text-right">
+                      <IconButton label="Remove" onClick={() => removeMeal(idx)}>
+                        ×
+                      </IconButton>
                     </td>
                   </tr>
                 ))}
-              </Table>
-            </Section>
-          </div>
+              </ProgrammeTable>
+              <AddRow label="Add meal" onClick={addMeal} />
+            </SectionWrapper>
 
-          {/* line-item sections */}
-          {(
-            [
-              { n: 3, title: "Decor & florals", k: "decor" },
-              { n: 4, title: "Entertainment, music & AV", k: "entertainment" },
-              { n: 5, title: "Photography & videography", k: "photography" },
-              { n: 6, title: "Attire & beauty", k: "attire" },
-              { n: 7, title: "Travel & logistics", k: "travel" },
-              { n: 8, title: "Rituals & ceremonies", k: "rituals" },
-              { n: 9, title: "Invitations & gifting", k: "gifting" },
-              { n: 10, title: "Miscellaneous", k: "misc" },
-            ] as const
-          ).map(({ n, title, k }) => (
-            <div key={k} className={visible(k)}>
-              <LineSection
-                n={n}
-                title={title}
-                k={k}
-                budget={budget}
-                update={updateLine}
-                add={addLine}
-                remove={removeLine}
-              />
-            </div>
-          ))}
+            <Divider />
 
-          {/* contingency */}
-          <div className={visible("contingency")}>
-            <Card title={`Contingency (${budget.contingencyPct}%)`}>
-              <div className="flex flex-wrap items-end justify-between gap-4">
-                <Field label="Contingency %">
-                  <NumInput
+            {/* 03–10 line-item sections */}
+            {LINE_SECTIONS.map(({ id, title }) => {
+              const items = budget[id] as LineItem[];
+              const t = items.reduce((s, i) => s + i.amount, 0);
+              const def = SECTION_DEFS.find((d) => d.id === id)!;
+              return (
+                <div key={id}>
+                  <SectionWrapper id={id} n={def.n} title={title} total={t}>
+                    <ProgrammeTable headers={["Item", "Source", "Amount", ""]}>
+                      {items.map((it, idx) => (
+                        <tr key={it.id} className="border-t border-parchment-line align-middle">
+                          <td className="py-3 pr-3">
+                            <Input
+                              value={it.label}
+                              onChange={(e) => updateLine(id, idx, { label: e.target.value })}
+                            />
+                          </td>
+                          <td className="py-3 pr-3 w-40">
+                            <Select
+                              value={it.source ?? "Estimate"}
+                              onChange={(e) =>
+                                updateLine(id, idx, { source: e.target.value as LineItem["source"] })
+                              }
+                            >
+                              <option>Confirmed</option>
+                              <option>Estimate</option>
+                            </Select>
+                          </td>
+                          <td className="py-3 pr-3 w-36">
+                            <NumberInput
+                              value={it.amount}
+                              onChange={(v) => updateLine(id, idx, { amount: v })}
+                            />
+                          </td>
+                          <td className="py-3 pr-0 text-right">
+                            <IconButton label="Remove" onClick={() => removeLine(id, idx)}>
+                              ×
+                            </IconButton>
+                          </td>
+                        </tr>
+                      ))}
+                    </ProgrammeTable>
+                    <AddRow label="Add line item" onClick={() => addLine(id)} />
+                  </SectionWrapper>
+                  <Divider />
+                </div>
+              );
+            })}
+
+            {/* 11 contingency */}
+            <SectionWrapper
+              id="contingency"
+              n={11}
+              title={`Contingency (${budget.contingencyPct}%)`}
+              description="A cushion for the unforeseen, applied to the subtotal above."
+              total={cont}
+            >
+              <div className="flex flex-wrap items-end justify-between gap-6">
+                <Field label="Contingency %" className="w-40">
+                  <NumberInput
                     value={budget.contingencyPct}
                     onChange={(v) => setBudget((b) => ({ ...b, contingencyPct: v }))}
                     step={0.5}
                   />
                 </Field>
                 <div className="text-right">
-                  <div className="text-xs text-stone-500">Applied to {formatINR(sub)} subtotal</div>
-                  <div className="font-serif text-2xl">{formatINR(cont)}</div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-ink-mute">
+                    Applied to subtotal
+                  </div>
+                  <div className="mt-1 text-sm tabular text-ink-mute">{formatINR(sub)}</div>
+                  <div className="mt-2 font-display text-3xl tabular text-ink">
+                    {formatINR(cont)}
+                  </div>
                 </div>
               </div>
-            </Card>
-          </div>
+            </SectionWrapper>
 
-          {/* summary */}
-          <div className={visible("summary")}>
-            <Card title="Summary">
-              <SummaryRow label="Rooms" value={sectionTotal(budget, "rooms")} />
-              <SummaryRow label="Meals" value={sectionTotal(budget, "meals")} />
-              <SummaryRow label="Decor & florals" value={sectionTotal(budget, "decor")} />
-              <SummaryRow label="Entertainment, music & AV" value={sectionTotal(budget, "entertainment")} />
-              <SummaryRow label="Photography & videography" value={sectionTotal(budget, "photography")} />
-              <SummaryRow label="Attire & beauty" value={sectionTotal(budget, "attire")} />
-              <SummaryRow label="Travel & logistics" value={sectionTotal(budget, "travel")} />
-              <SummaryRow label="Rituals & ceremonies" value={sectionTotal(budget, "rituals")} />
-              <SummaryRow label="Invitations & gifting" value={sectionTotal(budget, "gifting")} />
-              <SummaryRow label="Miscellaneous" value={sectionTotal(budget, "misc")} />
-              <SummaryRow label={`Contingency (${budget.contingencyPct}%)`} value={cont} />
-              <div className="mt-3 flex items-baseline justify-between border-t pt-3">
-                <span className="font-serif text-2xl">Grand total</span>
-                <span className="font-serif text-2xl tabular-nums">{formatINR(total)}</span>
+            <Divider />
+
+            {/* 12 summary */}
+            <SectionWrapper
+              id="summary"
+              n={12}
+              title="Summary"
+              description="All sections at a glance."
+              total={total}
+            >
+              <dl className="divide-y divide-parchment-line">
+                <SummaryRow label="Rooms" value={sectionTotal(budget, "rooms")} />
+                <SummaryRow label="Meals" value={sectionTotal(budget, "meals")} />
+                <SummaryRow label="Decor & florals" value={sectionTotal(budget, "decor")} />
+                <SummaryRow
+                  label="Entertainment, music & AV"
+                  value={sectionTotal(budget, "entertainment")}
+                />
+                <SummaryRow
+                  label="Photography & videography"
+                  value={sectionTotal(budget, "photography")}
+                />
+                <SummaryRow label="Attire & beauty" value={sectionTotal(budget, "attire")} />
+                <SummaryRow label="Travel & logistics" value={sectionTotal(budget, "travel")} />
+                <SummaryRow label="Rituals & ceremonies" value={sectionTotal(budget, "rituals")} />
+                <SummaryRow label="Invitations & gifting" value={sectionTotal(budget, "gifting")} />
+                <SummaryRow label="Miscellaneous" value={sectionTotal(budget, "misc")} />
+                <SummaryRow label={`Contingency (${budget.contingencyPct}%)`} value={cont} />
+              </dl>
+              <div className="mt-6 flex items-baseline justify-between border-t-2 border-gold-line pt-5">
+                <span className="font-display text-2xl text-ink">Grand total</span>
+                <span className="font-display text-3xl tabular text-ink">{formatINR(total)}</span>
               </div>
-            </Card>
-          </div>
+            </SectionWrapper>
 
-          <p className="mt-6 text-center text-xs text-stone-500 print:mt-10">
-            {coupleDisplayName(budget.meta)} · {budget.meta.venue}
-          </p>
+            <p className="mt-12 pb-12 text-center font-display italic text-sm text-ink-mute">
+              {couple}
+              {budget.meta.venue ? ` · ${budget.meta.venue}` : ""}
+            </p>
+          </div>
+        </main>
+      </div>
+
+      {/* Save toast */}
+      {saveMsg && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-5 right-5 z-30 max-w-xs rounded-sm border border-gold-line bg-parchment-deep px-4 py-3 font-body text-xs text-ink shadow-sm print:hidden"
+        >
+          {saveMsg}
         </div>
-      </main>
+      )}
     </div>
   );
 }
 
-// ----- helpers/components ---------------------------------------------------
+// ----- helpers --------------------------------------------------------------
 
-function LineSection({
+function SectionWrapper({
+  id,
   n,
   title,
-  k,
-  budget,
-  update,
-  add,
-  remove,
-}: {
-  n: number;
-  title: string;
-  k: LineSectionKey;
-  budget: Budget;
-  update: (k: LineSectionKey, idx: number, patch: Partial<LineItem>) => void;
-  add: (k: LineSectionKey) => void;
-  remove: (k: LineSectionKey, idx: number) => void;
-}) {
-  const items = budget[k] as LineItem[];
-  const total = items.reduce((s, i) => s + i.amount, 0);
-  return (
-    <Section n={n} title={title} total={total} onAdd={() => add(k)}>
-      <Table headers={["Item", "Source", "Amount", ""]}>
-        {items.map((it, idx) => (
-          <tr key={it.id} className="border-t">
-            <td className="py-2 pr-2">
-              <input
-                className="text-input"
-                value={it.label}
-                onChange={(e) => update(k, idx, { label: e.target.value })}
-              />
-            </td>
-            <td className="py-2 pr-2">
-              <select
-                className="text-input"
-                value={it.source ?? "Estimate"}
-                onChange={(e) => update(k, idx, { source: e.target.value as LineItem["source"] })}
-              >
-                <option>Confirmed</option>
-                <option>Estimate</option>
-              </select>
-            </td>
-            <td className="py-2 pr-2">
-              <NumInput value={it.amount} onChange={(v) => update(k, idx, { amount: v })} />
-            </td>
-            <td className="py-2 pr-2 text-right">
-              <RemoveBtn onClick={() => remove(k, idx)} />
-            </td>
-          </tr>
-        ))}
-      </Table>
-    </Section>
-  );
-}
-
-function Section({
-  n,
-  title,
+  description,
   total,
-  onAdd,
   children,
 }: {
+  id: SectionId;
   n: number;
   title: string;
-  total: number;
-  onAdd?: () => void;
+  description?: string;
+  total?: number;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mb-6 rounded-xl border border-stone-200 bg-white shadow-sm">
-      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-stone-200 px-5 py-3">
-        <div className="flex items-baseline gap-3">
-          <span className="text-sm text-stone-400 tabular-nums">
-            {n.toString().padStart(2, "0")}
-          </span>
-          <h2 className="font-serif text-2xl">{title}</h2>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="font-serif text-xl tabular-nums">{formatINR(total)}</span>
-          {onAdd && (
-            <button className="btn-ghost text-xs" onClick={onAdd}>
-              + Add
-            </button>
+    <section
+      id={`section-${id}`}
+      aria-labelledby={`heading-${id}`}
+      className="scroll-mt-24 py-12 first:pt-8 lg:scroll-mt-28 lg:py-14 print:py-6"
+    >
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <p className="font-display text-sm italic leading-none text-gold-soft">
+            {String(n).padStart(2, "0")}
+          </p>
+          <h2
+            id={`heading-${id}`}
+            className="mt-1.5 font-display text-3xl leading-tight text-ink"
+          >
+            {title}
+          </h2>
+          {description && (
+            <p className="mt-2 max-w-prose font-display text-sm italic text-ink-mute">
+              {description}
+            </p>
           )}
         </div>
+        {typeof total === "number" && (
+          <span className="shrink-0 rounded-sm border border-gold-line bg-parchment-deep px-3 py-1.5 font-display text-base tabular text-ink">
+            {formatINR(total)}
+          </span>
+        )}
       </header>
-      <div className="px-5 py-4">{children}</div>
-    </section>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="mb-6 rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
-      <h2 className="mb-3 font-serif text-2xl">{title}</h2>
       {children}
     </section>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Divider() {
   return (
-    <label className="block">
-      <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500">{label}</span>
-      {children}
-    </label>
+    <div aria-hidden className="divider-ornament print:hidden">
+      ✦
+    </div>
   );
 }
 
-function NumInput({
-  value,
-  onChange,
-  step = 1,
+function ProgrammeTable({
+  headers,
+  children,
 }: {
-  value: number;
-  onChange: (v: number) => void;
-  step?: number;
+  headers: string[];
+  children: React.ReactNode;
 }) {
-  return (
-    <input
-      type="number"
-      className="num-input"
-      value={Number.isFinite(value) ? value : 0}
-      step={step}
-      onChange={(e) => {
-        const v = parseFloat(e.target.value);
-        onChange(Number.isFinite(v) ? v : 0);
-      }}
-    />
-  );
-}
-
-function Table({ headers, children }: { headers: string[]; children: React.ReactNode }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-stone-500">
+          <tr>
             {headers.map((h, i) => (
               <th
                 key={i}
-                className={`pb-2 pr-2 font-medium ${i >= headers.length - 2 ? "text-right" : ""}`}
+                className={`pb-2 pr-3 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-mute ${
+                  i >= headers.length - 2 ? "text-right" : "text-left"
+                }`}
               >
                 {h}
               </th>
@@ -629,19 +703,71 @@ function Table({ headers, children }: { headers: string[]; children: React.React
   );
 }
 
-function RemoveBtn({ onClick }: { onClick: () => void }) {
+function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} aria-label="Remove" className="text-stone-400 hover:text-rose">
-      ×
-    </button>
+    <div className="mt-4 print:hidden">
+      <Button variant="ghost" onClick={onClick}>
+        + {label}
+      </Button>
+    </div>
   );
 }
 
 function SummaryRow({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-baseline justify-between py-1.5 text-sm">
-      <span className="text-stone-700">{label}</span>
-      <span className="tabular-nums">{formatINR(value)}</span>
+    <div className="flex items-baseline justify-between py-2.5 text-sm">
+      <dt className="text-ink-soft">{label}</dt>
+      <dd className="tabular text-ink">{formatINR(value)}</dd>
     </div>
+  );
+}
+
+function VenueField({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: VenueOption[];
+  onChange: (name: string) => void;
+}) {
+  const empty = options.length === 0;
+  const valueMissing = value !== "" && !options.some((o) => o.name === value);
+
+  return (
+    <Field
+      label="Venue"
+      helper={
+        empty ? (
+          <>
+            No venues yet. Add one in{" "}
+            <a href="/properties" className="text-ink underline-offset-2 hover:underline">
+              Properties
+            </a>{" "}
+            first.
+          </>
+        ) : undefined
+      }
+    >
+      <Select
+        value={value}
+        disabled={empty}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="" disabled>
+          {empty ? "No venues yet" : "Select a venue…"}
+        </option>
+        {valueMissing && (
+          <option value={value} disabled>
+            {value} (not in Properties)
+          </option>
+        )}
+        {options.map((o) => (
+          <option key={o.id} value={o.name}>
+            {o.name}
+          </option>
+        ))}
+      </Select>
+    </Field>
   );
 }

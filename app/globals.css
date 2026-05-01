@@ -2,16 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap");
 
-html, body { background: #faf6f0; color: #1a1410; }
-body { font-family: "Inter", system-ui, sans-serif; }
-h1, h2, h3, h4 { font-family: "Cormorant Garamond", Georgia, serif; }
+html, body { background: #faf6f0; }
+body { font-family: "Inter", system-ui, sans-serif; color: #3a2e26; }
+h1, h2, h3, h4 { font-family: "Cormorant Garamond", Georgia, serif; color: #1a1410; }
 
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+}
+input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 0.85; }
+
+.font-display { font-family: "Cormorant Garamond", Georgia, serif; }
+.font-body { font-family: "Inter", system-ui, sans-serif; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Wedding-programme divider: hairline · ornament · hairline */
+.divider-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c9a96a;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.5em;
+  user-select: none;
+}
+.divider-ornament::before,
+.divider-ornament::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid #d9c79a;
+  margin: 0 1.25rem;
+}
+
+/* --- Legacy utilities still used by /properties and /login --- */
 .num-input {
   @apply w-32 rounded-md border border-stone-300 bg-white px-2 py-1 text-right tabular-nums text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold;
 }
@@ -24,30 +54,69 @@ input[type="number"] { -moz-appearance: textfield; }
 .btn-primary { @apply btn bg-ink text-parchment hover:bg-stone-800; }
 .btn-ghost { @apply btn border border-stone-300 bg-white text-ink hover:bg-stone-50; }
 
+/* --- react-day-picker theme overrides (used by components/ui/DateField.tsx) --- */
+.rdp-themed {
+  --rdp-cell-size: 2.25rem;
+  --rdp-accent-color: #b8893f;
+  --rdp-accent-background-color: #1a1410;
+  --rdp-background-color: transparent;
+  --rdp-today-color: #b8893f;
+  --rdp-day_button-border-radius: 0.125rem;
+  --rdp-selected-border: 0;
+  --rdp-day_button-height: 2.25rem;
+  --rdp-day_button-width: 2.25rem;
+  --rdp-range_start-background: #1a1410;
+  --rdp-range_end-background: #1a1410;
+}
+.rdp-themed .rdp-nav-btn {
+  @apply inline-flex h-7 w-7 items-center justify-center rounded-sm text-ink-mute transition hover:bg-parchment-deep hover:text-ink disabled:opacity-30;
+}
+.rdp-themed .rdp-day .rdp-today:not(.rdp-selected) > button {
+  @apply font-semibold;
+}
+.rdp-themed .rdp-selected > button {
+  @apply bg-ink text-parchment hover:bg-ink hover:text-parchment;
+}
+
 /* --- Print stylesheet — invoked by the PDF button (window.print()). --- */
 @media print {
   @page { margin: 14mm; size: A4 portrait; }
   html, body { background: #fff !important; color: #000 !important; }
 
-  /* Strip the editing chrome */
-  button, .num-input, .text-input { all: unset; }
-  input, select { border: none !important; background: transparent !important; padding: 0 !important; }
-  input[type="number"], input[type="text"], select {
-    appearance: none; -webkit-appearance: none;
-    box-shadow: none !important; outline: none !important;
-  }
-  input::placeholder { color: transparent; }
+  .print\:hidden { display: none !important; }
 
-  /* Sticky black banner becomes a header strip */
+  /* Strip editable affordances cleanly without nuking semantics. */
+  input, select, textarea {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+  }
+  input::placeholder, textarea::placeholder { color: transparent !important; }
+
+  /* Sticky chrome unsticks for print. */
   .sticky { position: static !important; }
-  .bg-ink { background: #fff !important; color: #000 !important; border-bottom: 2px solid #000 !important; box-shadow: none !important; }
-  .text-parchment, .text-stone-400, .text-stone-300 { color: #000 !important; }
 
-  /* Cards & sections — flatten */
-  section, .shadow-sm, .shadow-lg, .rounded-xl {
-    box-shadow: none !important; border: 1px solid #ccc !important; break-inside: avoid;
+  /* Dividers translate to print as a single hairline. */
+  .divider-ornament {
+    color: #999 !important;
+    page-break-inside: avoid;
+  }
+  .divider-ornament::before,
+  .divider-ornament::after { border-top-color: #ccc !important; }
+
+  /* Section bottom borders + table hairlines stay subtle. */
+  .border-parchment-line, .border-gold-line, .border-gold-soft {
+    border-color: #ccc !important;
   }
 
-  /* Remove the small "×" remove buttons and "+ Add" links */
-  [aria-label="Remove"], header .text-xs.btn-ghost { display: none !important; }
+  section { break-inside: avoid; }
+
+  /* Hide remove buttons inside tables. */
+  [aria-label="Remove"] { display: none !important; }
 }

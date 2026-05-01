@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-// Routes that REQUIRE auth. Everything else (including /, /calculator, /properties, /login) stays public.
-const PROTECTED_PREFIXES = ["/weddings", "/profile"];
-
 export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+  const isLogin = path === "/login" || path.startsWith("/login/");
+
   const res = NextResponse.next({ request: req });
 
+  // If Supabase isn't configured (local dev without env), let everything through.
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return res;
   }
@@ -26,22 +27,21 @@ export async function middleware(req: NextRequest) {
     },
   );
 
-  // Always refresh session if a cookie is present.
+  // Refreshes the session cookie if needed.
   const { data: { user } } = await supabase.auth.getUser();
 
-  const path = req.nextUrl.pathname;
-  const isProtected = PROTECTED_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
-
-  if (!user && isProtected) {
+  if (!user && !isLogin) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", path);
+    url.search = "";
+    if (path && path !== "/") url.searchParams.set("next", path + (req.nextUrl.search || ""));
     return NextResponse.redirect(url);
   }
 
-  if (user && path === "/login") {
+  if (user && isLogin) {
     const url = req.nextUrl.clone();
-    url.pathname = "/weddings";
+    const next = req.nextUrl.searchParams.get("next");
+    url.pathname = next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/login") ? next : "/";
     url.search = "";
     return NextResponse.redirect(url);
   }
@@ -50,5 +50,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
+  // Skip Next.js internals, static files, and common image extensions.
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

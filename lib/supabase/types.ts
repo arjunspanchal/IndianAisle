@@ -12,7 +12,16 @@ export type SectionKey =
 
 export type LineSource = "Confirmed" | "Estimate";
 
+export type WeddingRole = "couple" | "planner" | "family_or_friend";
+export type WeddingType = "local" | "destination";
+
+export type RsvpStatus = "pending" | "accepted" | "declined" | "maybe";
+export type GuestSide = "" | "bride" | "groom" | "both";
+
+type Empty = { [_ in never]: never };
+
 export type Database = {
+  __InternalSupabase: { PostgrestVersion: "12" };
   public: {
     Tables: {
       wedding_profiles: {
@@ -25,6 +34,10 @@ export type Database = {
         Row: {
           id: string;
           owner_id: string;
+          role: WeddingRole;
+          couple_names: string;
+          wedding_date: string | null;
+          wedding_type: WeddingType;
           bride_name: string;
           groom_name: string;
           venue: string;
@@ -40,6 +53,10 @@ export type Database = {
         };
         Insert: {
           owner_id: string;
+          role: WeddingRole;
+          couple_names: string;
+          wedding_date?: string | null;
+          wedding_type: WeddingType;
           bride_name?: string;
           groom_name?: string;
           venue?: string;
@@ -52,6 +69,10 @@ export type Database = {
           contingency_pct?: number;
         };
         Update: Partial<{
+          role: WeddingRole;
+          couple_names: string;
+          wedding_date: string | null;
+          wedding_type: WeddingType;
           bride_name: string;
           groom_name: string;
           venue: string;
@@ -114,6 +135,59 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      wedding_guests: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          name: string;
+          guest_type: string;
+          side: GuestSide;
+          address: string;
+          phone: string;
+          email: string;
+          invited: boolean;
+          rsvp_status: RsvpStatus;
+          hotel_required: boolean;
+          arrival_date: string | null;
+          plus_ones: number;
+          notes: string;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          wedding_id: string;
+          name?: string;
+          guest_type?: string;
+          side?: GuestSide;
+          address?: string;
+          phone?: string;
+          email?: string;
+          invited?: boolean;
+          rsvp_status?: RsvpStatus;
+          hotel_required?: boolean;
+          arrival_date?: string | null;
+          plus_ones?: number;
+          notes?: string;
+          position?: number;
+        };
+        Update: Partial<{
+          name: string;
+          guest_type: string;
+          side: GuestSide;
+          address: string;
+          phone: string;
+          email: string;
+          invited: boolean;
+          rsvp_status: RsvpStatus;
+          hotel_required: boolean;
+          arrival_date: string | null;
+          plus_ones: number;
+          notes: string;
+          position: number;
+        }>;
+        Relationships: [];
+      };
       wedding_lines: {
         Row: {
           id: string;
@@ -145,5 +219,12 @@ export type Database = {
         Relationships: [];
       };
     };
+    Views: Empty;
+    Functions: Empty;
+    Enums: {
+      wedding_section: SectionKey;
+      wedding_line_source: LineSource;
+    };
+    CompositeTypes: Empty;
   };
 };
