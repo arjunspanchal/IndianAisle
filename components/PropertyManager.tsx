@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   blankProperty,
   FEATURE_FLAGS,
@@ -12,6 +12,21 @@ import {
 } from "@/lib/properties";
 import { formatINR } from "@/lib/budget";
 import { removeProperty, saveProperty } from "@/app/properties/actions";
+import PlacesAutocomplete, { type PlacePick } from "@/components/PlacesAutocomplete";
+
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+function mapsUrl(p: Property): string | null {
+  if (p.placeId && p.lat != null && p.lng != null) {
+    return `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}&query_place_id=${encodeURIComponent(p.placeId)}`;
+  }
+  if (p.lat != null && p.lng != null) {
+    return `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
+  }
+  const q = [p.name, p.address || p.location].filter(Boolean).join(" ");
+  if (!q) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
 
 type Props = {
   initial: Property[];
@@ -316,7 +331,7 @@ function PropertyCard({
             </div>
           )}
 
-          {(p.contactName || p.contactPhone || p.contactEmail || p.website) && (
+          {(p.contactName || p.contactPhone || p.contactEmail || p.website || mapsUrl(p)) && (
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600">
               {p.contactName && <span>👤 {p.contactName}</span>}
               {p.contactPhone && (
@@ -328,6 +343,16 @@ function PropertyCard({
               {p.website && (
                 <a className="hover:underline" href={p.website} target="_blank" rel="noreferrer">
                   🔗 Website
+                </a>
+              )}
+              {mapsUrl(p) && (
+                <a
+                  className="hover:underline"
+                  href={mapsUrl(p) as string}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  📍 Open in Maps
                 </a>
               )}
             </div>
@@ -377,11 +402,35 @@ function PropertyForm({
     onChange({ ...value, [k]: Number.isFinite(n) ? n : undefined } as Property);
   };
 
+  const applyPick = useCallback(
+    (pick: PlacePick) => {
+      onChange({
+        ...value,
+        name: pick.name ?? value.name,
+        address: pick.address ?? value.address,
+        location: pick.location ?? value.location,
+        // Don't clobber a phone/website the user has already typed.
+        website: value.website?.trim() ? value.website : pick.website ?? value.website,
+        contactPhone: value.contactPhone?.trim()
+          ? value.contactPhone
+          : pick.phone ?? value.contactPhone,
+        lat: pick.lat ?? value.lat,
+        lng: pick.lng ?? value.lng,
+        placeId: pick.placeId ?? value.placeId,
+      });
+    },
+    [value, onChange],
+  );
+
   return (
     <section className="mb-6 rounded-xl border border-ink/20 bg-white p-5 shadow-md">
       <h2 className="mb-4 font-serif text-2xl">
         {value.airtableId ? "Edit property" : "New property"}
       </h2>
+
+      <div className="mb-5">
+        <PlacesAutocomplete onSelect={applyPick} apiKey={GOOGLE_MAPS_API_KEY} />
+      </div>
 
       <FormGroup title="Identity">
         <Field label="Name">

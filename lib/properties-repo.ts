@@ -59,6 +59,9 @@ function fromRow(r: PropertyRow): Property {
     status: toStatus(r.status),
     rating: r.rating,
     visited: r.visited,
+    lat: r.lat ?? undefined,
+    lng: r.lng ?? undefined,
+    placeId: r.place_id ?? undefined,
     notes: r.notes,
   };
 }
@@ -95,6 +98,9 @@ function toRowFields(p: Property): Omit<PropertyInsert, "owner_id"> {
     status: p.status ?? null,
     rating: p.rating ?? 0,
     visited: p.visited ?? false,
+    lat: p.lat ?? null,
+    lng: p.lng ?? null,
+    place_id: p.placeId ?? null,
     notes: p.notes ?? "",
   };
 }

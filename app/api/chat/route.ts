@@ -9,7 +9,11 @@ import {
   forgetFactsMatching,
   listFactsForCurrentUser,
   rememberFact,
+  PROFILE_CATEGORIES,
+  type MemoryFact,
+  type ProfileCategory,
 } from "@/lib/memory-repo";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { WeddingRole, WeddingType } from "@/lib/supabase/types";
 
 export const maxDuration = 60;
@@ -50,28 +54,31 @@ When you remember or forget something, briefly acknowledge it (e.g. "Got it — 
 
 Any facts already known about this user are listed in the "Known facts" section below; rely on those silently when relevant rather than restating them.
 
-# Onboarding interview
+# Profile slots (REQUIRED, persistent)
 
-If the "Known facts" section says "(No saved facts yet)" AND the user is signed in, offer a short profile setup the first time they engage. Phrase it like: "Want to spend 30 seconds setting up your profile so I can give better advice? I'll ask 5 quick questions. Or just dive in and ask anything."
+Every signed-in user has 5 required profile slots. The "Profile slots" status block in the user message below tells you which are filled (✓) and which are missing (✗). When you call "remember" for a profile answer, ALWAYS pass the matching category so it counts toward filling the slot:
 
-If they accept (yes / sure / go ahead), run the interview below. If they decline or ask a real question first, drop it — answer their question, and just call "remember" silently when they happen to mention something durable.
+- name — the user's name (and partner's name if relevant)
+- role — relationship to the wedding: couple / planner / family_or_friend
+- city — where the user is based
+- budget — rough total budget in lakhs or crores
+- non_negotiable — any hard requirements (one fact per non-negotiable; reuse the same category)
 
-Interview flow — ask ONE question at a time, wait for the answer, call "remember" with a clean third-person fact, then ask the next question. After the last question, summarize what you learned in 1-2 lines and stop.
+## When to ask
 
-1. "What's your name? (And your partner's, if you're the one getting married.)"
-   → remember a fact like "Name: Arjun. Partner: Kash."
-2. "What's your relationship to this wedding — getting married, planning for someone, or helping family/friends?"
-   → remember "Role: couple" / "Role: planner" / "Role: helping family/friends".
-3. "Which city are you based in?"
-   → remember "Based in <city>."
-4. "Roughly what total budget are you working with — in lakhs or crores?"
-   → remember "Total budget around <X>."
-5. "Any non-negotiables I should know upfront — vegetarian only, no alcohol, specific community traditions, destination vs local preference, anything else?"
-   → remember each non-negotiable as its own short fact.
+- If ALL slots are ✓: do not run the interview. Just answer the user's question.
+- If ANY slot is ✗ AND the user is signed in: gently fill the gaps. On the FIRST message of the session ask them to fill the missing slots ("Quick — 2 questions left to finish your profile: …"). One question at a time. Call "remember" with the right category after each answer.
+- If the user dives into a real question, answer it first — but circle back to ask one missing slot at a time afterwards. Don't pile up multiple questions.
+- If the user volunteers multiple answers in one message, accept them all (multiple "remember" calls in parallel) and only ask for what's still missing.
+- After all slots are ✓, briefly summarize ("Got it. Profile is set.") and stop interviewing.
 
-If the user volunteers multiple answers in one message, accept them all and skip ahead — don't re-ask. Skip any question whose answer is already in "Known facts".
+## When the user is signed out
 
-If the user is NOT signed in, do not run the interview. Tell them to sign in at /login first so the facts can be saved.`;
+The Profile-slots block will say "(signed out)". Do not run the interview. If they try to set up a profile, tell them to sign in at /login first so the facts can be saved.
+
+## Free-form facts
+
+Anything else durable the user mentions (preferred decor style, shortlisted venues, specific dates) should still be saved with "remember", but pass category="other" or omit category. Don't conflate these with the 5 required slots.`;
 
 const TOOLS: Anthropic.Tool[] = [
   {
@@ -108,7 +115,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "remember",
     description:
-      "Save a short, durable fact about the user (preferences, constraints, context) so it persists across conversations. One atomic fact per call. Do not save sensitive data, passwords, or ephemeral intents.",
+      "Save a short, durable fact about the user (preferences, constraints, context) so it persists across conversations. One atomic fact per call. Do not save sensitive data, passwords, or ephemeral intents. Pass `category` for profile slot answers (name/role/city/budget/non_negotiable) so they count toward filling the user's profile.",
     input_schema: {
       type: "object",
       properties: {
@@ -116,6 +123,12 @@ const TOOLS: Anthropic.Tool[] = [
           type: "string",
           description:
             "A short factual statement about the user, written in third person. E.g. 'Prefers destination weddings.', 'Budget cap is around 30 lakhs.', 'Based in Mumbai.'",
+        },
+        category: {
+          type: "string",
+          enum: ["name", "role", "city", "budget", "non_negotiable", "other"],
+          description:
+            "Tag the fact. Use one of the 5 profile slots (name/role/city/budget/non_negotiable) for onboarding answers, or 'other' for free-form facts.",
         },
       },
       required: ["fact"],
@@ -156,12 +169,39 @@ function toAnthropicMessages(messages: UIMessage[]): Anthropic.MessageParam[] {
     .filter((m) => m.content.length > 0);
 }
 
-function renderMemorySection(facts: { fact: string }[]): string {
-  if (facts.length === 0) {
-    return `# Known facts about this user\n\n(No saved facts yet. Use the "remember" tool when you learn something durable.)`;
+function renderMemorySection(
+  facts: MemoryFact[],
+  signedIn: boolean,
+): string {
+  const header = "# Known facts about this user";
+  if (!signedIn) {
+    return `${header}\n\nProfile slots: (signed out — onboarding disabled until the user signs in)\n\n(No saved facts yet.)`;
   }
-  const lines = facts.map((f) => `- ${f.fact}`).join("\n");
-  return `# Known facts about this user\n\n${lines}`;
+
+  const factsByCategory = new Map<string, MemoryFact[]>();
+  for (const f of facts) {
+    const key = f.category ?? "other";
+    const bucket = factsByCategory.get(key) ?? [];
+    bucket.push(f);
+    factsByCategory.set(key, bucket);
+  }
+
+  const slotLines = (PROFILE_CATEGORIES as readonly ProfileCategory[]).map(
+    (slot) => {
+      const slotFacts = factsByCategory.get(slot) ?? [];
+      if (slotFacts.length === 0) return `- ✗ ${slot}: MISSING`;
+      const joined = slotFacts.map((f) => f.fact).join(" / ");
+      return `- ✓ ${slot}: ${joined}`;
+    },
+  );
+
+  const otherFacts = factsByCategory.get("other") ?? [];
+  const otherSection =
+    otherFacts.length === 0
+      ? ""
+      : `\n\n## Other facts\n${otherFacts.map((f) => `- ${f.fact}`).join("\n")}`;
+
+  return `${header}\n\n## Profile slots\n${slotLines.join("\n")}${otherSection}`;
 }
 
 type CreateWeddingArgs = {
@@ -206,12 +246,21 @@ async function runCreateWedding(input: unknown): Promise<string> {
 }
 
 async function runRemember(input: unknown): Promise<string> {
-  const args = (input ?? {}) as { fact?: unknown };
+  const args = (input ?? {}) as { fact?: unknown; category?: unknown };
   if (typeof args.fact !== "string" || !args.fact.trim()) {
     throw new Error("fact is required");
   }
-  const saved = await rememberFact(args.fact);
-  return JSON.stringify({ ok: true, id: saved.id, fact: saved.fact });
+  const category =
+    typeof args.category === "string" && args.category.trim()
+      ? args.category.trim()
+      : null;
+  const saved = await rememberFact(args.fact, category);
+  return JSON.stringify({
+    ok: true,
+    id: saved.id,
+    fact: saved.fact,
+    category: saved.category,
+  });
 }
 
 async function runForget(input: unknown): Promise<string> {
@@ -227,8 +276,14 @@ export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
   const conversation: Anthropic.MessageParam[] = toAnthropicMessages(messages);
 
-  const facts = await listFactsForCurrentUser();
-  const memorySection = renderMemorySection(facts);
+  const sb = createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await sb.auth.getUser();
+  const signedIn = Boolean(user);
+
+  const facts = signedIn ? await listFactsForCurrentUser() : [];
+  const memorySection = renderMemorySection(facts, signedIn);
 
   const uiStream = createUIMessageStream({
     execute: async ({ writer }) => {

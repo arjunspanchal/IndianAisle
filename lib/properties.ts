@@ -65,6 +65,11 @@ export type Property = {
   rating?: number;           // 0–5
   visited?: boolean;
 
+  // Geo (populated from Google Places when the user picks a venue)
+  lat?: number;
+  lng?: number;
+  placeId?: string;
+
   // Free-form
   notes?: string;
 };

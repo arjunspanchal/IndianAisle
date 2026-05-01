@@ -39,9 +39,15 @@ export type Database = {
         Relationships: [];
       };
       user_memory: {
-        Row: { id: string; user_id: string; fact: string; created_at: string };
-        Insert: { user_id: string; fact: string };
-        Update: Partial<{ fact: string }>;
+        Row: {
+          id: string;
+          user_id: string;
+          fact: string;
+          category: string | null;
+          created_at: string;
+        };
+        Insert: { user_id: string; fact: string; category?: string | null };
+        Update: Partial<{ fact: string; category: string | null }>;
         Relationships: [];
       };
       weddings: {
@@ -268,6 +274,9 @@ export type Database = {
           visited: boolean;
           notes: string;
           position: number;
+          lat: number | null;
+          lng: number | null;
+          place_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -305,6 +314,9 @@ export type Database = {
           visited?: boolean;
           notes?: string;
           position?: number;
+          lat?: number | null;
+          lng?: number | null;
+          place_id?: string | null;
         };
         Update: Partial<{
           name: string;
@@ -339,6 +351,9 @@ export type Database = {
           visited: boolean;
           notes: string;
           position: number;
+          lat: number | null;
+          lng: number | null;
+          place_id: string | null;
         }>;
         Relationships: [];
       };

@@ -80,6 +80,11 @@ export default async function ProfilePage() {
                 key={f.id}
                 className="flex items-center gap-3 py-3 text-sm"
               >
+                {f.category && (
+                  <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] uppercase tracking-wide text-stone-600">
+                    {f.category.replace(/_/g, " ")}
+                  </span>
+                )}
                 <span className="flex-1 text-stone-800">{f.fact}</span>
                 <form action={forgetFactAction}>
                   <input type="hidden" name="id" value={f.id} />
