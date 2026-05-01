@@ -53,3 +53,10 @@ export async function forgetFactsMatching(needle: string): Promise<number> {
   if (error) throw new Error(error.message);
   return (data ?? []).length;
 }
+
+export async function forgetFactById(id: string): Promise<void> {
+  if (!id) throw new Error("id is empty");
+  const sb = createSupabaseServerClient();
+  const { error } = await sb.from("user_memory").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}

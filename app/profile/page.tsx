@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { listFactsForCurrentUser } from "@/lib/memory-repo";
 import { signOutAction } from "@/app/login/actions";
 import DeleteAccountForm from "./DeleteAccountForm";
+import { forgetFactAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,7 @@ export default async function ProfilePage() {
   if (error || !data.user) redirect("/login?next=/profile");
 
   const { email, created_at } = data.user;
+  const facts = await listFactsForCurrentUser();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
@@ -50,6 +53,47 @@ export default async function ProfilePage() {
             <button type="submit" className="btn-ghost">Sign out</button>
           </form>
         </div>
+      </section>
+
+      <section className="mb-8 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="font-serif text-2xl">What the assistant remembers</h2>
+          <span className="text-xs uppercase tracking-wide text-stone-500">
+            {facts.length} {facts.length === 1 ? "fact" : "facts"}
+          </span>
+        </div>
+        <p className="mt-1 text-sm text-stone-600">
+          Facts the chatbot has saved about you. They&rsquo;re injected into every
+          conversation so the assistant has context. Delete anything that&rsquo;s
+          wrong or stale.
+        </p>
+
+        {facts.length === 0 ? (
+          <div className="mt-4 rounded-lg bg-stone-50 px-4 py-3 text-sm text-stone-600">
+            Nothing saved yet. Tell the chatbot about yourself and it&rsquo;ll
+            start filling this in.
+          </div>
+        ) : (
+          <ul className="mt-4 divide-y divide-stone-100 border-t border-stone-100">
+            {facts.map((f) => (
+              <li
+                key={f.id}
+                className="flex items-center gap-3 py-3 text-sm"
+              >
+                <span className="flex-1 text-stone-800">{f.fact}</span>
+                <form action={forgetFactAction}>
+                  <input type="hidden" name="id" value={f.id} />
+                  <button
+                    type="submit"
+                    className="rounded-md px-2 py-1 text-xs text-stone-500 transition hover:bg-stone-100 hover:text-rose-700"
+                  >
+                    Delete
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="rounded-xl border border-rose-200 bg-white p-5 shadow-sm">

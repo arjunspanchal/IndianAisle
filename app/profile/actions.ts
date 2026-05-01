@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { forgetFactById } from "@/lib/memory-repo";
 
 export type DeleteAccountResult = { ok: true } | { ok: false; error: string };
 
@@ -26,4 +27,11 @@ export async function deleteAccountAction(formData: FormData): Promise<DeleteAcc
   await sb.auth.signOut();
   revalidatePath("/", "layout");
   redirect("/login?deleted=1");
+}
+
+export async function forgetFactAction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) throw new Error("Missing fact id");
+  await forgetFactById(id);
+  revalidatePath("/profile");
 }
