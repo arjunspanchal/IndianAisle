@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { saveBudget as saveBudgetToAirtable } from "@/lib/airtable";
-import { createWedding, deleteWedding, saveWeddingBudget } from "@/lib/wedding-repo";
+import { saveWeddingBudget } from "@/lib/wedding-repo";
 import type { Budget } from "@/lib/budget";
 
 // Existing /calculator page (Airtable-backed). Kept single-arg for backward compatibility.
@@ -20,7 +19,7 @@ export async function saveBudgetAction(
   }
 }
 
-// New Supabase-backed save, used by /weddings/[id]/page.tsx.
+// Supabase-backed save for the per-wedding calculator at /weddings/[id].
 export async function saveWeddingBudgetAction(
   weddingId: string,
   budget: Budget,
@@ -28,21 +27,9 @@ export async function saveWeddingBudgetAction(
   try {
     await saveWeddingBudget(weddingId, budget);
     revalidatePath(`/weddings/${weddingId}`);
-    revalidatePath("/weddings");
+    revalidatePath("/");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
-}
-
-export async function createWeddingAction(): Promise<void> {
-  const id = await createWedding();
-  revalidatePath("/weddings");
-  redirect(`/weddings/${id}`);
-}
-
-export async function deleteWeddingAction(weddingId: string): Promise<void> {
-  await deleteWedding(weddingId);
-  revalidatePath("/weddings");
-  redirect("/weddings");
 }

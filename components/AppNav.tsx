@@ -9,15 +9,23 @@ type Item = { href: string; label: string; emoji: string };
 const ITEMS: Item[] = [
   { href: "/", label: "Home", emoji: "🏠" },
   { href: "/calculator", label: "Calculator", emoji: "📊" },
-  { href: "/weddings", label: "My weddings", emoji: "💍" },
   { href: "/properties", label: "Properties", emoji: "🏨" },
 ];
 
-type User = { email: string; displayName: string } | null;
+type User = { email: string } | null;
 
 export default function AppNav({ user }: { user: User }) {
   const pathname = usePathname() || "/";
+
+  // Hide AppNav entirely on the login route.
+  if (pathname === "/login" || pathname.startsWith("/login/")) return null;
+
   const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const truncatedEmail = user?.email
+    ? user.email.length > 24
+      ? user.email.slice(0, 22) + "…"
+      : user.email
+    : "";
 
   return (
     <aside className="flex flex-col border-b border-stone-200 bg-white/70 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:w-56 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r print:hidden">
@@ -51,8 +59,10 @@ export default function AppNav({ user }: { user: User }) {
         {user ? (
           <div className="space-y-2">
             <div className="px-2">
-              <div className="text-sm font-medium text-stone-800">{user.displayName}</div>
-              <div className="truncate text-xs text-stone-500">{user.email}</div>
+              <div className="text-xs uppercase tracking-wide text-stone-500">Signed in as</div>
+              <div className="mt-0.5 truncate text-sm text-stone-800" title={user.email}>
+                {truncatedEmail}
+              </div>
             </div>
             <form action={signOutAction}>
               <button
@@ -60,19 +70,17 @@ export default function AppNav({ user }: { user: User }) {
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
               >
                 <span aria-hidden>🚪</span>
-                <span>Log out</span>
+                <span>Sign out</span>
               </button>
             </form>
           </div>
         ) : (
           <Link
             href="/login"
-            className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition ${
-              active("/login") ? "bg-ink text-parchment" : "text-stone-700 hover:bg-stone-100"
-            }`}
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
           >
             <span aria-hidden>🔑</span>
-            <span>Log in</span>
+            <span>Sign in</span>
           </Link>
         )}
       </div>

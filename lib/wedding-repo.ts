@@ -8,7 +8,7 @@ import {
   defaultBudget,
 } from "./budget";
 import { createSupabaseServerClient } from "./supabase/server";
-import type { SectionKey } from "./supabase/types";
+import type { SectionKey, WeddingRole, WeddingType } from "./supabase/types";
 
 const SECTION_KEYS: SectionKey[] = [
   "decor", "entertainment", "photography", "attire",
@@ -17,125 +17,89 @@ const SECTION_KEYS: SectionKey[] = [
 
 // --- list / create ---------------------------------------------------------
 
-export type WeddingSummary = {
+export type WeddingListItem = {
   id: string;
-  brideName: string;
-  groomName: string;
-  venue: string;
-  startDate: string | null;
-  endDate: string | null;
-  guests: number;
-  events: number;
+  role: WeddingRole;
+  coupleNames: string;
+  weddingDate: string | null;
+  weddingType: WeddingType;
   updatedAt: string;
 };
 
-export async function listMyWeddings(): Promise<WeddingSummary[]> {
+// All reads are RLS-scoped to owner_id = auth.uid().
+// Collaborator/sharing is a future task.
+export async function listWeddingsForCurrentUser(): Promise<WeddingListItem[]> {
   const sb = createSupabaseServerClient();
   const { data, error } = await sb
     .from("weddings")
-    .select("id, bride_name, groom_name, venue, start_date, end_date, guests, events, updated_at")
+    .select("id, role, couple_names, wedding_date, wedding_type, updated_at")
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []).map((r) => ({
     id: r.id,
-    brideName: r.bride_name,
-    groomName: r.groom_name,
-    venue: r.venue,
-    startDate: r.start_date,
-    endDate: r.end_date,
-    guests: r.guests,
-    events: r.events,
+    role: r.role,
+    coupleNames: r.couple_names,
+    weddingDate: r.wedding_date,
+    weddingType: r.wedding_type,
     updatedAt: r.updated_at,
   }));
 }
 
-export async function createWedding(seed?: Budget): Promise<string> {
+export type CreateWeddingInput = {
+  role: WeddingRole;
+  couple_names: string;
+  wedding_date: string | null;
+  wedding_type: WeddingType;
+};
+
+export async function createWedding(input: CreateWeddingInput): Promise<string> {
   const sb = createSupabaseServerClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error("Not signed in");
 
-  const b = seed ?? defaultBudget();
-
-  const { data: wedding, error: e1 } = await sb
+  const { data: wedding, error } = await sb
     .from("weddings")
     .insert({
       owner_id: user.id,
-      bride_name: b.meta.brideName,
-      groom_name: b.meta.groomName,
-      venue: b.meta.venue,
-      start_date: b.meta.startDate || null,
-      end_date: b.meta.endDate || null,
-      guests: b.meta.guests,
-      events: b.meta.events,
-      rooms_nights: b.rooms.nights,
-      rooms_gst_pct: b.rooms.gstPct,
-      contingency_pct: b.contingencyPct,
+      role: input.role,
+      couple_names: input.couple_names,
+      wedding_date: input.wedding_date,
+      wedding_type: input.wedding_type,
     })
     .select("id")
     .single();
-  if (e1) throw new Error(e1.message);
-
-  await seedChildren(wedding.id, b);
+  if (error) throw new Error(error.message);
   return wedding.id;
 }
 
-async function seedChildren(weddingId: string, b: Budget): Promise<void> {
+export type WeddingRecord = {
+  id: string;
+  role: WeddingRole;
+  coupleNames: string;
+  weddingDate: string | null;
+  weddingType: WeddingType;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function getWeddingById(id: string): Promise<WeddingRecord | null> {
   const sb = createSupabaseServerClient();
-
-  if (b.rooms.categories.length) {
-    const { error } = await sb.from("wedding_rooms").insert(
-      b.rooms.categories.map((c, i) => ({
-        wedding_id: weddingId,
-        label: c.label,
-        count: c.count,
-        rate_per_night: c.ratePerNight,
-        position: i,
-      })),
-    );
-    if (error) throw new Error(error.message);
-  }
-
-  if (b.meals.length) {
-    const { error } = await sb.from("wedding_meals").insert(
-      b.meals.map((m, i) => ({
-        wedding_id: weddingId,
-        label: m.label,
-        pax: m.pax,
-        rate_per_head: m.ratePerHead,
-        tax_pct: m.taxPct,
-        sittings: m.sittings,
-        position: i,
-      })),
-    );
-    if (error) throw new Error(error.message);
-  }
-
-  const lineRows: {
-    wedding_id: string;
-    section: SectionKey;
-    label: string;
-    amount: number;
-    source: "Confirmed" | "Estimate";
-    note: string | null;
-    position: number;
-  }[] = [];
-  for (const key of SECTION_KEYS) {
-    (b[key] as LineItem[]).forEach((it, i) =>
-      lineRows.push({
-        wedding_id: weddingId,
-        section: key,
-        label: it.label,
-        amount: it.amount,
-        source: it.source ?? "Estimate",
-        note: it.note ?? null,
-        position: i,
-      }),
-    );
-  }
-  if (lineRows.length) {
-    const { error } = await sb.from("wedding_lines").insert(lineRows);
-    if (error) throw new Error(error.message);
-  }
+  const { data, error } = await sb
+    .from("weddings")
+    .select("id, role, couple_names, wedding_date, wedding_type, created_at, updated_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return {
+    id: data.id,
+    role: data.role,
+    coupleNames: data.couple_names,
+    weddingDate: data.wedding_date,
+    weddingType: data.wedding_type,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
 }
 
 // --- read ------------------------------------------------------------------

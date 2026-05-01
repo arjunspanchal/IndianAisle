@@ -9,16 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  let user: { email: string; displayName: string } | null = null;
+  let user: { email: string } | null = null;
   if (isSupabaseConfigured()) {
     const sb = createSupabaseServerClient();
     const { data } = await sb.auth.getUser();
     if (data.user) {
-      const meta = data.user.user_metadata as { display_name?: string } | undefined;
-      user = {
-        email: data.user.email ?? "",
-        displayName: meta?.display_name ?? data.user.email?.split("@")[0] ?? "",
-      };
+      user = { email: data.user.email ?? "" };
     }
   }
 

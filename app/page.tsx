@@ -1,104 +1,74 @@
 import Link from "next/link";
-import {
-  defaultBudget,
-  formatDateRange,
-  formatINR,
-  formatINRCompact,
-  grandTotal,
-  sectionTotal,
-  coupleDisplayName,
-} from "@/lib/budget";
-import { getBudget, isAirtableConfigured } from "@/lib/airtable";
+import { listWeddingsForCurrentUser, type WeddingListItem } from "@/lib/wedding-repo";
 
 export const dynamic = "force-dynamic";
 
+const TYPE_LABEL: Record<WeddingListItem["weddingType"], string> = {
+  local: "Local",
+  destination: "Destination",
+};
+
+function formatWeddingDate(iso: string | null): string {
+  if (!iso) return "Date TBD";
+  const d = new Date(iso + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return "Date TBD";
+  return d.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+}
+
 export default async function HomePage() {
-  const configured = isAirtableConfigured();
-  const budget = configured ? await getBudget().catch(() => defaultBudget()) : defaultBudget();
+  const weddings = await listWeddingsForCurrentUser();
 
-  const today = new Date();
-  const start = budget.meta.startDate ? new Date(budget.meta.startDate + "T00:00:00") : null;
-  const daysToGo =
-    start && !Number.isNaN(start.getTime())
-      ? Math.ceil((start.getTime() - today.getTime()) / 86_400_000)
-      : null;
-
-  const total = grandTotal(budget);
-  const tiles: { label: string; value: string }[] = [
-    { label: "Grand total", value: formatINRCompact(total) },
-    { label: "Per guest", value: formatINR(Math.round(total / Math.max(budget.meta.guests, 1))) },
-    { label: "Guests", value: String(budget.meta.guests) },
-    { label: "Events", value: String(budget.meta.events) },
-  ];
-  if (daysToGo !== null) {
-    tiles.unshift({ label: "Days to go", value: daysToGo >= 0 ? String(daysToGo) : `${-daysToGo} ago` });
+  if (weddings.length === 0) {
+    return (
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-2xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6">
+        <p className="text-xs uppercase tracking-[0.3em] text-stone-500">The Indian Aisle</p>
+        <h1 className="mt-3 font-serif text-5xl tracking-tight sm:text-6xl">
+          Welcome to The Indian Aisle
+        </h1>
+        <p className="mt-4 max-w-md text-stone-600">
+          Plan your wedding budget — from venues to vidaai — with a calculator built for Indian weddings.
+        </p>
+        <Link
+          href="/weddings/new"
+          className="btn-primary mt-8 px-6 py-3 text-base"
+        >
+          Create a Wedding
+        </Link>
+      </div>
+    );
   }
 
-  const sections = [
-    ["Rooms", sectionTotal(budget, "rooms")],
-    ["Meals", sectionTotal(budget, "meals")],
-    ["Decor & florals", sectionTotal(budget, "decor")],
-    ["Entertainment & AV", sectionTotal(budget, "entertainment")],
-    ["Photography & video", sectionTotal(budget, "photography")],
-    ["Attire & beauty", sectionTotal(budget, "attire")],
-    ["Travel & logistics", sectionTotal(budget, "travel")],
-    ["Rituals & ceremonies", sectionTotal(budget, "rituals")],
-    ["Invitations & gifting", sectionTotal(budget, "gifting")],
-    ["Miscellaneous", sectionTotal(budget, "misc")],
-    ["Contingency", sectionTotal(budget, "contingency")],
-  ] as [string, number][];
-
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <p className="text-xs uppercase tracking-widest text-stone-500">{coupleDisplayName(budget.meta)}</p>
-        <h1 className="mt-1 font-serif text-4xl tracking-tight sm:text-5xl">{budget.meta.venue}</h1>
-        <p className="mt-2 text-stone-600">
-          {formatDateRange(budget.meta.startDate, budget.meta.endDate)}
-        </p>
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+      <header className="mb-6 flex items-baseline justify-between gap-4">
+        <h1 className="font-serif text-3xl tracking-tight sm:text-4xl">Welcome to The Indian Aisle</h1>
       </header>
 
-      <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {tiles.map((t) => (
-          <div key={t.label} className="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
-            <div className="text-xs uppercase tracking-widest text-stone-500">{t.label}</div>
-            <div className="font-serif text-2xl tabular-nums">{t.value}</div>
-          </div>
-        ))}
-      </section>
-
-      <section className="mb-8 rounded-xl border border-stone-200 bg-white shadow-sm">
-        <header className="border-b border-stone-200 px-5 py-3">
-          <h2 className="font-serif text-2xl">Section breakdown</h2>
-        </header>
-        <ul className="divide-y divide-stone-100">
-          {sections.map(([label, value]) => {
-            const pct = total > 0 ? (value / total) * 100 : 0;
-            return (
-              <li key={label} className="flex items-center gap-4 px-5 py-2">
-                <span className="w-44 text-sm text-stone-700">{label}</span>
-                <div className="relative flex-1 overflow-hidden rounded-full bg-stone-100">
-                  <div className="h-2 bg-gold/70" style={{ width: `${pct}%` }} />
+      <ul className="space-y-3">
+        {weddings.map((w) => {
+          const couple = w.coupleNames.trim() || "Untitled wedding";
+          return (
+            <li
+              key={w.id}
+              className="rounded-xl border border-stone-200 bg-white shadow-sm transition hover:border-stone-300 hover:shadow"
+            >
+              <Link href={`/weddings/${w.id}`} className="block px-5 py-4">
+                <div className="font-serif text-2xl">{couple}</div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-600">
+                  <span>{formatWeddingDate(w.weddingDate)}</span>
+                  <span aria-hidden className="text-stone-300">·</span>
+                  <span>{TYPE_LABEL[w.weddingType]}</span>
                 </div>
-                <span className="w-24 text-right text-xs tabular-nums text-stone-500">{pct.toFixed(1)}%</span>
-                <span className="w-28 text-right text-sm tabular-nums">{formatINR(value)}</span>
-              </li>
-            );
-          })}
-        </ul>
-        <footer className="flex items-baseline justify-between border-t border-stone-200 px-5 py-3">
-          <span className="font-serif text-xl">Grand total</span>
-          <span className="font-serif text-xl tabular-nums">{formatINR(total)}</span>
-        </footer>
-      </section>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
 
-      <div className="flex gap-3">
-        <Link href="/calculator" className="btn-primary">Open calculator</Link>
-        {!configured && (
-          <span className="self-center text-xs text-stone-500">
-            (showing in-code defaults — set AIRTABLE_PAT to read live numbers)
-          </span>
-        )}
+      <div className="mt-8">
+        <Link href="/weddings/new" className="btn-ghost">
+          + Create another wedding
+        </Link>
       </div>
     </div>
   );
