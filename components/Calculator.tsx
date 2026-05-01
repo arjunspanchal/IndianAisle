@@ -17,7 +17,7 @@ import {
   sectionTotal,
   subtotalBeforeContingency,
 } from "@/lib/budget";
-import { saveBudgetAction } from "@/app/actions";
+import { saveWeddingBudgetAction } from "@/app/actions";
 import { exportToExcel, printAsPDF } from "@/lib/export";
 import CalculatorSectionNav, { type SectionNavItem } from "@/components/CalculatorSectionNav";
 import Field from "@/components/ui/Field";
@@ -32,9 +32,10 @@ export type VenueOption = { id: string; name: string };
 
 type Props = {
   initialBudget?: Budget;
-  airtableReady?: boolean;
-  weddingId?: string;
+  // Required for save — the page is always rendered under /weddings/[id].
+  weddingId: string;
   venueOptions?: VenueOption[];
+  venuesError?: string | null;
 };
 
 type LineSectionKey =
@@ -92,8 +93,9 @@ const HEADER_OFFSET_PX = 96;
 
 export default function Calculator({
   initialBudget,
-  airtableReady = false,
+  weddingId,
   venueOptions = [],
+  venuesError = null,
 }: Props) {
   const [budget, setBudget] = useState<Budget>(initialBudget ?? defaultBudget());
   const [saving, setSaving] = useState(false);
@@ -196,14 +198,10 @@ export default function Calculator({
 
   // ---- save ----
   const onSave = async () => {
-    if (!airtableReady) {
-      setSaveMsg("Airtable not configured — set AIRTABLE_PAT to enable save.");
-      return;
-    }
     setSaving(true);
     setSaveMsg(null);
     try {
-      const result = await saveBudgetAction(budget);
+      const result = await saveWeddingBudgetAction(weddingId, budget);
       if (!result.ok) throw new Error(result.error);
       setSaveMsg(`Saved at ${new Date().toLocaleTimeString()}.`);
     } catch (e: unknown) {
@@ -215,7 +213,7 @@ export default function Calculator({
   };
 
   const onReset = () => {
-    if (confirm("Reset to defaults? Unsaved local changes will be lost (Airtable not touched).")) {
+    if (confirm("Reset to defaults? Unsaved local changes will be lost (the saved copy isn't touched).")) {
       setBudget(defaultBudget());
       setSaveMsg(null);
     }
@@ -262,8 +260,7 @@ export default function Calculator({
               <Button
                 variant="primary"
                 onClick={onSave}
-                disabled={saving || !airtableReady}
-                title={!airtableReady ? "Airtable not configured" : undefined}
+                disabled={saving}
               >
                 {saving ? "Saving…" : "Save"}
               </Button>
@@ -284,7 +281,7 @@ export default function Calculator({
             <Button
               variant="primary"
               onClick={onSave}
-              disabled={saving || !airtableReady}
+              disabled={saving}
             >
               {saving ? "Saving…" : "Save"}
             </Button>
@@ -336,6 +333,7 @@ export default function Calculator({
                 <VenueField
                   value={budget.meta.venue}
                   options={venueOptions}
+                  error={venuesError}
                   onChange={(name) => setMeta("venue", name)}
                 />
                 <Field label="Start date">
@@ -725,20 +723,27 @@ function SummaryRow({ label, value }: { label: string; value: number }) {
 function VenueField({
   value,
   options,
+  error,
   onChange,
 }: {
   value: string;
   options: VenueOption[];
+  error?: string | null;
   onChange: (name: string) => void;
 }) {
   const empty = options.length === 0;
   const valueMissing = value !== "" && !options.some((o) => o.name === value);
+  const hasError = Boolean(error);
 
   return (
     <Field
       label="Venue"
       helper={
-        empty ? (
+        hasError ? (
+          <span className="text-rose-700">
+            Couldn&apos;t load Properties: {error}
+          </span>
+        ) : empty ? (
           <>
             No venues yet. Add one in{" "}
             <a href="/properties" className="text-ink underline-offset-2 hover:underline">
@@ -751,11 +756,15 @@ function VenueField({
     >
       <Select
         value={value}
-        disabled={empty}
+        disabled={empty && !hasError}
         onChange={(e) => onChange(e.target.value)}
       >
         <option value="" disabled>
-          {empty ? "No venues yet" : "Select a venue…"}
+          {hasError
+            ? "Couldn't load venues"
+            : empty
+            ? "No venues yet"
+            : "Select a venue…"}
         </option>
         {valueMissing && (
           <option value={value} disabled>

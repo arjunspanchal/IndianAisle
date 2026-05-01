@@ -1,4 +1,5 @@
 import Link from "next/link";
+import InlineChat from "@/components/InlineChat";
 import { listWeddingsForCurrentUser, type WeddingListItem } from "@/lib/wedding-repo";
 
 export const dynamic = "force-dynamic";
@@ -20,20 +21,19 @@ export default async function HomePage() {
 
   if (weddings.length === 0) {
     return (
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-2xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-stone-500">The Indian Aisle</p>
-        <h1 className="mt-3 font-serif text-5xl tracking-tight sm:text-6xl">
-          Welcome to The Indian Aisle
-        </h1>
-        <p className="mt-4 max-w-md text-stone-600">
-          Plan your wedding budget — from venues to vidaai — with a calculator built for Indian weddings.
-        </p>
-        <Link
-          href="/weddings/new"
-          className="btn-primary mt-8 px-6 py-3 text-base"
-        >
-          Create a Wedding
-        </Link>
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-2xl flex-col px-4 py-10 sm:px-6">
+        <div className="text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-stone-500">The Indian Aisle</p>
+          <h1 className="mt-3 font-serif text-4xl tracking-tight sm:text-5xl">
+            Welcome to The Indian Aisle
+          </h1>
+          <p className="mt-3 text-stone-600">
+            Tell the assistant about your wedding to get started.
+          </p>
+        </div>
+        <div className="mt-8 flex-1">
+          <InlineChat className="h-full min-h-[28rem]" />
+        </div>
       </div>
     );
   }
@@ -66,9 +66,16 @@ export default async function HomePage() {
       </ul>
 
       <div className="mt-8">
-        <Link href="/weddings/new" className="btn-ghost">
-          + Create another wedding
-        </Link>
+        <h2 className="font-serif text-xl tracking-tight">Add another or ask anything</h2>
+        <p className="mt-1 text-sm text-stone-600">
+          Tell the assistant who's getting married and I'll set up a new wedding, or ask any planning question.
+        </p>
+        <div className="mt-3">
+          <InlineChat
+            greeting={`What can I help with? Try: "Set up another wedding for Priya & Rohan, local, June 2026."`}
+            placeholder="Ask anything…"
+          />
+        </div>
       </div>
     </div>
   );

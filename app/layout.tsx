@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AppNav from "@/components/AppNav";
+import ChatWidget from "@/components/ChatWidget";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AppNav user={user} />
           <div className="flex-1">{children}</div>
         </div>
+        <ChatWidget />
       </body>
     </html>
   );

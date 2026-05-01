@@ -8,8 +8,9 @@ type Item = { href: string; label: string; emoji: string };
 
 const ITEMS: Item[] = [
   { href: "/", label: "Home", emoji: "🏠" },
-  { href: "/calculator", label: "Calculator", emoji: "📊" },
+  { href: "/weddings", label: "Manage weddings", emoji: "💍" },
   { href: "/properties", label: "Properties", emoji: "🏨" },
+  { href: "/profile", label: "Manage profile", emoji: "👤" },
 ];
 
 type User = { email: string } | null;
@@ -83,12 +84,6 @@ export default function AppNav({ user }: { user: User }) {
             <span>Sign in</span>
           </Link>
         )}
-      </div>
-
-      <div className="px-5 py-4 text-xs text-stone-400">
-        <a href="https://github.com/arjunspanchal/IndianAisle" className="hover:underline" target="_blank" rel="noreferrer">
-          GitHub
-        </a>
       </div>
     </aside>
   );

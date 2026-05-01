@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Calculator, { type VenueOption } from "@/components/Calculator";
 import { getWeddingBudget } from "@/lib/wedding-repo";
-import { isAirtableConfigured } from "@/lib/airtable";
-import { listProperties } from "@/lib/airtable-properties";
+import { listProperties } from "@/lib/properties-repo";
 
 export const dynamic = "force-dynamic";
 
@@ -11,16 +10,15 @@ export default async function WeddingPage({ params }: { params: { id: string } }
   const budget = await getWeddingBudget(params.id);
   if (!budget) notFound();
 
-  const airtableReady = isAirtableConfigured();
-  const venueOptions: VenueOption[] = airtableReady
-    ? (
-        await listProperties().catch((e) => {
-          // Don't break the page — but make the failure visible in logs.
-          console.error("[venue-picker] listProperties failed:", e);
-          return [];
-        })
-      ).map((p) => ({ id: p.id, name: p.name }))
-    : [];
+  let venueOptions: VenueOption[] = [];
+  let venuesError: string | null = null;
+  try {
+    const rows = await listProperties();
+    venueOptions = rows.map((p) => ({ id: p.id, name: p.name }));
+  } catch (e) {
+    console.error("[venue-picker] listProperties failed:", e);
+    venuesError = e instanceof Error ? e.message : String(e);
+  }
 
   return (
     <div>
@@ -38,8 +36,8 @@ export default async function WeddingPage({ params }: { params: { id: string } }
       <Calculator
         initialBudget={budget}
         weddingId={params.id}
-        airtableReady={airtableReady}
         venueOptions={venueOptions}
+        venuesError={venuesError}
       />
     </div>
   );

@@ -5,7 +5,7 @@ import {
   createProperty,
   deleteProperty,
   updateProperty,
-} from "@/lib/airtable-properties";
+} from "@/lib/properties-repo";
 import type { Property } from "@/lib/properties";
 
 type Result<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -21,9 +21,9 @@ export async function saveProperty(p: Property): Promise<Result<Property>> {
   }
 }
 
-export async function removeProperty(airtableId: string): Promise<Result<true>> {
+export async function removeProperty(id: string): Promise<Result<true>> {
   try {
-    await deleteProperty(airtableId);
+    await deleteProperty(id);
     revalidatePath("/properties");
     return { ok: true, data: true };
   } catch (e) {

@@ -18,6 +18,14 @@ export type WeddingType = "local" | "destination";
 export type RsvpStatus = "pending" | "accepted" | "declined" | "maybe";
 export type GuestSide = "" | "bride" | "groom" | "both";
 
+export type PropertyStatus =
+  | "Not contacted"
+  | "Inquired"
+  | "Visited"
+  | "Shortlisted"
+  | "Booked"
+  | "Rejected";
+
 type Empty = { [_ in never]: never };
 
 export type Database = {
@@ -28,6 +36,12 @@ export type Database = {
         Row: { id: string; display_name: string; created_at: string };
         Insert: { id: string; display_name?: string };
         Update: { display_name?: string };
+        Relationships: [];
+      };
+      user_memory: {
+        Row: { id: string; user_id: string; fact: string; created_at: string };
+        Insert: { user_id: string; fact: string };
+        Update: Partial<{ fact: string }>;
         Relationships: [];
       };
       weddings: {
@@ -218,9 +232,124 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      wedding_properties: {
+        Row: {
+          id: string;
+          owner_id: string;
+          name: string;
+          location: string;
+          address: string;
+          website: string;
+          contact_name: string;
+          contact_phone: string;
+          contact_email: string;
+          rooms: number;
+          max_guests: number | null;
+          event_spaces: number | null;
+          tier: 1 | 2 | 3;
+          banquet: boolean;
+          lawn: boolean;
+          poolside: boolean;
+          mandap: boolean;
+          bridal_suite: boolean;
+          air_conditioned: boolean;
+          in_house_catering: boolean;
+          outside_catering_allowed: boolean;
+          outside_decor_allowed: boolean;
+          liquor_license: boolean;
+          avg_room_rate: number | null;
+          banquet_rental: number | null;
+          per_plate_cost: number | null;
+          buyout_cost: number | null;
+          parking_spots: number | null;
+          airport_km: number | null;
+          status: PropertyStatus | null;
+          rating: number;
+          visited: boolean;
+          notes: string;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          name?: string;
+          location?: string;
+          address?: string;
+          website?: string;
+          contact_name?: string;
+          contact_phone?: string;
+          contact_email?: string;
+          rooms?: number;
+          max_guests?: number | null;
+          event_spaces?: number | null;
+          tier?: 1 | 2 | 3;
+          banquet?: boolean;
+          lawn?: boolean;
+          poolside?: boolean;
+          mandap?: boolean;
+          bridal_suite?: boolean;
+          air_conditioned?: boolean;
+          in_house_catering?: boolean;
+          outside_catering_allowed?: boolean;
+          outside_decor_allowed?: boolean;
+          liquor_license?: boolean;
+          avg_room_rate?: number | null;
+          banquet_rental?: number | null;
+          per_plate_cost?: number | null;
+          buyout_cost?: number | null;
+          parking_spots?: number | null;
+          airport_km?: number | null;
+          status?: PropertyStatus | null;
+          rating?: number;
+          visited?: boolean;
+          notes?: string;
+          position?: number;
+        };
+        Update: Partial<{
+          name: string;
+          location: string;
+          address: string;
+          website: string;
+          contact_name: string;
+          contact_phone: string;
+          contact_email: string;
+          rooms: number;
+          max_guests: number | null;
+          event_spaces: number | null;
+          tier: 1 | 2 | 3;
+          banquet: boolean;
+          lawn: boolean;
+          poolside: boolean;
+          mandap: boolean;
+          bridal_suite: boolean;
+          air_conditioned: boolean;
+          in_house_catering: boolean;
+          outside_catering_allowed: boolean;
+          outside_decor_allowed: boolean;
+          liquor_license: boolean;
+          avg_room_rate: number | null;
+          banquet_rental: number | null;
+          per_plate_cost: number | null;
+          buyout_cost: number | null;
+          parking_spots: number | null;
+          airport_km: number | null;
+          status: PropertyStatus | null;
+          rating: number;
+          visited: boolean;
+          notes: string;
+          position: number;
+        }>;
+        Relationships: [];
+      };
     };
     Views: Empty;
-    Functions: Empty;
+    Functions: {
+      delete_account: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
+    };
     Enums: {
       wedding_section: SectionKey;
       wedding_line_source: LineSource;

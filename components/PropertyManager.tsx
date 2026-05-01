@@ -15,13 +15,13 @@ import { removeProperty, saveProperty } from "@/app/properties/actions";
 
 type Props = {
   initial: Property[];
-  airtableReady: boolean;
+  serverReady: boolean;
   loadError: string | null;
 };
 
 type StatusMsg = { kind: "ok" | "err"; text: string } | null;
 
-export default function PropertyManager({ initial, airtableReady, loadError }: Props) {
+export default function PropertyManager({ initial, serverReady, loadError }: Props) {
   const [items, setItems] = useState<Property[]>(initial);
   const [editing, setEditing] = useState<Property | null>(null);
   const [filterTier, setFilterTier] = useState<PropertyTier | "all">("all");
@@ -66,14 +66,14 @@ export default function PropertyManager({ initial, airtableReady, loadError }: P
       setStatus({ kind: "err", text: "Name is required." });
       return;
     }
-    if (!airtableReady) {
+    if (!serverReady) {
       setItems((prev) => {
         const exists = prev.find((x) => x.id === editing.id);
         if (exists) return prev.map((x) => (x.id === editing.id ? editing : x));
         return [...prev, editing];
       });
       setEditing(null);
-      setStatus({ kind: "ok", text: "Saved locally (Airtable not configured)." });
+      setStatus({ kind: "ok", text: "Saved locally (Supabase not configured)." });
       return;
     }
     void (async () => {
@@ -103,10 +103,10 @@ export default function PropertyManager({ initial, airtableReady, loadError }: P
   };
 
   const onDelete = (p: Property) => {
-    if (!confirm(`Delete property “${p.name}”? This affects everyone using the app.`)) return;
-    if (!airtableReady) {
+    if (!confirm(`Delete property “${p.name}”?`)) return;
+    if (!serverReady) {
       setItems((prev) => prev.filter((x) => x.id !== p.id));
-      setStatus({ kind: "ok", text: "Removed locally (Airtable not configured)." });
+      setStatus({ kind: "ok", text: "Removed locally (Supabase not configured)." });
       return;
     }
     if (!p.airtableId) {
@@ -135,7 +135,7 @@ export default function PropertyManager({ initial, airtableReady, loadError }: P
         <div>
           <h1 className="font-serif text-4xl tracking-tight sm:text-5xl">Property manager</h1>
           <p className="mt-1 text-sm text-stone-600">
-            Shared directory of candidate venues — visible to everyone using The Indian Aisle.
+            Your candidate venues — only visible to you.
           </p>
         </div>
         <button className="btn-primary" onClick={startAdd} disabled={pending}>
@@ -145,14 +145,12 @@ export default function PropertyManager({ initial, airtableReady, loadError }: P
 
       {loadError && (
         <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">
-          Couldn&apos;t load from Airtable: {loadError}. Showing in-memory defaults. Make sure
-          a table named <code>Properties</code> exists in your base with the fields documented in
-          <code> lib/airtable-properties.ts</code>.
+          Couldn&apos;t load properties: {loadError}.
         </div>
       )}
-      {!airtableReady && (
+      {!serverReady && (
         <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-          Airtable not configured — changes won&apos;t persist or be visible to other users until <code>AIRTABLE_PAT</code> is set.
+          Supabase not configured — changes won&apos;t persist until <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> are set.
         </div>
       )}
       {status && (
