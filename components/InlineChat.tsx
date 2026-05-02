@@ -18,6 +18,9 @@ type Props = {
   hero?: boolean;
 };
 
+const ACCEPTED_FILE_TYPES = "application/pdf";
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
+
 export default function InlineChat({
   greeting = "Hi! Tell me about your wedding and I'll set it up for you. Try: \"Plan a destination wedding for Kash & Arjun in March 2026.\"",
   placeholder = "Tell me about your wedding…",
@@ -27,6 +30,9 @@ export default function InlineChat({
   const router = useRouter();
   const [input, setInput] = useState("");
   const [pendingNav, setPendingNav] = useState<string | null>(null);
+  const [attached, setAttached] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const { messages, sendMessage, status, error } = useChat({
@@ -56,13 +62,73 @@ export default function InlineChat({
     }
   }, [pendingNav, status, router]);
 
+  const onPickFile = (f: File | null) => {
+    setFileError(null);
+    if (!f) return setAttached(null);
+    if (f.type !== "application/pdf") {
+      setFileError("Only PDF files are supported.");
+      return;
+    }
+    if (f.size > MAX_FILE_BYTES) {
+      setFileError("File is too large (max 20 MB).");
+      return;
+    }
+    setAttached(f);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text || isStreaming) return;
-    sendMessage({ text });
+    if ((!text && !attached) || isStreaming) return;
+    if (attached) {
+      const dt = new DataTransfer();
+      dt.items.add(attached);
+      sendMessage({ text: text || `Attached PDF: ${attached.name}`, files: dt.files });
+    } else {
+      sendMessage({ text });
+    }
     setInput("");
+    setAttached(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const fileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept={ACCEPTED_FILE_TYPES}
+      className="hidden"
+      onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+    />
+  );
+
+  const attachButton = (
+    <button
+      type="button"
+      onClick={() => fileInputRef.current?.click()}
+      disabled={isStreaming}
+      title="Attach a vendor PDF"
+      className="rounded-md p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-40"
+      aria-label="Attach a PDF"
+    >
+      <span aria-hidden>📎</span>
+    </button>
+  );
+
+  const attachmentChip = attached && (
+    <div className="mt-2 inline-flex max-w-full items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-700">
+      <span aria-hidden>📄</span>
+      <span className="truncate">{attached.name}</span>
+      <button
+        type="button"
+        onClick={() => onPickFile(null)}
+        className="text-stone-500 hover:text-rose-700"
+        aria-label="Remove attachment"
+      >
+        ×
+      </button>
+    </div>
+  );
 
   if (hero && messages.length === 0) {
     return (
@@ -70,6 +136,7 @@ export default function InlineChat({
         onSubmit={handleSubmit}
         className={`group rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition focus-within:border-stone-400 focus-within:shadow-md sm:p-5 ${className}`}
       >
+        {fileInput}
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -85,16 +152,27 @@ export default function InlineChat({
           disabled={isStreaming}
           autoFocus
         />
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-xs text-stone-400">Press Enter to send · Shift+Enter for new line</span>
+        {attachmentChip}
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {attachButton}
+            <span className="hidden text-xs text-stone-400 sm:inline">
+              Press Enter to send · attach a vendor PDF to auto-fill
+            </span>
+          </div>
           <button
             type="submit"
-            disabled={isStreaming || !input.trim()}
+            disabled={isStreaming || (!input.trim() && !attached)}
             className="rounded-full bg-ink px-4 py-1.5 text-sm text-parchment transition disabled:opacity-40"
           >
             Send
           </button>
         </div>
+        {fileError && (
+          <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            {fileError}
+          </div>
+        )}
         {error && (
           <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
             Something went wrong. Check that <code>ANTHROPIC_API_KEY</code> is set.
@@ -119,6 +197,10 @@ export default function InlineChat({
           const text = m.parts
             .map((p) => (p.type === "text" ? p.text : ""))
             .join("");
+          const fileParts = m.parts.filter(
+            (p): p is { type: "file"; mediaType: string; filename?: string; url: string } =>
+              p.type === "file",
+          );
           const isUser = m.role === "user";
           return (
             <div
@@ -126,13 +208,24 @@ export default function InlineChat({
               className={`flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${
+                className={`max-w-[85%] space-y-1 whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${
                   isUser
                     ? "bg-ink text-parchment"
                     : "bg-stone-100 text-stone-800"
                 }`}
               >
-                {text || (isStreaming ? "…" : "")}
+                {fileParts.map((fp, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2 text-xs ${
+                      isUser ? "text-parchment/80" : "text-stone-600"
+                    }`}
+                  >
+                    <span aria-hidden>📄</span>
+                    <span className="truncate">{fp.filename ?? "attached.pdf"}</span>
+                  </div>
+                ))}
+                {text || (isStreaming && !isUser ? "…" : "")}
               </div>
             </div>
           );
@@ -147,23 +240,33 @@ export default function InlineChat({
 
       <form
         onSubmit={handleSubmit}
-        className="flex gap-2 border-t border-stone-200 bg-white px-3 py-3 sm:px-4"
+        className="border-t border-stone-200 bg-white px-3 py-3 sm:px-4"
       >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={placeholder}
-          className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-500"
-          disabled={isStreaming}
-          autoFocus
-        />
-        <button
-          type="submit"
-          disabled={isStreaming || !input.trim()}
-          className="rounded-lg bg-ink px-4 py-2 text-sm text-parchment disabled:opacity-40"
-        >
-          Send
-        </button>
+        {fileInput}
+        <div className="flex items-center gap-2">
+          {attachButton}
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-500"
+            disabled={isStreaming}
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={isStreaming || (!input.trim() && !attached)}
+            className="rounded-lg bg-ink px-4 py-2 text-sm text-parchment disabled:opacity-40"
+          >
+            Send
+          </button>
+        </div>
+        {attachmentChip}
+        {fileError && (
+          <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            {fileError}
+          </div>
+        )}
       </form>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   blankProperty,
   FEATURE_FLAGS,
@@ -13,8 +13,19 @@ import {
 import { formatINR } from "@/lib/budget";
 import { removeProperty, saveProperty } from "@/app/properties/actions";
 import PlacesAutocomplete, { type PlacePick } from "@/components/PlacesAutocomplete";
+import { findNearestAirport } from "@/lib/google-maps-client";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+function airportDirectionsUrl(p: Property): string | null {
+  if (!p.nearestAirportName) return null;
+  const origin =
+    p.lat != null && p.lng != null
+      ? `${p.lat},${p.lng}`
+      : p.address || p.name || p.location;
+  if (!origin) return null;
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(p.nearestAirportName + " airport")}&travelmode=driving`;
+}
 
 function mapsUrl(p: Property): string | null {
   if (p.placeId && p.lat != null && p.lng != null) {
@@ -286,8 +297,9 @@ function PropertyCard({
     p.maxGuests ? `${p.maxGuests} guests max` : null,
     p.eventSpaces ? `${p.eventSpaces} event space${p.eventSpaces === 1 ? "" : "s"}` : null,
     p.parkingSpots ? `${p.parkingSpots} parking` : null,
-    p.airportKm ? `${p.airportKm} km from airport` : null,
   ].filter(Boolean) as string[];
+
+  const airportDir = airportDirectionsUrl(p);
 
   return (
     <li className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
@@ -310,6 +322,31 @@ function PropertyCard({
           </div>
           {capacityBits.length > 0 && (
             <div className="mt-1 text-xs text-stone-500">{capacityBits.join(" · ")}</div>
+          )}
+
+          {(p.nearestAirportName || p.airportKm != null) && (
+            <div className="mt-1 text-xs text-stone-500">
+              <span aria-hidden>✈️ </span>
+              {p.nearestAirportName ? (
+                airportDir ? (
+                  <a
+                    href={airportDir}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-stone-700 underline-offset-2 hover:underline"
+                  >
+                    {p.nearestAirportName}
+                  </a>
+                ) : (
+                  <span className="text-stone-700">{p.nearestAirportName}</span>
+                )
+              ) : (
+                <span>Nearest airport</span>
+              )}
+              {p.airportKm != null && (
+                <span> · {p.airportKm} km driving</span>
+              )}
+            </div>
           )}
 
           {features.length > 0 && (
@@ -402,9 +439,19 @@ function PropertyForm({
     onChange({ ...value, [k]: Number.isFinite(n) ? n : undefined } as Property);
   };
 
+  // Track latest form state so the async airport lookup always merges against
+  // current values (the user may keep editing while we wait for Google).
+  const latest = useRef(value);
+  useEffect(() => {
+    latest.current = value;
+  }, [value]);
+
+  const [airportPending, setAirportPending] = useState(false);
+  const [airportError, setAirportError] = useState<string | null>(null);
+
   const applyPick = useCallback(
     (pick: PlacePick) => {
-      onChange({
+      const merged: Property = {
         ...value,
         name: pick.name ?? value.name,
         address: pick.address ?? value.address,
@@ -417,7 +464,30 @@ function PropertyForm({
         lat: pick.lat ?? value.lat,
         lng: pick.lng ?? value.lng,
         placeId: pick.placeId ?? value.placeId,
-      });
+      };
+      onChange(merged);
+      latest.current = merged;
+
+      // Async: find nearest airport via Google Distance Matrix.
+      if (pick.lat == null || pick.lng == null || !GOOGLE_MAPS_API_KEY) return;
+      setAirportPending(true);
+      setAirportError(null);
+      findNearestAirport({ lat: pick.lat, lng: pick.lng }, GOOGLE_MAPS_API_KEY)
+        .then((result) => {
+          if (!result) {
+            setAirportError("No airport candidates found.");
+            return;
+          }
+          onChange({
+            ...latest.current,
+            airportKm: Math.round(result.distanceKm),
+            nearestAirportName: result.airport.name,
+          });
+        })
+        .catch((e: unknown) => {
+          setAirportError(e instanceof Error ? e.message : String(e));
+        })
+        .finally(() => setAirportPending(false));
     },
     [value, onChange],
   );
@@ -624,6 +694,22 @@ function PropertyForm({
             value={value.airportKm ?? ""}
             onChange={(e) => setNum("airportKm", e.target.value)}
           />
+          {airportPending ? (
+            <p className="mt-1 text-xs text-stone-500">
+              Computing nearest airport via Google Maps…
+            </p>
+          ) : value.nearestAirportName ? (
+            <p className="mt-1 text-xs text-stone-500">
+              ✈️ Nearest: <span className="text-stone-700">{value.nearestAirportName}</span>
+              {value.airportKm != null && (
+                <span> · {value.airportKm} km driving</span>
+              )}
+            </p>
+          ) : airportError ? (
+            <p className="mt-1 text-xs text-amber-700">
+              Couldn&rsquo;t auto-detect airport: {airportError}
+            </p>
+          ) : null}
         </Field>
       </FormGroup>
 

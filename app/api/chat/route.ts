@@ -4,7 +4,12 @@ import {
   createUIMessageStreamResponse,
   type UIMessage,
 } from "ai";
-import { createWedding } from "@/lib/wedding-repo";
+import {
+  createWedding,
+  getWeddingBudget,
+  saveWeddingBudget,
+} from "@/lib/wedding-repo";
+import type { Budget, LineItem } from "@/lib/budget";
 import {
   forgetFactsMatching,
   listFactsForCurrentUser,
@@ -14,7 +19,22 @@ import {
   type ProfileCategory,
 } from "@/lib/memory-repo";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { WeddingRole, WeddingType } from "@/lib/supabase/types";
+import type {
+  SectionKey,
+  WeddingRole,
+  WeddingType,
+} from "@/lib/supabase/types";
+
+const SECTION_KEYS: SectionKey[] = [
+  "decor",
+  "entertainment",
+  "photography",
+  "attire",
+  "travel",
+  "rituals",
+  "gifting",
+  "misc",
+];
 
 export const maxDuration = 60;
 
@@ -42,6 +62,21 @@ You have a "create_wedding" tool that creates a real wedding entry the user can 
 3. Never call create_wedding speculatively, on the first turn, or based on inferred intent — only after explicit confirmation.
 4. When the tool returns successfully, tell the user the wedding was created and share the URL it returned (e.g. "Created — open it at /weddings/<id>"). Do not invent IDs.
 5. If the tool returns an error (e.g. user not signed in), surface the message plainly and suggest they sign in at /login.
+
+# Importing a vendor PDF / quote
+
+When the user attaches a PDF (visible as a "document" content block in the latest user message), treat it as a vendor quote or wedding budget breakdown. Flow:
+
+1. **Read the document carefully.** Identify: couple names, venue, dates (start/end), guest count, number of events, room block (count/rate/GST), meal lines (pax/rate/tax/sittings), and line items grouped by section. Map vendor categories to your section keys: decor, entertainment, photography, attire, travel, rituals, gifting, misc.
+2. **Decide the target wedding.**
+   - If the user already has a wedding open / mentioned and you have its id, target that one.
+   - Otherwise, propose creating a new wedding. Ask only for the fields not in the PDF (e.g. role — couple/planner/family_or_friend). Get confirmation, call \`create_wedding\`, capture the returned id.
+3. **Summarize what you extracted in a short, structured recap** — venue, dates, guests, the room block (e.g. "41 rooms × Rs 15,000 × 2 nights, +18% GST"), totals per section, and the grand total. Then ask: "Should I populate this into the calculator?"
+4. **Wait for explicit confirmation** ("yes", "go ahead", "populate it"). Never call \`populate_budget\` without it.
+5. **Call \`populate_budget\`** with the parsed data. Pass only sections you actually extracted — sections you omit stay unchanged. Use pre-tax rates for room \`rate_per_night\` and meal \`rate_per_head\` (the GST/tax_pct fields handle the markup separately). For meal \`sittings\`, count how many times the meal is served (e.g. breakfast on Day 1 + Day 2 = 2 sittings).
+6. **After success**, briefly confirm what was populated and give the URL the tool returned. Do not invent IDs.
+
+If the PDF is unclear, scanned, or unreadable, say so plainly and ask the user to provide the missing details in chat.
 
 # Long-term memory (remember / forget)
 
@@ -150,6 +185,116 @@ const TOOLS: Anthropic.Tool[] = [
       required: ["matching"],
     },
   },
+  {
+    name: "populate_budget",
+    description:
+      "Populate a wedding's budget (rooms, meals, decor, entertainment, photography, attire, travel, rituals, gifting, misc) from extracted vendor-quote data. Each section provided REPLACES the existing entries in that section; sections you omit stay unchanged. Only call AFTER the user has explicitly confirmed the extracted summary.",
+    input_schema: {
+      type: "object",
+      properties: {
+        wedding_id: {
+          type: "string",
+          description:
+            "ID of the wedding to populate. Use the id returned by create_wedding, or one the user explicitly named.",
+        },
+        meta: {
+          type: "object",
+          description: "High-level wedding details extracted from the quote.",
+          properties: {
+            bride_name: { type: "string" },
+            groom_name: { type: "string" },
+            venue: { type: "string" },
+            start_date: {
+              type: "string",
+              description: "ISO yyyy-mm-dd, first event day.",
+            },
+            end_date: {
+              type: "string",
+              description: "ISO yyyy-mm-dd, last event day.",
+            },
+            guests: { type: "integer" },
+            events: { type: "integer", description: "Number of events." },
+          },
+        },
+        rooms: {
+          type: "object",
+          description:
+            "Hotel room block. `nights` is the number of paid nights (e.g. 2 for a 3-day wedding with check-in Day 1, check-out Day 3). `gst_pct` is the room-rate GST as a percent (typically 18 for India). `categories` is the list of room types — pre-tax rates only.",
+          properties: {
+            nights: { type: "integer" },
+            gst_pct: { type: "number" },
+            categories: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  label: { type: "string" },
+                  count: { type: "integer" },
+                  rate_per_night: {
+                    type: "number",
+                    description: "INR per room per night, BEFORE tax.",
+                  },
+                },
+                required: ["label", "count", "rate_per_night"],
+              },
+            },
+          },
+        },
+        meals: {
+          type: "array",
+          description:
+            "Catering line items. Each entry is one meal type (e.g. 'Platinum Breakfast'). `tax_pct` is GST (5 or 18 typically). `sittings` is the number of times this meal is served (e.g. 2 for breakfast on Day 1 and Day 2).",
+          items: {
+            type: "object",
+            properties: {
+              label: { type: "string" },
+              pax: { type: "integer" },
+              rate_per_head: {
+                type: "number",
+                description: "INR per person, BEFORE tax.",
+              },
+              tax_pct: { type: "number" },
+              sittings: { type: "integer" },
+            },
+            required: ["label", "pax", "rate_per_head", "tax_pct", "sittings"],
+          },
+        },
+        lines: {
+          type: "object",
+          description:
+            "Line items grouped by section. Each section is REPLACED wholesale by the items provided. Omit sections you don't want to change. `amount` is in INR. `source` is 'Confirmed' if the quote shows a fixed price, else 'Estimate'.",
+          properties: {
+            decor: { type: "array", items: { $ref: "#/$defs/lineItem" } },
+            entertainment: { type: "array", items: { $ref: "#/$defs/lineItem" } },
+            photography: { type: "array", items: { $ref: "#/$defs/lineItem" } },
+            attire: { type: "array", items: { $ref: "#/$defs/lineItem" } },
+            travel: { type: "array", items: { $ref: "#/$defs/lineItem" } },
+            rituals: { type: "array", items: { $ref: "#/$defs/lineItem" } },
+            gifting: { type: "array", items: { $ref: "#/$defs/lineItem" } },
+            misc: { type: "array", items: { $ref: "#/$defs/lineItem" } },
+          },
+        },
+        contingency_pct: {
+          type: "number",
+          description:
+            "Contingency buffer as a percent of the rest (e.g. 5 for 5%). Only set if the quote explicitly calls one out.",
+        },
+      },
+      required: ["wedding_id"],
+      $defs: {
+        lineItem: {
+          type: "object",
+          properties: {
+            label: { type: "string" },
+            amount: { type: "number" },
+            source: { type: "string", enum: ["Confirmed", "Estimate"] },
+            note: { type: "string" },
+          },
+          required: ["label", "amount"],
+        },
+      },
+    } as Anthropic.Tool["input_schema"],
+  },
 ];
 
 const client = new Anthropic();
@@ -157,16 +302,40 @@ const client = new Anthropic();
 const MAX_ITERATIONS = 5;
 
 function toAnthropicMessages(messages: UIMessage[]): Anthropic.MessageParam[] {
-  return messages
-    .map((m) => ({
-      role: (m.role === "assistant" ? "assistant" : "user") as
-        | "user"
-        | "assistant",
-      content: m.parts
-        .map((p) => (p.type === "text" ? p.text : ""))
-        .join(""),
-    }))
-    .filter((m) => m.content.length > 0);
+  const out: Anthropic.MessageParam[] = [];
+  for (const m of messages) {
+    const role: "user" | "assistant" =
+      m.role === "assistant" ? "assistant" : "user";
+    const blocks: Anthropic.ContentBlockParam[] = [];
+
+    for (const part of m.parts) {
+      if (part.type === "text" && typeof part.text === "string" && part.text) {
+        blocks.push({ type: "text", text: part.text });
+      } else if (
+        role === "user" &&
+        part.type === "file" &&
+        typeof (part as { mediaType?: unknown }).mediaType === "string" &&
+        (part as { mediaType: string }).mediaType === "application/pdf" &&
+        typeof (part as { url?: unknown }).url === "string"
+      ) {
+        const url = (part as { url: string }).url;
+        const base64 = url.includes(",") ? url.split(",", 2)[1] : url;
+        blocks.push({
+          type: "document",
+          source: {
+            type: "base64",
+            media_type: "application/pdf",
+            data: base64,
+          },
+          cache_control: { type: "ephemeral" },
+        });
+      }
+    }
+
+    if (blocks.length === 0) continue;
+    out.push({ role, content: blocks });
+  }
+  return out;
 }
 
 function renderMemorySection(
@@ -272,6 +441,143 @@ async function runForget(input: unknown): Promise<string> {
   return JSON.stringify({ ok: true, removed });
 }
 
+function rid(prefix: string): string {
+  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function asNumber(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function asInt(v: unknown): number | null {
+  const n = asNumber(v);
+  return n === null ? null : Math.round(n);
+}
+
+function asString(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+type PopulateBudgetArgs = {
+  wedding_id?: unknown;
+  meta?: unknown;
+  rooms?: unknown;
+  meals?: unknown;
+  lines?: unknown;
+  contingency_pct?: unknown;
+};
+
+async function runPopulateBudget(input: unknown): Promise<string> {
+  const args = (input ?? {}) as PopulateBudgetArgs;
+  const weddingId = asString(args.wedding_id);
+  if (!weddingId) throw new Error("wedding_id is required");
+
+  const current = await getWeddingBudget(weddingId);
+  if (!current) throw new Error("Wedding not found or not accessible");
+
+  const next: Budget = {
+    ...current,
+    meta: { ...current.meta },
+    rooms: { ...current.rooms, categories: [...current.rooms.categories] },
+    meals: [...current.meals],
+  };
+  for (const s of SECTION_KEYS) next[s] = [...current[s]];
+
+  if (args.meta && typeof args.meta === "object") {
+    const m = args.meta as Record<string, unknown>;
+    const bn = asString(m.bride_name);
+    const gn = asString(m.groom_name);
+    const v = asString(m.venue);
+    const sd = asString(m.start_date);
+    const ed = asString(m.end_date);
+    const guests = asInt(m.guests);
+    const events = asInt(m.events);
+    if (bn) next.meta.brideName = bn;
+    if (gn) next.meta.groomName = gn;
+    if (v) next.meta.venue = v;
+    if (sd && /^\d{4}-\d{2}-\d{2}$/.test(sd)) next.meta.startDate = sd;
+    if (ed && /^\d{4}-\d{2}-\d{2}$/.test(ed)) next.meta.endDate = ed;
+    if (guests !== null) next.meta.guests = guests;
+    if (events !== null) next.meta.events = events;
+  }
+
+  if (args.rooms && typeof args.rooms === "object") {
+    const r = args.rooms as Record<string, unknown>;
+    const nights = asInt(r.nights);
+    const gst = asNumber(r.gst_pct);
+    if (nights !== null) next.rooms.nights = nights;
+    if (gst !== null) next.rooms.gstPct = gst;
+    if (Array.isArray(r.categories)) {
+      next.rooms.categories = r.categories.map((c, i) => {
+        const o = (c ?? {}) as Record<string, unknown>;
+        return {
+          id: rid(`room${i}`),
+          label: asString(o.label) ?? `Category ${i + 1}`,
+          count: asInt(o.count) ?? 0,
+          ratePerNight: asNumber(o.rate_per_night) ?? 0,
+        };
+      });
+    }
+  }
+
+  if (Array.isArray(args.meals)) {
+    next.meals = args.meals.map((m, i) => {
+      const o = (m ?? {}) as Record<string, unknown>;
+      return {
+        id: rid(`meal${i}`),
+        label: asString(o.label) ?? `Meal ${i + 1}`,
+        pax: asInt(o.pax) ?? 0,
+        ratePerHead: asNumber(o.rate_per_head) ?? 0,
+        taxPct: asNumber(o.tax_pct) ?? 0,
+        sittings: asInt(o.sittings) ?? 1,
+      };
+    });
+  }
+
+  if (args.lines && typeof args.lines === "object") {
+    const linesObj = args.lines as Record<string, unknown>;
+    for (const section of SECTION_KEYS) {
+      const provided = linesObj[section];
+      if (Array.isArray(provided)) {
+        next[section] = provided.map((l, i): LineItem => {
+          const o = (l ?? {}) as Record<string, unknown>;
+          return {
+            id: rid(`${section}${i}`),
+            label: asString(o.label) ?? `Item ${i + 1}`,
+            amount: asNumber(o.amount) ?? 0,
+            source: o.source === "Estimate" ? "Estimate" : "Confirmed",
+            note: asString(o.note) ?? undefined,
+          };
+        });
+      }
+    }
+  }
+
+  const cp = asNumber(args.contingency_pct);
+  if (cp !== null) next.contingencyPct = cp;
+
+  await saveWeddingBudget(weddingId, next);
+
+  const lineCounts: Record<string, number> = {};
+  for (const s of SECTION_KEYS) lineCounts[s] = next[s].length;
+
+  return JSON.stringify({
+    ok: true,
+    wedding_id: weddingId,
+    url: `/weddings/${weddingId}`,
+    summary: {
+      meta: next.meta,
+      rooms: {
+        nights: next.rooms.nights,
+        gst_pct: next.rooms.gstPct,
+        categories: next.rooms.categories.length,
+      },
+      meals: next.meals.length,
+      line_items_by_section: lineCounts,
+    },
+  });
+}
+
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
   const conversation: Anthropic.MessageParam[] = toAnthropicMessages(messages);
@@ -293,7 +599,7 @@ export async function POST(req: Request) {
 
         const anthropicStream = client.messages.stream({
           model: "claude-haiku-4-5",
-          max_tokens: 4096,
+          max_tokens: 8192,
           system: [
             {
               type: "text",
@@ -349,6 +655,14 @@ export async function POST(req: Request) {
               result = await runRemember(block.input);
             } else if (block.name === "forget") {
               result = await runForget(block.input);
+            } else if (block.name === "populate_budget") {
+              result = await runPopulateBudget(block.input);
+              const parsed = JSON.parse(result) as { wedding_id: string; url: string };
+              writer.write({
+                type: "data-wedding-created",
+                data: { id: parsed.wedding_id, url: parsed.url },
+                transient: true,
+              });
             } else {
               toolResults.push({
                 type: "tool_result",

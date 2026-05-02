@@ -70,6 +70,7 @@ create table if not exists public.weddings (
   couple_names text not null,
   wedding_date date,
   wedding_type text not null check (wedding_type in ('local','destination')),
+  tradition text check (tradition in ('hindu_indian','muslim_indian','catholic')),
   bride_name text not null default '',
   groom_name text not null default '',
   venue text not null default '',
@@ -83,6 +84,11 @@ create table if not exists public.weddings (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- For pre-existing schemas where weddings was created before tradition.
+alter table public.weddings
+  add column if not exists tradition text
+    check (tradition in ('hindu_indian','muslim_indian','catholic'));
 create index if not exists weddings_owner_id_idx on public.weddings (owner_id);
 
 drop trigger if exists weddings_set_updated_at on public.weddings;
@@ -165,6 +171,29 @@ create policy wedding_lines_owner_all on public.wedding_lines
   for all
   using (exists (select 1 from public.weddings w where w.id = wedding_lines.wedding_id and w.owner_id = (select auth.uid())))
   with check (exists (select 1 from public.weddings w where w.id = wedding_lines.wedding_id and w.owner_id = (select auth.uid())));
+
+-- ============================================================================
+-- wedding_events  (per-wedding function list, each mapped to a venue space)
+-- ============================================================================
+create table if not exists public.wedding_events (
+  id uuid primary key default gen_random_uuid(),
+  wedding_id uuid not null references public.weddings(id) on delete cascade,
+  name text not null default '',
+  -- Free-form so users can add custom spaces if needed; common values match
+  -- the property facility flags: banquet, lawn, poolside, mandap, bridal_suite, other.
+  space text not null default '',
+  event_date date,
+  position integer not null default 0
+);
+create index if not exists wedding_events_wedding_id_idx on public.wedding_events (wedding_id);
+
+alter table public.wedding_events enable row level security;
+
+drop policy if exists wedding_events_owner_all on public.wedding_events;
+create policy wedding_events_owner_all on public.wedding_events
+  for all
+  using (exists (select 1 from public.weddings w where w.id = wedding_events.wedding_id and w.owner_id = (select auth.uid())))
+  with check (exists (select 1 from public.weddings w where w.id = wedding_events.wedding_id and w.owner_id = (select auth.uid())));
 
 -- ============================================================================
 -- wedding_guests

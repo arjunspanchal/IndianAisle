@@ -28,6 +28,60 @@ export type MealConfig = {
   sittings: number; // e.g. 2 = breakfast on day 1 + day 2
 };
 
+export type WeddingTradition = "hindu_indian" | "muslim_indian" | "catholic";
+
+export const TRADITION_LABEL: Record<WeddingTradition, string> = {
+  hindu_indian: "India — Hindu",
+  muslim_indian: "India — Muslim",
+  catholic: "Catholic",
+};
+
+// Common venue spaces (the property's boolean facility flags map onto these).
+export const EVENT_SPACES = [
+  { key: "banquet", label: "Banquet hall" },
+  { key: "lawn", label: "Lawn" },
+  { key: "poolside", label: "Poolside" },
+  { key: "mandap", label: "Mandap" },
+  { key: "bridal_suite", label: "Bridal suite" },
+  { key: "other", label: "Other" },
+] as const;
+export type EventSpaceKey = (typeof EVENT_SPACES)[number]["key"];
+
+export type WeddingEvent = {
+  id: string;
+  airtableId?: string; // Supabase row id once persisted
+  name: string;
+  space: string; // free-form, but typically one of EVENT_SPACES.key
+  date?: string; // ISO yyyy-mm-dd
+};
+
+export const TRADITION_DEFAULT_EVENTS: Record<WeddingTradition, { name: string; space: string }[]> = {
+  hindu_indian: [
+    { name: "Mehendi", space: "lawn" },
+    { name: "Haldi", space: "poolside" },
+    { name: "Sangeet", space: "banquet" },
+    { name: "Shaadi", space: "mandap" },
+  ],
+  muslim_indian: [
+    { name: "Mehendi", space: "lawn" },
+    { name: "Sangeet", space: "banquet" },
+    { name: "Nikah", space: "banquet" },
+    { name: "Walima", space: "banquet" },
+  ],
+  catholic: [
+    { name: "Rehearsal dinner", space: "banquet" },
+    { name: "Ceremony", space: "lawn" },
+    { name: "Reception", space: "banquet" },
+  ],
+};
+
+export const buildDefaultEvents = (t: WeddingTradition): WeddingEvent[] =>
+  TRADITION_DEFAULT_EVENTS[t].map((e, i) => ({
+    id: `evt-${t}-${i}-${Date.now()}`,
+    name: e.name,
+    space: e.space,
+  }));
+
 export type Budget = {
   meta: {
     brideName: string;
@@ -37,6 +91,7 @@ export type Budget = {
     endDate: string;   // ISO yyyy-mm-dd
     guests: number;
     events: number;
+    tradition?: WeddingTradition | null;
   };
   rooms: {
     nights: number;
@@ -44,6 +99,7 @@ export type Budget = {
     categories: RoomCategory[];
   };
   meals: MealConfig[];
+  events: WeddingEvent[];
   decor: LineItem[];
   entertainment: LineItem[];
   photography: LineItem[];
@@ -63,8 +119,10 @@ export const defaultBudget = (): Budget => ({
     startDate: "2026-12-06",
     endDate: "2026-12-08",
     guests: 91,
-    events: 5,
+    events: 4,
+    tradition: "hindu_indian",
   },
+  events: buildDefaultEvents("hindu_indian"),
   rooms: {
     nights: 2,
     gstPct: 18,

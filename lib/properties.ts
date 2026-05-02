@@ -70,6 +70,11 @@ export type Property = {
   lng?: number;
   placeId?: string;
 
+  // Nearest airport (auto-derived from Google Distance Matrix on Place pick).
+  // `airportKm` (above) holds the driving distance.
+  nearestAirportName?: string;
+  nearestAirportPlaceId?: string;
+
   // Free-form
   notes?: string;
 };

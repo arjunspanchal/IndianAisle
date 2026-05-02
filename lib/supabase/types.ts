@@ -14,6 +14,7 @@ export type LineSource = "Confirmed" | "Estimate";
 
 export type WeddingRole = "couple" | "planner" | "family_or_friend";
 export type WeddingType = "local" | "destination";
+export type WeddingTradition = "hindu_indian" | "muslim_indian" | "catholic";
 
 export type RsvpStatus = "pending" | "accepted" | "declined" | "maybe";
 export type GuestSide = "" | "bride" | "groom" | "both";
@@ -26,6 +27,24 @@ export type PropertyStatus =
   | "Booked"
   | "Rejected";
 
+export type VendorCategory =
+  | "meals"
+  | "decor"
+  | "entertainment"
+  | "photography"
+  | "attire"
+  | "travel"
+  | "rituals"
+  | "gifting"
+  | "misc";
+
+export type VendorStatus =
+  | "Not contacted"
+  | "Inquired"
+  | "Quoted"
+  | "Booked"
+  | "Rejected";
+
 type Empty = { [_ in never]: never };
 
 export type Database = {
@@ -33,9 +52,24 @@ export type Database = {
   public: {
     Tables: {
       wedding_profiles: {
-        Row: { id: string; display_name: string; created_at: string };
-        Insert: { id: string; display_name?: string };
-        Update: { display_name?: string };
+        Row: {
+          id: string;
+          display_name: string;
+          role: WeddingRole;
+          company_name: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          display_name?: string;
+          role?: WeddingRole;
+          company_name?: string;
+        };
+        Update: {
+          display_name?: string;
+          role?: WeddingRole;
+          company_name?: string;
+        };
         Relationships: [];
       };
       user_memory: {
@@ -58,6 +92,7 @@ export type Database = {
           couple_names: string;
           wedding_date: string | null;
           wedding_type: WeddingType;
+          tradition: WeddingTradition | null;
           bride_name: string;
           groom_name: string;
           venue: string;
@@ -77,6 +112,7 @@ export type Database = {
           couple_names: string;
           wedding_date?: string | null;
           wedding_type: WeddingType;
+          tradition?: WeddingTradition | null;
           bride_name?: string;
           groom_name?: string;
           venue?: string;
@@ -93,6 +129,7 @@ export type Database = {
           couple_names: string;
           wedding_date: string | null;
           wedding_type: WeddingType;
+          tradition: WeddingTradition | null;
           bride_name: string;
           groom_name: string;
           venue: string;
@@ -103,6 +140,30 @@ export type Database = {
           rooms_nights: number;
           rooms_gst_pct: number;
           contingency_pct: number;
+        }>;
+        Relationships: [];
+      };
+      wedding_events: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          name: string;
+          space: string;
+          event_date: string | null;
+          position: number;
+        };
+        Insert: {
+          wedding_id: string;
+          name?: string;
+          space?: string;
+          event_date?: string | null;
+          position?: number;
+        };
+        Update: Partial<{
+          name: string;
+          space: string;
+          event_date: string | null;
+          position: number;
         }>;
         Relationships: [];
       };
@@ -277,6 +338,8 @@ export type Database = {
           lat: number | null;
           lng: number | null;
           place_id: string | null;
+          nearest_airport_name: string | null;
+          nearest_airport_place_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -317,6 +380,8 @@ export type Database = {
           lat?: number | null;
           lng?: number | null;
           place_id?: string | null;
+          nearest_airport_name?: string | null;
+          nearest_airport_place_id?: string | null;
         };
         Update: Partial<{
           name: string;
@@ -354,6 +419,52 @@ export type Database = {
           lat: number | null;
           lng: number | null;
           place_id: string | null;
+          nearest_airport_name: string | null;
+          nearest_airport_place_id: string | null;
+        }>;
+        Relationships: [];
+      };
+      wedding_vendors: {
+        Row: {
+          id: string;
+          owner_id: string;
+          name: string;
+          category: VendorCategory;
+          quote_amount: number;
+          contact_name: string;
+          contact_phone: string;
+          contact_email: string;
+          website: string;
+          status: VendorStatus | null;
+          rating: number;
+          notes: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          name: string;
+          category: VendorCategory;
+          quote_amount?: number;
+          contact_name?: string;
+          contact_phone?: string;
+          contact_email?: string;
+          website?: string;
+          status?: VendorStatus | null;
+          rating?: number;
+          notes?: string;
+        };
+        Update: Partial<{
+          name: string;
+          category: VendorCategory;
+          quote_amount: number;
+          contact_name: string;
+          contact_phone: string;
+          contact_email: string;
+          website: string;
+          status: VendorStatus | null;
+          rating: number;
+          notes: string;
         }>;
         Relationships: [];
       };

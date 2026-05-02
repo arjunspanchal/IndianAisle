@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { loadGoogleMaps } from "@/lib/google-maps-client";
 
 export type PlacePick = {
   name?: string;
@@ -20,31 +21,6 @@ type Props = {
   country?: string; // ISO 3166-1 alpha-2; default "in"
 };
 
-type GoogleNS = {
-  maps: {
-    places: {
-      Autocomplete: new (
-        input: HTMLInputElement,
-        opts: AutocompleteOptions,
-      ) => AutocompleteInstance;
-    };
-    event: {
-      clearInstanceListeners: (instance: unknown) => void;
-    };
-  };
-};
-
-type AutocompleteOptions = {
-  fields: string[];
-  types?: string[];
-  componentRestrictions?: { country: string | string[] };
-};
-
-type AutocompleteInstance = {
-  addListener: (event: string, cb: () => void) => void;
-  getPlace: () => GooglePlace;
-};
-
 type GooglePlace = {
   name?: string;
   formatted_address?: string;
@@ -54,41 +30,6 @@ type GooglePlace = {
   address_components?: Array<{ long_name: string; short_name: string; types: string[] }>;
   geometry?: { location?: { lat: () => number; lng: () => number } };
 };
-
-declare global {
-  interface Window {
-    __gmaps_loader__?: Promise<GoogleNS>;
-    google?: GoogleNS;
-  }
-}
-
-function loadGoogleMaps(apiKey: string): Promise<GoogleNS> {
-  if (typeof window === "undefined") {
-    return Promise.reject(new Error("not in browser"));
-  }
-  if (window.google?.maps?.places) return Promise.resolve(window.google);
-  if (window.__gmaps_loader__) return window.__gmaps_loader__;
-
-  const promise = new Promise<GoogleNS>((resolve, reject) => {
-    const script = document.createElement("script");
-    const params = new URLSearchParams({
-      key: apiKey,
-      libraries: "places",
-      v: "weekly",
-    });
-    script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (window.google?.maps?.places) resolve(window.google);
-      else reject(new Error("Google Maps loaded but Places library missing"));
-    };
-    script.onerror = () => reject(new Error("Failed to load Google Maps script"));
-    document.head.appendChild(script);
-  });
-  window.__gmaps_loader__ = promise;
-  return promise;
-}
 
 function pickCity(p: GooglePlace): string | undefined {
   const comps = p.address_components ?? [];
@@ -106,7 +47,7 @@ export default function PlacesAutocomplete({
   country = "in",
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const acRef = useRef<AutocompleteInstance | null>(null);
+  const acRef = useRef<{ addListener: (e: string, cb: () => void) => void } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const id = useId();
@@ -131,7 +72,7 @@ export default function PlacesAutocomplete({
           componentRestrictions: { country },
         });
         ac.addListener("place_changed", () => {
-          const p = ac.getPlace();
+          const p = ac.getPlace() as GooglePlace;
           const lat = p.geometry?.location?.lat();
           const lng = p.geometry?.location?.lng();
           onSelect({

@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import Calculator, { type VenueOption } from "@/components/Calculator";
 import { getWeddingBudget } from "@/lib/wedding-repo";
 import { listProperties } from "@/lib/properties-repo";
+import { listVendorOptions } from "@/lib/vendors-repo";
+import { getPlannerHeaderForCurrentUser } from "@/lib/profile-repo";
+import type { VendorOption } from "@/lib/vendors";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +17,33 @@ export default async function WeddingPage({ params }: { params: { id: string } }
   let venuesError: string | null = null;
   try {
     const rows = await listProperties();
-    venueOptions = rows.map((p) => ({ id: p.id, name: p.name }));
+    venueOptions = rows.map((p) => ({
+      id: p.id,
+      name: p.name,
+      rooms: p.rooms,
+      avgRoomRate: p.avgRoomRate,
+      perPlateCost: p.perPlateCost,
+      spaces: {
+        banquet: p.banquet,
+        lawn: p.lawn,
+        poolside: p.poolside,
+        mandap: p.mandap,
+        bridal_suite: p.bridalSuite,
+      },
+    }));
   } catch (e) {
     console.error("[venue-picker] listProperties failed:", e);
     venuesError = e instanceof Error ? e.message : String(e);
   }
+
+  let vendorOptions: VendorOption[] = [];
+  try {
+    vendorOptions = await listVendorOptions();
+  } catch (e) {
+    console.error("[vendor-picker] listVendorOptions failed:", e);
+  }
+
+  const plannerHeader = await getPlannerHeaderForCurrentUser().catch(() => "");
 
   return (
     <div>
@@ -38,6 +63,8 @@ export default async function WeddingPage({ params }: { params: { id: string } }
         weddingId={params.id}
         venueOptions={venueOptions}
         venuesError={venuesError}
+        vendorOptions={vendorOptions}
+        plannerHeader={plannerHeader}
       />
     </div>
   );

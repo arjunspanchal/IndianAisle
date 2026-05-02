@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { listFactsForCurrentUser } from "@/lib/memory-repo";
+import { getProfileForCurrentUser } from "@/lib/profile-repo";
 import { signOutAction } from "@/app/login/actions";
 import DeleteAccountForm from "./DeleteAccountForm";
+import RoleForm from "./RoleForm";
 import { forgetFactAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +24,10 @@ export default async function ProfilePage() {
   if (error || !data.user) redirect("/login?next=/profile");
 
   const { email, created_at } = data.user;
-  const facts = await listFactsForCurrentUser();
+  const [facts, profile] = await Promise.all([
+    listFactsForCurrentUser(),
+    getProfileForCurrentUser(),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
@@ -53,6 +58,15 @@ export default async function ProfilePage() {
             <button type="submit" className="btn-ghost">Sign out</button>
           </form>
         </div>
+      </section>
+
+      <section className="mb-8 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+        <h2 className="font-serif text-2xl">Your role</h2>
+        <p className="mt-1 text-sm text-stone-600">
+          Tell us how you&rsquo;re involved. Wedding planners can add their company name, which
+          appears as a header at the top of every PDF and Excel export.
+        </p>
+        <RoleForm initialRole={profile.role} initialCompanyName={profile.companyName} />
       </section>
 
       <section className="mb-8 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">

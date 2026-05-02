@@ -62,6 +62,8 @@ function fromRow(r: PropertyRow): Property {
     lat: r.lat ?? undefined,
     lng: r.lng ?? undefined,
     placeId: r.place_id ?? undefined,
+    nearestAirportName: r.nearest_airport_name ?? undefined,
+    nearestAirportPlaceId: r.nearest_airport_place_id ?? undefined,
     notes: r.notes,
   };
 }
@@ -101,6 +103,8 @@ function toRowFields(p: Property): Omit<PropertyInsert, "owner_id"> {
     lat: p.lat ?? null,
     lng: p.lng ?? null,
     place_id: p.placeId ?? null,
+    nearest_airport_name: p.nearestAirportName ?? null,
+    nearest_airport_place_id: p.nearestAirportPlaceId ?? null,
     notes: p.notes ?? "",
   };
 }

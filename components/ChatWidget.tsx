@@ -5,12 +5,17 @@ import { DefaultChatTransport } from "ai";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
+
 export default function ChatWidget() {
   const pathname = usePathname() || "/";
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [pendingNav, setPendingNav] = useState<string | null>(null);
+  const [attached, setAttached] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const { messages, sendMessage, status, error } = useChat({
@@ -40,12 +45,34 @@ export default function ChatWidget() {
     }
   }, [pendingNav, status, router]);
 
+  const onPickFile = (f: File | null) => {
+    setFileError(null);
+    if (!f) return setAttached(null);
+    if (f.type !== "application/pdf") {
+      setFileError("Only PDF files are supported.");
+      return;
+    }
+    if (f.size > MAX_FILE_BYTES) {
+      setFileError("File is too large (max 20 MB).");
+      return;
+    }
+    setAttached(f);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text || isStreaming) return;
-    sendMessage({ text });
+    if ((!text && !attached) || isStreaming) return;
+    if (attached) {
+      const dt = new DataTransfer();
+      dt.items.add(attached);
+      sendMessage({ text: text || `Attached PDF: ${attached.name}`, files: dt.files });
+    } else {
+      sendMessage({ text });
+    }
     setInput("");
+    setAttached(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   if (pathname === "/login" || pathname.startsWith("/login/")) return null;
@@ -111,22 +138,60 @@ export default function ChatWidget() {
 
           <form
             onSubmit={handleSubmit}
-            className="flex gap-2 border-t border-stone-200 bg-white px-3 py-3"
+            className="border-t border-stone-200 bg-white px-3 py-3"
           >
             <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything…"
-              className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-500"
-              disabled={isStreaming}
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
             />
-            <button
-              type="submit"
-              disabled={isStreaming || !input.trim()}
-              className="rounded-lg bg-ink px-3 py-2 text-sm text-parchment disabled:opacity-40"
-            >
-              Send
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isStreaming}
+                title="Attach a vendor PDF"
+                className="rounded-md p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-40"
+                aria-label="Attach a PDF"
+              >
+                <span aria-hidden>📎</span>
+              </button>
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask anything…"
+                className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-500"
+                disabled={isStreaming}
+              />
+              <button
+                type="submit"
+                disabled={isStreaming || (!input.trim() && !attached)}
+                className="rounded-lg bg-ink px-3 py-2 text-sm text-parchment disabled:opacity-40"
+              >
+                Send
+              </button>
+            </div>
+            {attached && (
+              <div className="mt-2 inline-flex max-w-full items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-700">
+                <span aria-hidden>📄</span>
+                <span className="truncate">{attached.name}</span>
+                <button
+                  type="button"
+                  onClick={() => onPickFile(null)}
+                  className="text-stone-500 hover:text-rose-700"
+                  aria-label="Remove attachment"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+            {fileError && (
+              <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                {fileError}
+              </div>
+            )}
           </form>
         </div>
       )}

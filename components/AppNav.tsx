@@ -10,6 +10,7 @@ const ITEMS: Item[] = [
   { href: "/", label: "Home", emoji: "🏠" },
   { href: "/weddings", label: "Manage weddings", emoji: "💍" },
   { href: "/properties", label: "Properties", emoji: "🏨" },
+  { href: "/vendors", label: "Vendors", emoji: "🤝" },
   { href: "/profile", label: "Manage profile", emoji: "👤" },
 ];
 
