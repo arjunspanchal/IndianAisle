@@ -54,9 +54,12 @@ function toRowFields(v: Vendor): Omit<VendorInsert, "owner_id"> {
 
 export async function listVendors(): Promise<Vendor[]> {
   const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return [];
   const { data, error } = await sb
     .from("wedding_vendors")
     .select("*")
+    .eq("owner_id", user.id)
     .order("category", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
@@ -65,9 +68,40 @@ export async function listVendors(): Promise<Vendor[]> {
 
 export async function listVendorOptions(): Promise<VendorOption[]> {
   const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return [];
   const { data, error } = await sb
     .from("wedding_vendors")
     .select("id, name, category, quote_amount, rate_type")
+    .eq("owner_id", user.id)
+    .order("category", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    category: r.category as VendorCategory,
+    quoteAmount: Number(r.quote_amount),
+    rateType: r.rate_type,
+  }));
+}
+
+// Vendor options for a specific wedding's pickers. Returns the wedding
+// owner's catalog — visible to the owner directly and to collaborators via
+// the collaborator-select RLS policy on wedding_vendors.
+export async function listVendorOptionsForWedding(weddingId: string): Promise<VendorOption[]> {
+  const sb = createSupabaseServerClient();
+  const { data: w, error: wErr } = await sb
+    .from("weddings")
+    .select("owner_id")
+    .eq("id", weddingId)
+    .maybeSingle();
+  if (wErr) throw new Error(wErr.message);
+  if (!w) return [];
+  const { data, error } = await sb
+    .from("wedding_vendors")
+    .select("id, name, category, quote_amount, rate_type")
+    .eq("owner_id", w.owner_id)
     .order("category", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);

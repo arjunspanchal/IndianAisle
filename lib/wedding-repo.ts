@@ -21,6 +21,7 @@ const SECTION_KEYS: SectionKey[] = [
 export type WeddingListItem = {
   id: string;
   role: WeddingRole;
+  name: string;
   coupleNames: string;
   weddingDate: string | null;
   weddingType: WeddingType;
@@ -28,18 +29,46 @@ export type WeddingListItem = {
   isShared: boolean; // true when current user is a collaborator, not the owner
 };
 
+export type WeddingDashboardItem = WeddingListItem & {
+  guestCount: number;
+  eventCount: number;
+};
+
+// Per-wedding aggregates for the planner dashboard. One round-trip per wedding
+// per stat (count: 'exact', head: true is cheap — no rows returned).
+export async function listWeddingsWithStats(): Promise<WeddingDashboardItem[]> {
+  const sb = createSupabaseServerClient();
+  const list = await listWeddingsForCurrentUser();
+  if (list.length === 0) return [];
+  const enriched = await Promise.all(
+    list.map(async (w) => {
+      const [guestsRes, eventsRes] = await Promise.all([
+        sb.from("wedding_guests").select("*", { count: "exact", head: true }).eq("wedding_id", w.id),
+        sb.from("wedding_events").select("*", { count: "exact", head: true }).eq("wedding_id", w.id),
+      ]);
+      return {
+        ...w,
+        guestCount: guestsRes.count ?? 0,
+        eventCount: eventsRes.count ?? 0,
+      };
+    }),
+  );
+  return enriched;
+}
+
 // RLS now returns weddings owned by the user OR ones they collaborate on.
 export async function listWeddingsForCurrentUser(): Promise<WeddingListItem[]> {
   const sb = createSupabaseServerClient();
   const { data: { user } } = await sb.auth.getUser();
   const { data, error } = await sb
     .from("weddings")
-    .select("id, role, couple_names, wedding_date, wedding_type, updated_at, owner_id")
+    .select("id, role, name, couple_names, wedding_date, wedding_type, updated_at, owner_id")
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []).map((r) => ({
     id: r.id,
     role: r.role,
+    name: r.name ?? "",
     coupleNames: r.couple_names,
     weddingDate: r.wedding_date,
     weddingType: r.wedding_type,
@@ -50,6 +79,7 @@ export async function listWeddingsForCurrentUser(): Promise<WeddingListItem[]> {
 
 export type CreateWeddingInput = {
   role: WeddingRole;
+  name: string;
   couple_names: string;
   wedding_date: string | null;
   wedding_type: WeddingType;
@@ -65,6 +95,7 @@ export async function createWedding(input: CreateWeddingInput): Promise<string> 
     .insert({
       owner_id: user.id,
       role: input.role,
+      name: input.name,
       couple_names: input.couple_names,
       wedding_date: input.wedding_date,
       wedding_type: input.wedding_type,
@@ -75,9 +106,19 @@ export async function createWedding(input: CreateWeddingInput): Promise<string> 
   return wedding.id;
 }
 
+export async function updateWeddingName(weddingId: string, name: string): Promise<void> {
+  const sb = createSupabaseServerClient();
+  const { error } = await sb
+    .from("weddings")
+    .update({ name })
+    .eq("id", weddingId);
+  if (error) throw new Error(error.message);
+}
+
 export type WeddingRecord = {
   id: string;
   role: WeddingRole;
+  name: string;
   coupleNames: string;
   weddingDate: string | null;
   weddingType: WeddingType;
@@ -89,7 +130,7 @@ export async function getWeddingById(id: string): Promise<WeddingRecord | null> 
   const sb = createSupabaseServerClient();
   const { data, error } = await sb
     .from("weddings")
-    .select("id, role, couple_names, wedding_date, wedding_type, created_at, updated_at")
+    .select("id, role, name, couple_names, wedding_date, wedding_type, created_at, updated_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -97,6 +138,7 @@ export async function getWeddingById(id: string): Promise<WeddingRecord | null> 
   return {
     id: data.id,
     role: data.role,
+    name: data.name ?? "",
     coupleNames: data.couple_names,
     weddingDate: data.wedding_date,
     weddingType: data.wedding_type,

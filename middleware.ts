@@ -4,6 +4,8 @@ import { createServerClient } from "@supabase/ssr";
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const isLogin = path === "/login" || path.startsWith("/login/");
+  const isLanding = path === "/";
+  const isPublic = isLogin || isLanding;
 
   const res = NextResponse.next({ request: req });
 
@@ -30,7 +32,7 @@ export async function middleware(req: NextRequest) {
   // Refreshes the session cookie if needed.
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && !isLogin) {
+  if (!user && !isPublic) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";

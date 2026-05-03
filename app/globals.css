@@ -2,22 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap");
 
 /* --- Theme tokens (RGB triplets so Tailwind alpha utilities still work) --- */
 :root {
-  --c-ink: 26 20 16;
-  --c-ink-soft: 58 46 38;
-  --c-ink-mute: 107 93 82;
-  --c-parchment: 250 246 240;
-  --c-parchment-deep: 241 234 217;
-  --c-parchment-line: 232 223 200;
-  --c-gold: 184 137 63;
-  --c-gold-soft: 201 169 106;
-  --c-gold-line: 217 199 154;
-  --c-rose: 201 123 118;
-  --c-rose-deep: 139 74 82;
-  --c-sage: 122 140 111;
+  --c-ink: 24 22 20;
+  --c-ink-soft: 58 50 44;
+  --c-ink-mute: 107 99 92;
+  --c-parchment: 250 247 242;
+  --c-parchment-deep: 241 235 224;
+  --c-parchment-line: 230 222 209;
+  --c-gold: 168 105 46;          /* deeper, more saturated terracotta-gold */
+  --c-gold-soft: 196 142 88;
+  --c-gold-line: 222 196 158;
+  --c-rose: 200 117 110;
+  --c-rose-deep: 142 70 78;
+  --c-sage: 117 138 108;
 
   /* Generic surface aliases used by chrome */
   --c-bg: var(--c-parchment);
@@ -32,18 +32,18 @@
 }
 
 .dark {
-  --c-ink: 245 237 224;              /* now light, since "ink" = primary text */
-  --c-ink-soft: 219 209 192;
-  --c-ink-mute: 168 156 141;
-  --c-parchment: 22 18 14;           /* page bg */
-  --c-parchment-deep: 31 25 19;
-  --c-parchment-line: 45 37 28;
-  --c-gold: 212 165 90;
-  --c-gold-soft: 224 188 125;
-  --c-gold-line: 132 102 56;
-  --c-rose: 214 139 136;
-  --c-rose-deep: 168 102 105;
-  --c-sage: 149 168 136;
+  --c-ink: 244 238 228;              /* now light, since "ink" = primary text */
+  --c-ink-soft: 220 211 197;
+  --c-ink-mute: 168 158 144;
+  --c-parchment: 18 16 13;           /* page bg */
+  --c-parchment-deep: 28 24 20;
+  --c-parchment-line: 44 38 30;
+  --c-gold: 226 169 102;             /* slightly brighter for dark contrast */
+  --c-gold-soft: 235 195 142;
+  --c-gold-line: 124 95 54;
+  --c-rose: 220 138 132;
+  --c-rose-deep: 174 102 105;
+  --c-sage: 152 172 138;
 
   --c-bg: var(--c-parchment);
   --c-surface: 31 25 19;             /* card */
@@ -57,8 +57,18 @@
 }
 
 html, body { background: rgb(var(--c-bg)); color: rgb(var(--c-text-soft)); }
-body { font-family: "Inter", system-ui, sans-serif; }
-h1, h2, h3, h4 { font-family: "Cormorant Garamond", Georgia, serif; color: rgb(var(--c-text)); }
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+h1, h2, h3, h4 {
+  font-family: "Fraunces", Georgia, serif;
+  color: rgb(var(--c-text));
+  font-feature-settings: "ss01";
+  letter-spacing: -0.01em;
+}
 
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -71,7 +81,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 0.85; }
 .dark input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.9); }
 
-.font-display { font-family: "Cormorant Garamond", Georgia, serif; }
+.font-display { font-family: "Fraunces", Georgia, serif; }
 .font-body { font-family: "Inter", system-ui, sans-serif; }
 .tabular { font-variant-numeric: tabular-nums; }
 
@@ -81,7 +91,7 @@ input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 0.85; }
   align-items: center;
   justify-content: center;
   color: rgb(var(--c-gold-soft));
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Fraunces", Georgia, serif;
   font-size: 0.875rem;
   letter-spacing: 0.5em;
   user-select: none;
@@ -102,10 +112,10 @@ input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 0.85; }
   @apply w-full rounded-md border border-stone-300 bg-white px-2 py-1 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100;
 }
 .btn {
-  @apply inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition;
+  @apply inline-flex items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-medium transition;
 }
-.btn-primary { @apply btn bg-ink text-parchment hover:bg-stone-800 dark:hover:bg-stone-200; }
-.btn-ghost { @apply btn border border-stone-300 bg-white text-ink hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800; }
+.btn-primary { @apply btn bg-ink text-parchment shadow-sm hover:opacity-90; }
+.btn-ghost { @apply btn border border-stone-300 bg-white text-ink hover:border-stone-400 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:border-stone-500 dark:hover:bg-stone-800; }
 
 /* --- react-day-picker theme overrides (used by components/ui/DateField.tsx) --- */
 .rdp-themed {

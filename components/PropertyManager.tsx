@@ -171,21 +171,21 @@ export default function PropertyManager({ initial, serverReady, loadError }: Pro
       </header>
 
       {loadError && (
-        <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">
+        <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200">
           Couldn&apos;t load properties: {loadError}.
         </div>
       )}
       {!serverReady && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:bg-amber-900/30">
+        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
           Supabase not configured — changes won&apos;t persist until <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> are set.
         </div>
       )}
       {status && (
         <div
-          className={`mb-4 rounded-md px-4 py-2 text-sm${
+          className={`mb-4 rounded-md px-4 py-2 text-sm ${
             status.kind === "ok"
-              ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border border-rose-200 bg-rose-50 text-rose-800"
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
+              : "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200"
           }`}
         >
           {status.text}
@@ -804,7 +804,7 @@ function FormGroup({
       <legend className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
         {title}
       </legend>
-      <div className={`grid gap-4${cols === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
+      <div className={`grid gap-4 ${cols === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
         {children}
       </div>
     </fieldset>
@@ -837,14 +837,14 @@ function Badge({
 }) {
   const cls =
     tone === "gold"
-      ? "border-amber-300 bg-amber-50 text-amber-800"
+      ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200"
       : tone === "emerald"
-        ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+        ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
         : tone === "rose"
-          ? "border-rose-300 bg-rose-50 text-rose-800"
-          : "border-stone-300 bg-stone-50 text-stone-700";
+          ? "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200"
+          : "border-stone-300 bg-stone-50 text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200";
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs${cls}`}>
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${cls}`}>
       {children}
     </span>
   );
@@ -860,7 +860,7 @@ function Field({
   className?: string;
 }) {
   return (
-    <label className={`block${className ?? ""}`}>
+    <label className={`block ${className ?? ""}`}>
       <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">{label}</span>
       {children}
     </label>

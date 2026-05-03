@@ -14,6 +14,7 @@ export type CreateWeddingFormResult =
 
 export async function createWeddingAction(formData: FormData): Promise<void> {
   const role = String(formData.get("role") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
   const coupleNames = String(formData.get("couple_names") ?? "").trim();
   const weddingDateRaw = String(formData.get("wedding_date") ?? "").trim();
   const weddingType = String(formData.get("wedding_type") ?? "");
@@ -27,6 +28,7 @@ export async function createWeddingAction(formData: FormData): Promise<void> {
 
   const id = await createWedding({
     role: role as WeddingRole,
+    name,
     couple_names: coupleNames,
     wedding_date: weddingDateRaw || null,
     wedding_type: weddingType as WeddingType,

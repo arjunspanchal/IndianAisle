@@ -22,8 +22,9 @@ type User = { email: string } | null;
 export default function AppNav({ user }: { user: User }) {
   const pathname = usePathname() || "/";
 
-  // Hide AppNav entirely on the login route.
+  // Hide AppNav entirely on the login route, and on the public landing page.
   if (pathname === "/login" || pathname.startsWith("/login/")) return null;
+  if (!user && pathname === "/") return null;
 
   const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const truncatedEmail = user?.email
@@ -34,10 +35,14 @@ export default function AppNav({ user }: { user: User }) {
 
   return (
     <aside className="flex flex-col border-b border-stone-200 bg-white/70 backdrop-blur dark:border-stone-800 dark:bg-stone-950/70 lg:sticky lg:top-0 lg:h-screen lg:w-56 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r print:hidden">
-      <div className="flex items-start justify-between gap-2 px-5 pt-5 pb-3">
-        <Link href="/" className="block">
-          <h1 className="font-serif text-2xl leading-tight">The Indian Aisle</h1>
-          <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">Wedding budget calculator</p>
+      <div className="flex items-center justify-between gap-2 px-5 pt-5 pb-4">
+        <Link href="/" className="block min-w-0">
+          <h1 className="font-serif text-xl leading-none tracking-tight text-stone-900 dark:text-stone-50">
+            The Indian Aisle
+          </h1>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
+            Planner workspace
+          </p>
         </Link>
         <ThemeToggle />
       </div>
@@ -48,7 +53,7 @@ export default function AppNav({ user }: { user: User }) {
             <Link
               key={it.href}
               href={it.href}
-              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition${
+              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition ${
                 isActive
                   ? "bg-ink text-parchment"
                   : "text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/60"

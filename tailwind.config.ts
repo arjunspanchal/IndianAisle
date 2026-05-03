@@ -20,17 +20,20 @@ const config: Config = {
         rose: tokenColor("--c-rose"),
         "rose-deep": tokenColor("--c-rose-deep"),
         sage: tokenColor("--c-sage"),
-        // Semantic surface tokens for chrome
         surface: tokenColor("--c-surface"),
         "surface-soft": tokenColor("--c-surface-soft"),
         line: tokenColor("--c-line"),
         "line-strong": tokenColor("--c-line-strong"),
       },
       fontFamily: {
-        serif: ["Cormorant Garamond", "Georgia", "serif"],
+        serif: ["Fraunces", "Georgia", "serif"],
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Cormorant Garamond", "Georgia", "serif"],
+        display: ["Fraunces", "Georgia", "serif"],
         body: ["Inter", "system-ui", "sans-serif"],
+      },
+      letterSpacing: {
+        tight: "-0.01em",
+        tighter: "-0.02em",
       },
     },
   },

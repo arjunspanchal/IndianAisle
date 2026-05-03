@@ -91,6 +91,7 @@ export type Database = {
           id: string;
           owner_id: string;
           role: WeddingRole;
+          name: string;
           couple_names: string;
           wedding_date: string | null;
           wedding_type: WeddingType;
@@ -111,6 +112,7 @@ export type Database = {
         Insert: {
           owner_id: string;
           role: WeddingRole;
+          name?: string;
           couple_names: string;
           wedding_date?: string | null;
           wedding_type: WeddingType;
@@ -128,6 +130,7 @@ export type Database = {
         };
         Update: Partial<{
           role: WeddingRole;
+          name: string;
           couple_names: string;
           wedding_date: string | null;
           wedding_type: WeddingType;
@@ -486,6 +489,32 @@ export type Database = {
           added_by?: string | null;
         };
         Update: Partial<{ added_by: string | null }>;
+        Relationships: [];
+      };
+      wedding_tasks: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          title: string;
+          due_date: string | null;
+          completed_at: string | null;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          wedding_id: string;
+          title?: string;
+          due_date?: string | null;
+          completed_at?: string | null;
+          position?: number;
+        };
+        Update: Partial<{
+          title: string;
+          due_date: string | null;
+          completed_at: string | null;
+          position: number;
+        }>;
         Relationships: [];
       };
     };

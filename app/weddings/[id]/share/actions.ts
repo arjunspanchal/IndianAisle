@@ -12,7 +12,14 @@ type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
 function err(e: unknown): string {
   if (!(e instanceof Error)) return String(e);
   // Supabase RPC errors come through with the function's RAISE message intact.
-  return e.message.replace(/^.*?: /, "");
+  const raw = e.message.replace(/^.*?: /, "");
+  // The RPC throws "No user with that email — ask them to sign up first" when
+  // the invitee hasn't created an account yet. Rewrite that to something more
+  // actionable for the inviter.
+  if (/no user with that email/i.test(raw)) {
+    return "They need to sign up at indianaisle.com first. Once they have an account, come back and invite again.";
+  }
+  return raw;
 }
 
 function bust(weddingId: string) {

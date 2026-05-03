@@ -135,7 +135,7 @@ export default function InlineChat({
     return (
       <form
         onSubmit={handleSubmit}
-        className={`group rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition focus-within:border-stone-400 focus-within:shadow-md dark:border-stone-800 dark:bg-stone-900 dark:focus-within:border-stone-600 sm:p-5${className}`}
+        className={`group rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition focus-within:border-stone-400 focus-within:shadow-md dark:border-stone-800 dark:bg-stone-900 dark:focus-within:border-stone-600 sm:p-5 ${className}`}
       >
         {fileInput}
         <textarea
@@ -185,7 +185,7 @@ export default function InlineChat({
 
   return (
     <div
-      className={`flex h-[32rem] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900${className}`}
+      className={`flex h-[32rem] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900 ${className}`}
     >
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-5">
         {messages.length === 0 && (
@@ -206,10 +206,10 @@ export default function InlineChat({
           return (
             <div
               key={m.id}
-              className={`flex${isUser ? "justify-end" : "justify-start"}`}
+              className={`flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[85%] space-y-1 whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm${
+                className={`max-w-[85%] space-y-1 whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${
                   isUser
                     ? "bg-ink text-parchment"
                     : "bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-100"
@@ -218,7 +218,7 @@ export default function InlineChat({
                 {fileParts.map((fp, i) => (
                   <div
                     key={i}
-                    className={`flex items-center gap-2 text-xs${
+                    className={`flex items-center gap-2 text-xs ${
                       isUser ? "text-parchment/80" : "text-stone-600"
                     }`}
                   >

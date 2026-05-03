@@ -10,6 +10,7 @@ type Step = 0 | 1 | 2 | 3 | 4;
 
 type FormState = {
   role: WeddingRole | null;
+  name: string;
   coupleNames: string;
   weddingDate: string; // ISO yyyy-mm-dd, "" for not decided
   dateUnknown: boolean;
@@ -29,7 +30,7 @@ const TYPE_OPTIONS: { value: WeddingType; label: string; hint: string }[] = [
 
 const STEP_TITLES = [
   "Whose wedding is it?",
-  "Couple names",
+  "Name your wedding",
   "When is the wedding?",
   "Local or destination?",
   "Review & create",
@@ -52,6 +53,7 @@ export default function OnboardingForm() {
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<FormState>({
     role: null,
+    name: "",
     coupleNames: "",
     weddingDate: "",
     dateUnknown: false,
@@ -84,6 +86,7 @@ export default function OnboardingForm() {
     }
     const fd = new FormData();
     fd.set("role", state.role);
+    fd.set("name", state.name.trim());
     fd.set("couple_names", state.coupleNames.trim());
     fd.set("wedding_date", state.dateUnknown ? "" : state.weddingDate);
     fd.set("wedding_type", state.weddingType);
@@ -122,22 +125,41 @@ export default function OnboardingForm() {
       )}
 
       {step === 1 && (
-        <div className="space-y-2">
-          <label htmlFor="couple_names" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
-            Couple names
-          </label>
-          <input
-            id="couple_names"
-            className="text-input text-base"
-            type="text"
-            placeholder="e.g. Kash & Arjun"
-            value={state.coupleNames}
-            onChange={(e) => setState((s) => ({ ...s, coupleNames: e.target.value }))}
-            autoFocus
-          />
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            However you&apos;d like to refer to the couple — use names, nicknames, or hashtags.
-          </p>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <label htmlFor="couple_names" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              Couple names
+            </label>
+            <input
+              id="couple_names"
+              className="text-input text-base"
+              type="text"
+              placeholder="e.g. Kash & Arjun"
+              value={state.coupleNames}
+              onChange={(e) => setState((s) => ({ ...s, coupleNames: e.target.value }))}
+              autoFocus
+            />
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              However you&apos;d like to refer to the couple — use names, nicknames, or hashtags.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="wedding_name" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              Wedding name <span className="normal-case text-stone-400">(optional)</span>
+            </label>
+            <input
+              id="wedding_name"
+              className="text-input text-base"
+              type="text"
+              placeholder="e.g. The Big Fat Indian Wedding"
+              value={state.name}
+              onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
+            />
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              A custom title for this wedding. Shown in headers and on your wedding list. If left blank, we&apos;ll use the couple names.
+            </p>
+          </div>
         </div>
       )}
 
@@ -233,8 +255,8 @@ function Stepper({ current }: { current: Step }) {
         <span
           key={i}
           aria-hidden
-          className={`h-1.5 flex-1 rounded-full transition${
-            i <= current ? "bg-gold" : "bg-stone-200"
+          className={`h-1.5 flex-1 rounded-full transition ${
+            i <= current ? "bg-gold" : "bg-stone-200 dark:bg-stone-800"
           }`}
         />
       ))}
@@ -257,13 +279,13 @@ function OptionCard({
     <button
       type="button"
       onClick={onClick}
-      className={`block w-full rounded-xl border px-4 py-3 text-left transition${
+      className={`block w-full rounded-xl border px-4 py-3 text-left transition ${
         selected
-          ? "border-ink bg-ink/5 ring-1 ring-ink"
-          : "border-stone-200 bg-white hover:border-stone-300"
+          ? "border-ink bg-stone-50 ring-1 ring-ink dark:border-stone-100 dark:bg-stone-800 dark:ring-stone-100"
+          : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
       }`}
     >
-      <div className="font-serif text-xl">{label}</div>
+      <div className="font-serif text-xl text-stone-900 dark:text-stone-50">{label}</div>
       <div className="mt-0.5 text-sm text-stone-600 dark:text-stone-400">{hint}</div>
     </button>
   );
@@ -287,6 +309,7 @@ function ReviewSummary({
   const rows: { label: string; value: string; step: Step }[] = [
     { label: "Whose wedding", value: state.role ? ROLE_LABEL[state.role] : "—", step: 0 },
     { label: "Couple", value: state.coupleNames.trim() || "—", step: 1 },
+    { label: "Wedding name", value: state.name.trim() || "—", step: 1 },
     { label: "Date", value: date, step: 2 },
     { label: "Type", value: state.weddingType ? TYPE_LABEL[state.weddingType] : "—", step: 3 },
   ];

@@ -79,16 +79,24 @@ export default function CalculatorSectionNav({
                 className={
                   "flex items-baseline gap-3 border-l-2 px-4 py-3 transition-colors " +
                   (isActive
-                    ? "border-l-rose-deep bg-parchment text-ink"
-                    : "border-l-transparent text-ink-soft hover:bg-parchment")
+                    ? "border-l-gold bg-ink text-parchment"
+                    : "border-l-transparent text-ink-soft hover:bg-parchment-deep")
                 }
               >
-                <span className="w-6 shrink-0 font-display text-xs italic tabular text-gold-soft">
+                <span
+                  className={`w-6 shrink-0 font-display text-xs italic tabular ${
+                    isActive ? "text-parchment/70" : "text-gold-soft"
+                  }`}
+                >
                   {String(it.n).padStart(2, "0")}
                 </span>
-                <span className={`flex-1 text-sm${isActive ? "font-medium" : ""}`}>{it.title}</span>
+                <span className={`flex-1 text-sm ${isActive ? "font-medium" : ""}`}>{it.title}</span>
                 {typeof it.total === "number" && (
-                  <span className="shrink-0 text-[11px] tabular text-ink-mute">
+                  <span
+                    className={`shrink-0 text-[11px] tabular ${
+                      isActive ? "text-parchment/80" : "text-ink-mute"
+                    }`}
+                  >
                     {formatTotal ? formatTotal(it.total) : it.total.toString()}
                   </span>
                 )}

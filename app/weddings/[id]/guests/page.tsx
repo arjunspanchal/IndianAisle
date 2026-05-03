@@ -21,12 +21,13 @@ export default async function GuestsPage({ params }: { params: { id: string } })
   const { data: { user } } = await sb.auth.getUser();
 
   const couple = wedding.coupleNames.trim() || "Untitled wedding";
+  const title = wedding.name.trim() || couple;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-stone-500 dark:text-stone-400">{couple}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-stone-500 dark:text-stone-400">{title}</p>
           <h1 className="mt-1 font-serif text-4xl tracking-tight sm:text-5xl">Guest list</h1>
         </div>
         <div className="flex items-center gap-2">

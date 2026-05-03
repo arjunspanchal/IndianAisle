@@ -35,16 +35,16 @@ export default function DeleteAccountForm() {
   const confirmed = confirm.trim().toLowerCase() === "delete";
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded-lg border border-rose-200 bg-rose-50/60 p-4">
+    <form onSubmit={onSubmit} className="space-y-3 rounded-lg border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-800 dark:bg-rose-950/30">
       <div>
-        <p className="font-medium text-rose-900">This permanently deletes your account.</p>
-        <p className="mt-1 text-sm text-rose-800/80">
+        <p className="font-medium text-rose-900 dark:text-rose-200">This permanently deletes your account.</p>
+        <p className="mt-1 text-sm text-rose-800/80 dark:text-rose-300/80">
           All weddings, guests, and properties on your account will be removed. This can&apos;t be undone.
         </p>
       </div>
 
       <label className="block">
-        <span className="mb-1 block text-xs uppercase tracking-wide text-rose-900/70">
+        <span className="mb-1 block text-xs uppercase tracking-wide text-rose-900/70 dark:text-rose-300/70">
           Type <span className="font-mono font-semibold">delete</span> to confirm
         </span>
         <input

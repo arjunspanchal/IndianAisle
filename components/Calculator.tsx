@@ -898,7 +898,7 @@ function ProgrammeTable({
             {headers.map((h, i) => (
               <th
                 key={i}
-                className={`pb-2 pr-3 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-mute${
+                className={`pb-2 pr-3 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-mute ${
                   i >= headers.length - 2 ? "text-right" : "text-left"
                 }`}
               >
@@ -933,7 +933,18 @@ function VendorPicker({
   onPick: (vendor: VendorOption) => void;
 }) {
   const matches = vendors.filter((v) => v.category === category);
-  if (matches.length === 0) return null;
+
+  if (matches.length === 0) {
+    return (
+      <a
+        href="/vendors"
+        className="font-display text-sm italic text-ink-mute underline-offset-2 hover:text-ink hover:underline"
+      >
+        + Add from vendor directory →
+      </a>
+    );
+  }
+
   return (
     <Select
       aria-label="Add from vendor directory"

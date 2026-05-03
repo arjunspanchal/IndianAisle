@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listWeddingsForCurrentUser, type WeddingListItem } from "@/lib/wedding-repo";
 import { deleteWeddingAction } from "@/app/actions";
+import RenameWedding from "@/components/RenameWedding";
 
 export const dynamic = "force-dynamic";
 
@@ -53,14 +54,21 @@ export default async function ManageWeddingsPage() {
         <ul className="space-y-3">
           {weddings.map((w) => {
             const couple = w.coupleNames.trim() || "Untitled wedding";
+            const title = w.name.trim() || couple;
             return (
               <li
                 key={w.id}
-                className="flex items-center gap-4 rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm transition hover:border-stone-300 hover:shadow dark:bg-stone-900 dark:border-stone-800 dark:hover:border-stone-700"
+                className="flex flex-wrap items-center gap-4 rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm transition hover:border-stone-300 hover:shadow dark:bg-stone-900 dark:border-stone-800 dark:hover:border-stone-700"
               >
-                <Link href={`/weddings/${w.id}`} className="block flex-1">
-                  <div className="font-serif text-2xl">{couple}</div>
+                <Link href={`/weddings/${w.id}`} className="block min-w-0 flex-1">
+                  <div className="font-serif text-2xl">{title}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-600 dark:text-stone-400">
+                    {w.name.trim() && (
+                      <>
+                        <span>{couple}</span>
+                        <span aria-hidden className="text-stone-300">·</span>
+                      </>
+                    )}
                     <span>{formatWeddingDate(w.weddingDate)}</span>
                     <span aria-hidden className="text-stone-300">·</span>
                     <span>{TYPE_LABEL[w.weddingType]}</span>
@@ -70,21 +78,24 @@ export default async function ManageWeddingsPage() {
                     </span>
                   </div>
                 </Link>
-                <form
-                  action={async () => {
-                    "use server";
-                    await deleteWeddingAction(w.id);
-                  }}
-                >
-                  <button
-                    type="submit"
-                    aria-label={`Delete ${couple}`}
-                    title="Delete"
-                    className="rounded-md px-3 py-1.5 text-sm text-stone-500 transition hover:bg-rose-50 hover:text-rose-700 dark:text-stone-400"
+                <div className="flex items-center gap-1">
+                  <RenameWedding weddingId={w.id} initialName={w.name} fallback={couple} />
+                  <form
+                    action={async () => {
+                      "use server";
+                      await deleteWeddingAction(w.id);
+                    }}
                   >
-                    Delete
-                  </button>
-                </form>
+                    <button
+                      type="submit"
+                      aria-label={`Delete ${title}`}
+                      title="Delete"
+                      className="rounded-md px-3 py-1.5 text-sm text-stone-500 transition hover:bg-rose-50 hover:text-rose-700 dark:text-stone-400"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </div>
               </li>
             );
           })}

@@ -109,11 +109,38 @@ function toRowFields(p: Property): Omit<PropertyInsert, "owner_id"> {
   };
 }
 
+// Returns the current user's own property catalog. Used by /properties.
+// Even though RLS now lets collaborators see other users' properties, the
+// catalog page should only show the viewer's own rows.
 export async function listProperties(): Promise<Property[]> {
   const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return [];
   const { data, error } = await sb
     .from("wedding_properties")
     .select("*")
+    .eq("owner_id", user.id)
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(fromRow);
+}
+
+// Returns the catalog of whoever owns the wedding (the user themselves if
+// they're the owner, otherwise the owner — visible because the wedding is
+// shared with the current viewer via wedding_collaborators / RLS).
+export async function listPropertiesForWedding(weddingId: string): Promise<Property[]> {
+  const sb = createSupabaseServerClient();
+  const { data: w, error: wErr } = await sb
+    .from("weddings")
+    .select("owner_id")
+    .eq("id", weddingId)
+    .maybeSingle();
+  if (wErr) throw new Error(wErr.message);
+  if (!w) return [];
+  const { data, error } = await sb
+    .from("wedding_properties")
+    .select("*")
+    .eq("owner_id", w.owner_id)
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []).map(fromRow);

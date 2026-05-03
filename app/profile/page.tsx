@@ -53,7 +53,7 @@ export default async function ProfilePage() {
           </div>
         </dl>
 
-        <div className="mt-5 border-t border-stone-100 pt-4">
+        <div className="mt-5 border-t border-stone-100 pt-4 dark:border-stone-800">
           <form action={signOutAction}>
             <button type="submit" className="btn-ghost">Sign out</button>
           </form>
@@ -88,7 +88,7 @@ export default async function ProfilePage() {
             start filling this in.
           </div>
         ) : (
-          <ul className="mt-4 divide-y divide-stone-100 border-t border-stone-100">
+          <ul className="mt-4 divide-y divide-stone-100 border-t border-stone-100 dark:divide-stone-800 dark:border-stone-800">
             {facts.map((f) => (
               <li
                 key={f.id}

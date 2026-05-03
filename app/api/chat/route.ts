@@ -407,6 +407,7 @@ async function runCreateWedding(input: unknown): Promise<string> {
 
   const id = await createWedding({
     role,
+    name: "",
     couple_names,
     wedding_date,
     wedding_type,

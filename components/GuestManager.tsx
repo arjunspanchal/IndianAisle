@@ -151,10 +151,10 @@ export default function GuestManager({ weddingId, initial }: Props) {
 
       {status && (
         <div
-          className={`mb-3 rounded-md px-4 py-2 text-sm${
+          className={`mb-3 rounded-md px-4 py-2 text-sm ${
             status.kind === "ok"
-              ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border border-rose-200 bg-rose-50 text-rose-800"
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
+              : "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200"
           }`}
         >
           {status.text}
@@ -309,7 +309,7 @@ function SummaryStrip({ summary }: { summary: ReturnType<typeof summarize> }) {
           className="rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm dark:bg-stone-900 dark:border-stone-800"
         >
           <div className="text-[10px] uppercase tracking-wide text-stone-500 dark:text-stone-400">{it.label}</div>
-          <div className={`mt-0.5 font-serif text-2xl${toneToText(it.tone)}`}>{it.value}</div>
+          <div className={`mt-0.5 font-serif text-2xl ${toneToText(it.tone)}`}>{it.value}</div>
         </div>
       ))}
     </div>
@@ -370,14 +370,14 @@ function RsvpBadge({ status }: { status: RsvpStatus }) {
   const tone = opt?.tone ?? "stone";
   const cls =
     tone === "emerald"
-      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+      ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
       : tone === "rose"
-        ? "border-rose-300 bg-rose-50 text-rose-800"
+        ? "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200"
         : tone === "amber"
-          ? "border-amber-300 bg-amber-50 text-amber-800"
-          : "border-stone-300 bg-stone-50 text-stone-700";
+          ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200"
+          : "border-stone-300 bg-stone-50 text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200";
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs${cls}`}>
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${cls}`}>
       {RSVP_LABEL[status]}
     </span>
   );
@@ -577,7 +577,7 @@ function FormField({
   className?: string;
 }) {
   return (
-    <label className={`block${className ?? ""}`}>
+    <label className={`block ${className ?? ""}`}>
       <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">{label}</span>
       {children}
     </label>

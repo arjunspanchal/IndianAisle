@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import Calculator, { type VenueOption } from "@/components/Calculator";
 import ShareWedding from "@/components/ShareWedding";
 import { getWeddingBudget } from "@/lib/wedding-repo";
-import { listProperties } from "@/lib/properties-repo";
-import { listVendorOptions } from "@/lib/vendors-repo";
+import { listPropertiesForWedding } from "@/lib/properties-repo";
+import { listVendorOptionsForWedding } from "@/lib/vendors-repo";
 import { getPlannerHeaderForCurrentUser } from "@/lib/profile-repo";
 import { getWeddingAccess } from "@/lib/collaborators-repo";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -19,7 +19,7 @@ export default async function WeddingPage({ params }: { params: { id: string } }
   let venueOptions: VenueOption[] = [];
   let venuesError: string | null = null;
   try {
-    const rows = await listProperties();
+    const rows = await listPropertiesForWedding(params.id);
     venueOptions = rows.map((p) => ({
       id: p.id,
       name: p.name,
@@ -41,9 +41,9 @@ export default async function WeddingPage({ params }: { params: { id: string } }
 
   let vendorOptions: VendorOption[] = [];
   try {
-    vendorOptions = await listVendorOptions();
+    vendorOptions = await listVendorOptionsForWedding(params.id);
   } catch (e) {
-    console.error("[vendor-picker] listVendorOptions failed:", e);
+    console.error("[vendor-picker] listVendorOptionsForWedding failed:", e);
   }
 
   const plannerHeader = await getPlannerHeaderForCurrentUser().catch(() => "");

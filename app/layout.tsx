@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AppNav user={user} />
           <div className="flex-1">{children}</div>
         </div>
-        <ChatWidget />
+        {user && <ChatWidget />}
       </body>
     </html>
   );

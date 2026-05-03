@@ -98,7 +98,7 @@ export default function ShareWedding({
           </div>
           <p className="mb-3 text-xs text-stone-600 dark:text-stone-400">
             {isOwner
-              ? "Anyone you add can edit the budget, events, and guest list. They cannot delete the wedding or manage sharing."
+              ? "Anyone you add can edit the budget, events, and guest list. They cannot delete the wedding or manage sharing. They must sign up at indianaisle.com first — invite emails aren't sent automatically."
               : "You have shared access. The owner controls who else can edit."}
           </p>
 
@@ -130,10 +130,10 @@ export default function ShareWedding({
 
           {status && (
             <div
-              className={`mb-3 rounded-md px-3 py-1.5 text-xs${
+              className={`mb-3 rounded-md px-3 py-1.5 text-xs ${
                 status.kind === "ok"
-                  ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                  : "border border-rose-200 bg-rose-50 text-rose-800"
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
+                  : "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200"
               }`}
             >
               {status.text}

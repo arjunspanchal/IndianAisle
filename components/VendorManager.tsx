@@ -34,11 +34,11 @@ type Props = {
 type StatusMsg = { kind: "ok" | "err"; text: string } | null;
 
 const STATUS_TONE: Record<VendorStatus, string> = {
-  "Not contacted": "bg-stone-100 text-stone-700",
-  Inquired: "bg-amber-50 text-amber-800",
-  Quoted: "bg-sky-50 text-sky-800",
-  Booked: "bg-emerald-50 text-emerald-800",
-  Rejected: "bg-rose-50 text-rose-800",
+  "Not contacted": "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-200",
+  Inquired: "bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
+  Quoted: "bg-sky-50 text-sky-800 dark:bg-sky-900/30 dark:text-sky-200",
+  Booked: "bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200",
+  Rejected: "bg-rose-50 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200",
 };
 
 export default function VendorManager({ initial, serverReady, loadError }: Props) {
@@ -162,21 +162,23 @@ export default function VendorManager({ initial, serverReady, loadError }: Props
       </header>
 
       {loadError && (
-        <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">
+        <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200">
           Couldn&apos;t load saved vendors: {loadError}
         </div>
       )}
 
       {!serverReady && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:bg-amber-900/30">
+        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
           Supabase isn&apos;t configured for this environment. Edits stay in this tab only.
         </div>
       )}
 
       {status && (
         <div
-          className={`mb-4 rounded-md px-4 py-2 text-sm${
-            status.kind === "ok" ? "border border-emerald-200 bg-emerald-50 text-emerald-800" : "border border-rose-200 bg-rose-50 text-rose-800"
+          className={`mb-4 rounded-md px-4 py-2 text-sm ${
+            status.kind === "ok"
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
+              : "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200"
           }`}
         >
           {status.text}
@@ -292,7 +294,9 @@ function VendorCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const tone = vendor.status ? STATUS_TONE[vendor.status] : "bg-stone-100 text-stone-500";
+  const tone = vendor.status
+    ? STATUS_TONE[vendor.status]
+    : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400";
   return (
     <li className="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-stone-300 dark:bg-stone-900 dark:border-stone-800 dark:hover:border-stone-700">
       <div className="flex items-start justify-between gap-4">
@@ -302,7 +306,7 @@ function VendorCard({
               {vendor.name || "(unnamed vendor)"}
             </h3>
             {vendor.status && (
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider${tone}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${tone}`}>
                 {vendor.status}
               </span>
             )}
