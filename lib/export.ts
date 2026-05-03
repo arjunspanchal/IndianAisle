@@ -24,11 +24,13 @@ const SECTIONS: { key: keyof Budget; title: string }[] = [
   { key: "misc", title: "10 Miscellaneous" },
 ];
 
-export function exportToExcel(budget: Budget): void {
+export function exportToExcel(budget: Budget, opts: { plannerHeader?: string } = {}): void {
   const wb = XLSX.utils.book_new();
+  const plannerHeader = (opts.plannerHeader ?? "").trim();
 
   // ---- Summary ----
   const summary: (string | number)[][] = [
+    ...(plannerHeader ? [[`Prepared by: ${plannerHeader}`], []] : []),
     [coupleDisplayName(budget.meta)],
     [budget.meta.venue],
     [formatDateRange(budget.meta.startDate, budget.meta.endDate)],

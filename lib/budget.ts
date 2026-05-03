@@ -8,6 +8,9 @@ export type LineItem = {
   note?: string;
   amount: number;
   source?: "Confirmed" | "Estimate";
+  /** Optional reference to a vendor (personal or curated). Both move together. */
+  vendorId?: string | null;
+  vendorSource?: "personal" | "curated" | null;
 };
 
 export type RoomCategory = {
@@ -28,6 +31,120 @@ export type MealConfig = {
   sittings: number; // e.g. 2 = breakfast on day 1 + day 2
 };
 
+export type WeddingTradition = "hindu_indian" | "muslim_indian" | "catholic";
+
+export const TRADITION_LABEL: Record<WeddingTradition, string> = {
+  hindu_indian: "India — Hindu",
+  muslim_indian: "India — Muslim",
+  catholic: "Catholic",
+};
+
+// Common venue spaces (the property's boolean facility flags map onto these).
+export const EVENT_SPACES = [
+  { key: "banquet", label: "Banquet hall" },
+  { key: "lawn", label: "Lawn" },
+  { key: "poolside", label: "Poolside" },
+  { key: "mandap", label: "Mandap" },
+  { key: "bridal_suite", label: "Bridal suite" },
+  { key: "other", label: "Other" },
+] as const;
+export type EventSpaceKey = (typeof EVENT_SPACES)[number]["key"];
+
+export type WeddingEvent = {
+  id: string;
+  airtableId?: string; // Supabase row id once persisted
+  name: string;
+  space: string; // free-form, but typically one of EVENT_SPACES.key
+  date?: string; // ISO yyyy-mm-dd
+};
+
+export const TRADITION_DEFAULT_EVENTS: Record<WeddingTradition, { name: string; space: string }[]> = {
+  hindu_indian: [
+    { name: "Mehendi", space: "lawn" },
+    { name: "Haldi", space: "poolside" },
+    { name: "Sangeet", space: "banquet" },
+    { name: "Shaadi", space: "mandap" },
+  ],
+  muslim_indian: [
+    { name: "Mehendi", space: "lawn" },
+    { name: "Sangeet", space: "banquet" },
+    { name: "Nikah", space: "banquet" },
+    { name: "Walima", space: "banquet" },
+  ],
+  catholic: [
+    { name: "Rehearsal dinner", space: "banquet" },
+    { name: "Ceremony", space: "lawn" },
+    { name: "Reception", space: "banquet" },
+  ],
+};
+
+export const buildDefaultEvents = (t: WeddingTradition): WeddingEvent[] =>
+  TRADITION_DEFAULT_EVENTS[t].map((e, i) => ({
+    id: `evt-${t}-${i}-${Date.now()}`,
+    name: e.name,
+    space: e.space,
+  }));
+
+// Pre-populated attire rows per tradition. Covers bride, groom, and the nuclear
+// family (parents + siblings). Amounts default to 0 — the user fills these in.
+export const TRADITION_DEFAULT_ATTIRE: Record<WeddingTradition, string[]> = {
+  hindu_indian: [
+    "Bride — Wedding lehenga",
+    "Bride — Sangeet outfit",
+    "Bride — Mehendi outfit",
+    "Bride — Haldi outfit",
+    "Bride — Hair, makeup & jewellery",
+    "Groom — Wedding sherwani",
+    "Groom — Sangeet outfit",
+    "Groom — Reception outfit",
+    "Mother of bride",
+    "Father of bride",
+    "Mother of groom",
+    "Father of groom",
+    "Sibling(s) — bride's side",
+    "Sibling(s) — groom's side",
+  ],
+  muslim_indian: [
+    "Bride — Nikah outfit",
+    "Bride — Walima outfit",
+    "Bride — Mehendi outfit",
+    "Bride — Sangeet outfit",
+    "Bride — Hair, makeup & jewellery",
+    "Groom — Nikah outfit",
+    "Groom — Walima outfit",
+    "Groom — Sangeet outfit",
+    "Mother of bride",
+    "Father of bride",
+    "Mother of groom",
+    "Father of groom",
+    "Sibling(s) — bride's side",
+    "Sibling(s) — groom's side",
+  ],
+  catholic: [
+    "Bride — Wedding gown",
+    "Bride — Reception dress",
+    "Bride — Rehearsal-dinner outfit",
+    "Bride — Hair, makeup & jewellery",
+    "Groom — Wedding suit / tuxedo",
+    "Groom — Reception outfit",
+    "Groom — Rehearsal-dinner outfit",
+    "Mother of bride",
+    "Father of bride",
+    "Mother of groom",
+    "Father of groom",
+    "Sibling(s) — bride's side",
+    "Sibling(s) — groom's side",
+  ],
+};
+
+export const buildDefaultAttire = (t: WeddingTradition): LineItem[] =>
+  TRADITION_DEFAULT_ATTIRE[t].map((label, i) => ({
+    id: `attire-default-${t}-${i}-${Date.now()}`,
+    label,
+    amount: 0,
+    source: "Estimate",
+  }));
+
 export type Budget = {
   meta: {
     brideName: string;
@@ -37,6 +154,7 @@ export type Budget = {
     endDate: string;   // ISO yyyy-mm-dd
     guests: number;
     events: number;
+    tradition?: WeddingTradition | null;
   };
   rooms: {
     nights: number;
@@ -44,6 +162,7 @@ export type Budget = {
     categories: RoomCategory[];
   };
   meals: MealConfig[];
+  events: WeddingEvent[];
   decor: LineItem[];
   entertainment: LineItem[];
   photography: LineItem[];
@@ -63,8 +182,10 @@ export const defaultBudget = (): Budget => ({
     startDate: "2026-12-06",
     endDate: "2026-12-08",
     guests: 91,
-    events: 5,
+    events: 4,
+    tradition: "hindu_indian",
   },
+  events: buildDefaultEvents("hindu_indian"),
   rooms: {
     nights: 2,
     gstPct: 18,

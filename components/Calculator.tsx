@@ -3,9 +3,15 @@
 import { useEffect, useState } from "react";
 import {
   Budget,
+  EVENT_SPACES,
   LineItem,
   MealConfig,
   RoomCategory,
+  TRADITION_LABEL,
+  WeddingEvent,
+  WeddingTradition,
+  buildDefaultAttire,
+  buildDefaultEvents,
   contingencyTotal,
   coupleDisplayName,
   defaultBudget,
@@ -17,7 +23,7 @@ import {
   sectionTotal,
   subtotalBeforeContingency,
 } from "@/lib/budget";
-import { saveBudgetAction } from "@/app/actions";
+import { saveWeddingBudgetAction } from "@/app/actions";
 import { exportToExcel, printAsPDF } from "@/lib/export";
 import CalculatorSectionNav, { type SectionNavItem } from "@/components/CalculatorSectionNav";
 import Field from "@/components/ui/Field";
@@ -27,14 +33,48 @@ import Select from "@/components/ui/Select";
 import NumberInput from "@/components/ui/NumberInput";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
+import type { VendorOption } from "@/lib/vendors";
 
-export type VenueOption = { id: string; name: string };
+export type VenueOption = {
+  id: string;
+  name: string;
+  rooms: number;
+  avgRoomRate?: number;
+  perPlateCost?: number;
+  // Facility flags — used to filter the per-event space picker to spaces this venue actually has.
+  spaces?: {
+    banquet: boolean;
+    lawn: boolean;
+    poolside: boolean;
+    mandap: boolean;
+    bridal_suite: boolean;
+  };
+};
+
+// Industry rule of thumb: 1 room per 2 guests (couples share).
+const requiredRoomsForGuests = (guests: number) => Math.ceil(Math.max(0, guests) / 2);
 
 type Props = {
   initialBudget?: Budget;
-  airtableReady?: boolean;
-  weddingId?: string;
+  // Required for save — the page is always rendered under /weddings/[id].
+  weddingId: string;
   venueOptions?: VenueOption[];
+  venuesError?: string | null;
+  /** Personal + saved-curated vendors available in the picker. */
+  vendorOptions?: VendorOption[];
+  /**
+   * Display-safe metadata for curated vendors referenced on existing budget
+   * lines that aren't currently in the picker (un-saved or downgrade case).
+   * Sourced via the get_curated_vendor_display SECURITY DEFINER RPC.
+   */
+  curatedDisplays?: Record<string, { name: string; category: string; baseCity: string }>;
+  /** Whether the current user is on the Pro tier (or admin). */
+  userIsPro?: boolean;
+  /**
+   * Wedding-planner company name. When present, rendered as a "Prepared by"
+   * banner at the top of PDF prints and as a header row in the Excel export.
+   */
+  plannerHeader?: string;
 };
 
 type LineSectionKey =
@@ -49,6 +89,7 @@ type LineSectionKey =
 
 type SectionId =
   | "details"
+  | "events"
   | "rooms"
   | "meals"
   | LineSectionKey
@@ -57,23 +98,29 @@ type SectionId =
 
 const SECTION_DEFS: { id: SectionId; n: number; title: string; description?: string }[] = [
   { id: "details", n: 0, title: "Wedding details", description: "The basics — names, dates, scale." },
-  { id: "rooms", n: 1, title: "Rooms" },
-  { id: "meals", n: 2, title: "Meals" },
-  { id: "decor", n: 3, title: "Decor & florals" },
-  { id: "entertainment", n: 4, title: "Entertainment, music & AV" },
-  { id: "photography", n: 5, title: "Photography & videography" },
-  { id: "attire", n: 6, title: "Attire & beauty" },
-  { id: "travel", n: 7, title: "Travel & logistics" },
-  { id: "rituals", n: 8, title: "Rituals & ceremonies" },
-  { id: "gifting", n: 9, title: "Invitations & gifting" },
-  { id: "misc", n: 10, title: "Miscellaneous" },
+  {
+    id: "events",
+    n: 1,
+    title: "Events",
+    description: "The functions in your wedding, each mapped to a space at your venue.",
+  },
+  { id: "rooms", n: 2, title: "Rooms" },
+  { id: "meals", n: 3, title: "Meals" },
+  { id: "decor", n: 4, title: "Decor & florals" },
+  { id: "entertainment", n: 5, title: "Entertainment, music & AV" },
+  { id: "photography", n: 6, title: "Photography & videography" },
+  { id: "attire", n: 7, title: "Attire & beauty" },
+  { id: "travel", n: 8, title: "Travel & logistics" },
+  { id: "rituals", n: 9, title: "Rituals & ceremonies" },
+  { id: "gifting", n: 10, title: "Invitations & gifting" },
+  { id: "misc", n: 11, title: "Miscellaneous" },
   {
     id: "contingency",
-    n: 11,
+    n: 12,
     title: "Contingency",
     description: "A cushion for the unforeseen, applied to the subtotal above.",
   },
-  { id: "summary", n: 12, title: "Summary", description: "All sections at a glance." },
+  { id: "summary", n: 13, title: "Summary", description: "All sections at a glance." },
 ];
 
 const LINE_SECTIONS: { id: LineSectionKey; title: string }[] = [
@@ -88,12 +135,18 @@ const LINE_SECTIONS: { id: LineSectionKey; title: string }[] = [
 ];
 
 // Header height used both for sticky offset and scroll-margin on sections.
-const HEADER_OFFSET_PX = 96;
+// Includes the top row + the live KPI bar (md+).
+const HEADER_OFFSET_PX = 144;
 
 export default function Calculator({
   initialBudget,
-  airtableReady = false,
+  weddingId,
   venueOptions = [],
+  venuesError = null,
+  vendorOptions = [],
+  curatedDisplays = {},
+  userIsPro = false,
+  plannerHeader = "",
 }: Props) {
   const [budget, setBudget] = useState<Budget>(initialBudget ?? defaultBudget());
   const [saving, setSaving] = useState(false);
@@ -108,11 +161,15 @@ export default function Calculator({
   const total = grandTotal(budget);
   const sub = subtotalBeforeContingency(budget);
   const cont = contingencyTotal(budget);
+  const roomsT = sectionTotal(budget, "rooms");
+  const mealsT = sectionTotal(budget, "meals");
+  const otherT = LINE_SECTIONS.reduce((s, ls) => s + sectionTotal(budget, ls.id), 0);
 
   const navItems: SectionNavItem[] = SECTION_DEFS.map((s) => {
     let t: number | undefined;
     switch (s.id) {
       case "details":
+      case "events":
         t = undefined;
         break;
       case "summary":
@@ -191,19 +248,98 @@ export default function Calculator({
       ],
     }));
 
+  const addLineFromVendor = (key: LineSectionKey, vendor: VendorOption) =>
+    setBudget((b) => {
+      const { amount, label } = priceVendorLine(vendor, b);
+      return {
+        ...b,
+        [key]: [
+          ...(b[key] as LineItem[]),
+          {
+            id: `${key}-${Date.now()}`,
+            label,
+            amount,
+            source: "Estimate",
+            vendorId: vendor.id,
+            vendorSource: vendor.source,
+          },
+        ],
+      };
+    });
+
   const removeLine = (key: LineSectionKey, idx: number) =>
     setBudget((b) => ({ ...b, [key]: (b[key] as LineItem[]).filter((_, i) => i !== idx) }));
 
+  // ---- events + tradition-driven seeds ----
+  const setTradition = (t: WeddingTradition | "") =>
+    setBudget((b) => {
+      const tradition = t === "" ? null : t;
+      // Seed events when none persisted yet.
+      const hasPersistedEvents = (b.events ?? []).some((e) => Boolean(e.airtableId));
+      const seedEvents = tradition && !hasPersistedEvents
+        ? buildDefaultEvents(tradition)
+        : (b.events ?? []);
+      // Seed attire when none persisted yet (gives bride/groom/family rows up-front).
+      const hasPersistedAttire = b.attire.some((it) => Boolean(it.airtableId));
+      const seedAttire = tradition && !hasPersistedAttire
+        ? buildDefaultAttire(tradition)
+        : b.attire;
+      return {
+        ...b,
+        meta: { ...b.meta, tradition },
+        events: seedEvents,
+        attire: seedAttire,
+      };
+    });
+
+  const insertAttireDefaults = () =>
+    setBudget((b) => {
+      if (!b.meta.tradition) return b;
+      if (
+        b.attire.length > 0 &&
+        !confirm("Replace the current attire list with the defaults for this tradition?")
+      ) {
+        return b;
+      }
+      return { ...b, attire: buildDefaultAttire(b.meta.tradition) };
+    });
+
+  const updateEvent = (idx: number, patch: Partial<WeddingEvent>) =>
+    setBudget((b) => ({
+      ...b,
+      events: (b.events ?? []).map((e, i) => (i === idx ? { ...e, ...patch } : e)),
+    }));
+
+  const addEvent = () =>
+    setBudget((b) => ({
+      ...b,
+      events: [
+        ...(b.events ?? []),
+        { id: `evt-${Date.now()}`, name: "New event", space: "" },
+      ],
+    }));
+
+  const removeEvent = (idx: number) =>
+    setBudget((b) => ({ ...b, events: (b.events ?? []).filter((_, i) => i !== idx) }));
+
+  const resetEventsToTradition = () =>
+    setBudget((b) => {
+      if (!b.meta.tradition) return b;
+      if (
+        (b.events ?? []).length > 0 &&
+        !confirm("Replace the current event list with the defaults for this tradition?")
+      ) {
+        return b;
+      }
+      return { ...b, events: buildDefaultEvents(b.meta.tradition) };
+    });
+
   // ---- save ----
   const onSave = async () => {
-    if (!airtableReady) {
-      setSaveMsg("Airtable not configured — set AIRTABLE_PAT to enable save.");
-      return;
-    }
     setSaving(true);
     setSaveMsg(null);
     try {
-      const result = await saveBudgetAction(budget);
+      const result = await saveWeddingBudgetAction(weddingId, budget);
       if (!result.ok) throw new Error(result.error);
       setSaveMsg(`Saved at ${new Date().toLocaleTimeString()}.`);
     } catch (e: unknown) {
@@ -215,7 +351,7 @@ export default function Calculator({
   };
 
   const onReset = () => {
-    if (confirm("Reset to defaults? Unsaved local changes will be lost (Airtable not touched).")) {
+    if (confirm("Reset to defaults? Unsaved local changes will be lost (the saved copy isn't touched).")) {
       setBudget(defaultBudget());
       setSaveMsg(null);
     }
@@ -226,6 +362,14 @@ export default function Calculator({
 
   return (
     <div className="flex min-h-screen flex-col bg-parchment">
+      {plannerHeader && (
+        <div className="hidden print:block">
+          <div className="border-b border-stone-300 px-10 py-4 text-center dark:border-stone-700">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500 dark:text-stone-400">Prepared by</p>
+            <p className="mt-1 font-display text-2xl text-ink">{plannerHeader}</p>
+          </div>
+        </div>
+      )}
       {/* ----- Sticky page header ----- */}
       <header
         className="sticky top-0 z-20 border-b border-gold-line bg-parchment/95 backdrop-blur print:static print:bg-white print:backdrop-blur-none"
@@ -242,15 +386,16 @@ export default function Calculator({
             </p>
           </div>
 
-          <div className="flex shrink-0 items-end gap-4 lg:gap-6">
-            <div className="text-right">
+          <div className="flex shrink-0 items-center gap-4 lg:gap-6">
+            {/* Compact total visible on small screens; full KPI bar shows below on md+. */}
+            <div className="text-right md:hidden">
               <div className="text-[10px] uppercase tracking-[0.22em] text-ink-mute">Total</div>
-              <div className="font-display text-2xl tabular leading-none text-ink lg:text-3xl">
+              <div className="font-display text-2xl tabular leading-none text-ink">
                 {formatINR(total)}
               </div>
             </div>
             <div className="hidden items-center gap-1.5 sm:flex print:hidden">
-              <Button variant="secondary" onClick={() => exportToExcel(budget)} title="Download .xlsx">
+              <Button variant="secondary" onClick={() => exportToExcel(budget, { plannerHeader })} title="Download .xlsx">
                 Excel
               </Button>
               <Button variant="secondary" onClick={printAsPDF} title="Print / save as PDF">
@@ -262,8 +407,7 @@ export default function Calculator({
               <Button
                 variant="primary"
                 onClick={onSave}
-                disabled={saving || !airtableReady}
-                title={!airtableReady ? "Airtable not configured" : undefined}
+                disabled={saving}
               >
                 {saving ? "Saving…" : "Save"}
               </Button>
@@ -272,7 +416,7 @@ export default function Calculator({
 
           {/* Mobile actions row */}
           <div className="flex w-full items-center justify-end gap-1.5 sm:hidden print:hidden">
-            <Button variant="ghost" onClick={() => exportToExcel(budget)}>
+            <Button variant="ghost" onClick={() => exportToExcel(budget, { plannerHeader })}>
               Excel
             </Button>
             <Button variant="ghost" onClick={printAsPDF}>
@@ -284,10 +428,20 @@ export default function Calculator({
             <Button
               variant="primary"
               onClick={onSave}
-              disabled={saving || !airtableReady}
+              disabled={saving}
             >
               {saving ? "Saving…" : "Save"}
             </Button>
+          </div>
+        </div>
+
+        {/* Live KPI bar — running totals visible at all times. */}
+        <div className="hidden border-t border-parchment-line bg-parchment/60 md:block print:hidden">
+          <div className="mx-auto grid max-w-6xl grid-cols-4 divide-x divide-parchment-line px-5 lg:px-10">
+            <KpiTile label="Rooms" value={roomsT} sectionId="rooms" offsetTop={HEADER_OFFSET_PX} />
+            <KpiTile label="Meals" value={mealsT} sectionId="meals" offsetTop={HEADER_OFFSET_PX} />
+            <KpiTile label="All other costs" value={otherT + cont} sectionId="summary" offsetTop={HEADER_OFFSET_PX} />
+            <KpiTile label="Grand total" value={total} sectionId="summary" offsetTop={HEADER_OFFSET_PX} emphasis />
           </div>
         </div>
       </header>
@@ -333,10 +487,44 @@ export default function Calculator({
                     onChange={(e) => setMeta("groomName", e.target.value)}
                   />
                 </Field>
+                <Field label="Tradition">
+                  <Select
+                    value={budget.meta.tradition ?? ""}
+                    onChange={(e) => setTradition(e.target.value as WeddingTradition | "")}
+                  >
+                    <option value="">Select a tradition…</option>
+                    <option value="hindu_indian">{TRADITION_LABEL.hindu_indian}</option>
+                    <option value="muslim_indian">{TRADITION_LABEL.muslim_indian}</option>
+                    <option value="catholic">{TRADITION_LABEL.catholic}</option>
+                  </Select>
+                </Field>
                 <VenueField
                   value={budget.meta.venue}
                   options={venueOptions}
-                  onChange={(name) => setMeta("venue", name)}
+                  guests={budget.meta.guests}
+                  error={venuesError}
+                  onChange={(name) => {
+                    const picked = venueOptions.find((o) => o.name === name);
+                    setBudget((b) => {
+                      const next = { ...b, meta: { ...b.meta, venue: name } };
+                      if (picked?.avgRoomRate && picked.avgRoomRate > 0) {
+                        next.rooms = {
+                          ...b.rooms,
+                          categories: b.rooms.categories.map((c) => ({
+                            ...c,
+                            ratePerNight: picked.avgRoomRate!,
+                          })),
+                        };
+                      }
+                      if (picked?.perPlateCost && picked.perPlateCost > 0) {
+                        next.meals = b.meals.map((m) => ({
+                          ...m,
+                          ratePerHead: picked.perPlateCost!,
+                        }));
+                      }
+                      return next;
+                    });
+                  }}
                 />
                 <Field label="Start date">
                   <DateField
@@ -365,16 +553,33 @@ export default function Calculator({
                 <Field label="Guests">
                   <NumberInput value={budget.meta.guests} onChange={(v) => setMeta("guests", v)} />
                 </Field>
-                <Field label="Events">
-                  <NumberInput value={budget.meta.events} onChange={(v) => setMeta("events", v)} />
-                </Field>
               </div>
             </SectionWrapper>
 
             <Divider />
 
-            {/* 01 rooms */}
-            <SectionWrapper id="rooms" n={1} title="Rooms" total={sectionTotal(budget, "rooms")}>
+            {/* 01 events */}
+            <SectionWrapper
+              id="events"
+              n={1}
+              title="Events"
+              description="Each function in the wedding, mapped to a space at your venue."
+            >
+              <EventsTable
+                tradition={budget.meta.tradition ?? null}
+                events={budget.events ?? []}
+                pickedVenue={venueOptions.find((o) => o.name === budget.meta.venue) ?? null}
+                onUpdate={updateEvent}
+                onAdd={addEvent}
+                onRemove={removeEvent}
+                onResetToDefaults={resetEventsToTradition}
+              />
+            </SectionWrapper>
+
+            <Divider />
+
+            {/* 02 rooms */}
+            <SectionWrapper id="rooms" n={2} title="Rooms" total={sectionTotal(budget, "rooms")}>
               <div className="mb-6 grid grid-cols-2 gap-x-6 gap-y-5 sm:max-w-md">
                 <Field label="Nights">
                   <NumberInput value={budget.rooms.nights} onChange={(v) => setRooms({ nights: v })} />
@@ -432,7 +637,7 @@ export default function Calculator({
             <Divider />
 
             {/* 02 meals */}
-            <SectionWrapper id="meals" n={2} title="Meals" total={sectionTotal(budget, "meals")}>
+            <SectionWrapper id="meals" n={3} title="Meals" total={sectionTotal(budget, "meals")}>
               <ProgrammeTable headers={["Meal", "Pax", "Rate", "Tax %", "Sittings", "Total", ""]}>
                 {budget.meals.map((m, idx) => (
                   <tr key={m.id} className="border-t border-parchment-line align-middle">
@@ -489,50 +694,103 @@ export default function Calculator({
                 <div key={id}>
                   <SectionWrapper id={id} n={def.n} title={title} total={t}>
                     <ProgrammeTable headers={["Item", "Source", "Amount", ""]}>
-                      {items.map((it, idx) => (
-                        <tr key={it.id} className="border-t border-parchment-line align-middle">
-                          <td className="py-3 pr-3">
-                            <Input
-                              value={it.label}
-                              onChange={(e) => updateLine(id, idx, { label: e.target.value })}
-                            />
-                          </td>
-                          <td className="py-3 pr-3 w-40">
-                            <Select
-                              value={it.source ?? "Estimate"}
-                              onChange={(e) =>
-                                updateLine(id, idx, { source: e.target.value as LineItem["source"] })
-                              }
-                            >
-                              <option>Confirmed</option>
-                              <option>Estimate</option>
-                            </Select>
-                          </td>
-                          <td className="py-3 pr-3 w-36">
-                            <NumberInput
-                              value={it.amount}
-                              onChange={(v) => updateLine(id, idx, { amount: v })}
-                            />
-                          </td>
-                          <td className="py-3 pr-0 text-right">
-                            <IconButton label="Remove" onClick={() => removeLine(id, idx)}>
-                              ×
-                            </IconButton>
-                          </td>
-                        </tr>
-                      ))}
+                      {items.map((it, idx) => {
+                        // Downgrade-aware render: a curated-vendor reference
+                        // on a free-tier account is shown name-only with the
+                        // amount still editable. Personal references and Pro
+                        // users get the full editor.
+                        const isLockedCurated =
+                          it.vendorSource === "curated" && !userIsPro;
+                        const display =
+                          (it.vendorId && curatedDisplays[it.vendorId]?.name) || it.label;
+                        return (
+                          <tr key={it.id} className="border-t border-parchment-line align-middle">
+                            <td className="py-3 pr-3">
+                              {isLockedCurated ? (
+                                <div className="space-y-0.5">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-display text-base text-ink">
+                                      {display}
+                                    </span>
+                                    <span className="rounded-full border border-gold-line bg-parchment-deep px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold">
+                                      Curated
+                                    </span>
+                                  </div>
+                                  <p className="font-display text-xs italic text-ink-mute">
+                                    Re-upgrade to edit
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="space-y-0.5">
+                                  <Input
+                                    value={it.label}
+                                    onChange={(e) =>
+                                      updateLine(id, idx, { label: e.target.value })
+                                    }
+                                  />
+                                  {it.vendorSource === "curated" && (
+                                    <span className="ml-1 inline-block rounded-full border border-gold-line bg-parchment-deep px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold">
+                                      Curated
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 pr-3 w-40">
+                              <Select
+                                value={it.source ?? "Estimate"}
+                                onChange={(e) =>
+                                  updateLine(id, idx, { source: e.target.value as LineItem["source"] })
+                                }
+                              >
+                                <option>Confirmed</option>
+                                <option>Estimate</option>
+                              </Select>
+                            </td>
+                            <td className="py-3 pr-3 w-36">
+                              <NumberInput
+                                value={it.amount}
+                                onChange={(v) => updateLine(id, idx, { amount: v })}
+                              />
+                            </td>
+                            <td className="py-3 pr-0 text-right">
+                              <IconButton label="Remove" onClick={() => removeLine(id, idx)}>
+                                ×
+                              </IconButton>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </ProgrammeTable>
-                    <AddRow label="Add line item" onClick={() => addLine(id)} />
+                    <div className="mt-4 flex flex-wrap items-center gap-3 print:hidden">
+                      <Button variant="ghost" onClick={() => addLine(id)}>
+                        + Add line item
+                      </Button>
+                      <VendorPicker
+                        category={id}
+                        vendors={vendorOptions}
+                        onPick={(v) => addLineFromVendor(id, v)}
+                      />
+                      {id === "attire" && budget.meta.tradition && (
+                        <button
+                          type="button"
+                          onClick={insertAttireDefaults}
+                          className="font-display text-sm italic text-ink-mute underline-offset-2 hover:text-ink hover:underline"
+                        >
+                          Insert {TRADITION_LABEL[budget.meta.tradition]} attire defaults (bride · groom · family)
+                        </button>
+                      )}
+                    </div>
                   </SectionWrapper>
                   <Divider />
                 </div>
               );
             })}
 
-            {/* 11 contingency */}
+            {/* 12 contingency */}
             <SectionWrapper
               id="contingency"
-              n={11}
+              n={12}
               title={`Contingency (${budget.contingencyPct}%)`}
               description="A cushion for the unforeseen, applied to the subtotal above."
               total={cont}
@@ -559,10 +817,10 @@ export default function Calculator({
 
             <Divider />
 
-            {/* 12 summary */}
+            {/* 13 summary */}
             <SectionWrapper
               id="summary"
-              n={12}
+              n={13}
               title="Summary"
               description="All sections at a glance."
               total={total}
@@ -713,6 +971,130 @@ function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
+function VendorPicker({
+  category,
+  vendors,
+  onPick,
+}: {
+  category: LineSectionKey;
+  vendors: VendorOption[];
+  onPick: (vendor: VendorOption) => void;
+}) {
+  const matches = vendors.filter((v) => v.category === category);
+  const personal = matches.filter((v) => v.source === "personal");
+  const curated = matches.filter((v) => v.source === "curated");
+
+  if (matches.length === 0) {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <a
+          href="/vendors"
+          className="font-display text-sm italic text-ink-mute underline-offset-2 hover:text-ink hover:underline"
+        >
+          + Add from vendor directory →
+        </a>
+        <a
+          href="/vendors?tab=curated"
+          className="font-display text-sm italic text-gold underline-offset-2 hover:text-ink hover:underline"
+        >
+          ★ Browse curated →
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Select
+        aria-label="Add from vendor directory"
+        className="w-auto min-w-[14rem]"
+        value=""
+        onChange={(e) => {
+          const v = matches.find((x) => x.id === e.target.value);
+          if (v) onPick(v);
+          e.currentTarget.value = "";
+        }}
+      >
+        <option value="">+ Add a vendor…</option>
+        {personal.length > 0 && (
+          <optgroup label="Your vendors">
+            {personal.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+                {v.quoteAmount > 0 ? ` — ${formatINR(v.quoteAmount)}${VENDOR_RATE_HINT[v.rateType]}` : ""}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        {curated.length > 0 && (
+          <optgroup label="From the directory">
+            {curated.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name} · Curated
+                {v.quoteAmount > 0 ? ` — ${formatINR(v.quoteAmount)}${VENDOR_RATE_HINT[v.rateType]}` : ""}
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </Select>
+      {curated.length === 0 && (
+        <a
+          href="/vendors?tab=curated"
+          className="font-display text-sm italic text-gold underline-offset-2 hover:text-ink hover:underline"
+        >
+          ★ Browse curated →
+        </a>
+      )}
+    </div>
+  );
+}
+
+const VENDOR_RATE_HINT: Record<VendorOption["rateType"], string> = {
+  fixed: "",
+  per_event: " /event",
+  per_day: " /day",
+};
+
+// Compute the price + label for a budget line from a vendor pick.
+// per_event multiplies by budget.meta.events; per_day by inclusive day count.
+function priceVendorLine(vendor: VendorOption, budget: Budget): { amount: number; label: string } {
+  if (vendor.rateType === "per_event") {
+    const n = Math.max(0, Math.round(budget.meta.events ?? 0));
+    if (n <= 0) {
+      return {
+        amount: vendor.quoteAmount,
+        label: `${vendor.name} (set events count)`,
+      };
+    }
+    return {
+      amount: Math.round(vendor.quoteAmount * n),
+      label: `${vendor.name} (× ${n} events)`,
+    };
+  }
+  if (vendor.rateType === "per_day") {
+    const days = inclusiveDayCount(budget.meta.startDate, budget.meta.endDate);
+    if (days <= 0) {
+      return {
+        amount: vendor.quoteAmount,
+        label: `${vendor.name} (set wedding dates)`,
+      };
+    }
+    return {
+      amount: Math.round(vendor.quoteAmount * days),
+      label: `${vendor.name} (× ${days} days)`,
+    };
+  }
+  return { amount: vendor.quoteAmount, label: vendor.name };
+}
+
+function inclusiveDayCount(startISO: string, endISO: string): number {
+  if (!startISO || !endISO) return 0;
+  const s = new Date(startISO + "T00:00:00").getTime();
+  const e = new Date(endISO + "T00:00:00").getTime();
+  if (Number.isNaN(s) || Number.isNaN(e) || e < s) return 0;
+  return Math.floor((e - s) / 86_400_000) + 1;
+}
+
 function SummaryRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-baseline justify-between py-2.5 text-sm">
@@ -722,51 +1104,272 @@ function SummaryRow({ label, value }: { label: string; value: number }) {
   );
 }
 
+function KpiTile({
+  label,
+  value,
+  sectionId,
+  offsetTop,
+  emphasis = false,
+}: {
+  label: string;
+  value: number;
+  sectionId: string;
+  offsetTop: number;
+  emphasis?: boolean;
+}) {
+  const onClick = () => {
+    const el = document.getElementById(`section-${sectionId}`);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - offsetTop + 1;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "group flex flex-col items-start gap-1 px-4 py-3 text-left transition-colors " +
+        "hover:bg-parchment-deep focus:outline-none focus:bg-parchment-deep " +
+        (emphasis ? "bg-parchment-deep/40" : "")
+      }
+    >
+      <span className="text-[10px] uppercase tracking-[0.22em] text-ink-mute">{label}</span>
+      <span
+        className={
+          "font-display tabular leading-none " +
+          (emphasis ? "text-2xl text-ink lg:text-3xl" : "text-xl text-ink-soft lg:text-2xl")
+        }
+      >
+        {formatINR(value)}
+      </span>
+    </button>
+  );
+}
+
+function EventsTable({
+  tradition,
+  events,
+  pickedVenue,
+  onUpdate,
+  onAdd,
+  onRemove,
+  onResetToDefaults,
+}: {
+  tradition: WeddingTradition | null;
+  events: WeddingEvent[];
+  pickedVenue: VenueOption | null;
+  onUpdate: (idx: number, patch: Partial<WeddingEvent>) => void;
+  onAdd: () => void;
+  onRemove: (idx: number) => void;
+  onResetToDefaults: () => void;
+}) {
+  // Compute the space options to show. If a venue is picked, only show spaces
+  // that property actually has — plus "Other" as a fallback. Otherwise show all.
+  const venueSpaces = pickedVenue?.spaces;
+  const availableSpaces = EVENT_SPACES.filter((s) => {
+    if (s.key === "other") return true;
+    if (!venueSpaces) return true;
+    return venueSpaces[s.key as keyof typeof venueSpaces];
+  });
+
+  if (!tradition) {
+    return (
+      <p className="font-display text-sm italic text-ink-mute">
+        Pick a tradition above to see the typical events.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      <ProgrammeTable headers={["Event", "Space", "Date", ""]}>
+        {events.length === 0 ? (
+          <tr>
+            <td colSpan={4} className="py-6 text-center font-display text-sm italic text-ink-mute">
+              No events yet — click &ldquo;Add event&rdquo; or &ldquo;Reset to defaults&rdquo;.
+            </td>
+          </tr>
+        ) : (
+          events.map((e, idx) => {
+            const spaceMissing =
+              e.space &&
+              e.space !== "other" &&
+              venueSpaces &&
+              !venueSpaces[e.space as keyof typeof venueSpaces];
+            return (
+              <tr key={e.id} className="border-t border-parchment-line align-middle">
+                <td className="py-3 pr-3">
+                  <Input
+                    value={e.name}
+                    onChange={(ev) => onUpdate(idx, { name: ev.target.value })}
+                  />
+                </td>
+                <td className="py-3 pr-3 w-48">
+                  <Select
+                    value={e.space}
+                    onChange={(ev) => onUpdate(idx, { space: ev.target.value })}
+                  >
+                    <option value="">Select…</option>
+                    {availableSpaces.map((s) => (
+                      <option key={s.key} value={s.key}>
+                        {s.label}
+                      </option>
+                    ))}
+                    {/* Preserve a previously-set space the venue doesn't actually have. */}
+                    {spaceMissing && (
+                      <option value={e.space} disabled>
+                        {e.space} (not at this venue)
+                      </option>
+                    )}
+                  </Select>
+                </td>
+                <td className="py-3 pr-3 w-44">
+                  <DateField
+                    value={e.date ?? ""}
+                    ariaLabel={`${e.name} date`}
+                    onChange={(v) => onUpdate(idx, { date: v })}
+                  />
+                </td>
+                <td className="py-3 pr-0 text-right">
+                  <IconButton label="Remove" onClick={() => onRemove(idx)}>
+                    ×
+                  </IconButton>
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </ProgrammeTable>
+      <div className="mt-4 flex flex-wrap items-center gap-3 print:hidden">
+        <Button variant="ghost" onClick={onAdd}>
+          + Add event
+        </Button>
+        <button
+          type="button"
+          onClick={onResetToDefaults}
+          className="font-display text-sm italic text-ink-mute underline-offset-2 hover:text-ink hover:underline"
+        >
+          Reset to {TRADITION_LABEL[tradition]} defaults
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function VenueField({
   value,
   options,
+  guests,
+  error,
   onChange,
 }: {
   value: string;
   options: VenueOption[];
+  guests: number;
+  error?: string | null;
   onChange: (name: string) => void;
 }) {
+  const [showAll, setShowAll] = useState(false);
+
   const empty = options.length === 0;
+  const hasError = Boolean(error);
+  const required = requiredRoomsForGuests(guests);
+  const fits = (o: VenueOption) => o.rooms >= required;
+  const matchCount = options.filter(fits).length;
+
+  // Filter behaviour:
+  //  - guests=0 or showAll → show every venue
+  //  - matches exist → show only matches (plus the currently-selected venue, even if it doesn't fit)
+  //  - no matches → fall back to showing all + a warning
+  const filterActive = guests > 0 && !showAll && matchCount > 0;
+  const visible = filterActive
+    ? options.filter((o) => fits(o) || o.name === value)
+    : options;
+
   const valueMissing = value !== "" && !options.some((o) => o.name === value);
+  const selectedFitsNot =
+    guests > 0 && value !== "" && options.some((o) => o.name === value && !fits(o));
+
+  let helper: React.ReactNode = undefined;
+  if (hasError) {
+    helper = <span className="text-rose-700 dark:text-rose-300">Couldn&apos;t load Properties: {error}</span>;
+  } else if (empty) {
+    helper = (
+      <>
+        No venues yet. Add one in{" "}
+        <a href="/properties" className="text-ink underline-offset-2 hover:underline">
+          Properties
+        </a>{" "}
+        first.
+      </>
+    );
+  } else if (guests > 0 && matchCount === 0) {
+    helper = (
+      <span>
+        No venues with ≥{required} rooms for {guests} guests — showing all {options.length}.
+      </span>
+    );
+  } else if (filterActive) {
+    helper = (
+      <span>
+        Showing {matchCount} of {options.length} that fit {guests} guests (≥{required} rooms).{" "}
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="text-ink underline-offset-2 hover:underline"
+        >
+          Show all
+        </button>
+        {selectedFitsNot && (
+          <>
+            {" "}· Current pick is below the rule of thumb.
+          </>
+        )}
+      </span>
+    );
+  } else if (showAll && guests > 0 && matchCount > 0) {
+    helper = (
+      <span>
+        Showing all {options.length} venues.{" "}
+        <button
+          type="button"
+          onClick={() => setShowAll(false)}
+          className="text-ink underline-offset-2 hover:underline"
+        >
+          Filter to {matchCount} that fit {guests} guests
+        </button>
+      </span>
+    );
+  }
 
   return (
-    <Field
-      label="Venue"
-      helper={
-        empty ? (
-          <>
-            No venues yet. Add one in{" "}
-            <a href="/properties" className="text-ink underline-offset-2 hover:underline">
-              Properties
-            </a>{" "}
-            first.
-          </>
-        ) : undefined
-      }
-    >
+    <Field label="Venue" helper={helper}>
       <Select
         value={value}
-        disabled={empty}
+        disabled={empty && !hasError}
         onChange={(e) => onChange(e.target.value)}
       >
         <option value="" disabled>
-          {empty ? "No venues yet" : "Select a venue…"}
+          {hasError
+            ? "Couldn't load venues"
+            : empty
+            ? "No venues yet"
+            : "Select a venue…"}
         </option>
         {valueMissing && (
           <option value={value} disabled>
             {value} (not in Properties)
           </option>
         )}
-        {options.map((o) => (
-          <option key={o.id} value={o.name}>
-            {o.name}
-          </option>
-        ))}
+        {visible.map((o) => {
+          const tooSmall = guests > 0 && !fits(o);
+          return (
+            <option key={o.id} value={o.name}>
+              {o.name} · {o.rooms} room{o.rooms === 1 ? "" : "s"}
+              {tooSmall ? " (below rule of thumb)" : ""}
+            </option>
+          );
+        })}
       </Select>
     </Field>
   );

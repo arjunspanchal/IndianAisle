@@ -69,7 +69,7 @@ export default function LoginForm({ next }: { next: string }) {
     return (
       <form onSubmit={onEmailSubmit} className="mt-5 space-y-3" noValidate>
         <label className="block">
-          <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500">Email</span>
+          <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">Email</span>
           <input
             className="text-input"
             type="email"
@@ -83,7 +83,7 @@ export default function LoginForm({ next }: { next: string }) {
         </label>
 
         {error && (
-          <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
             {error}
           </div>
         )}
@@ -92,7 +92,7 @@ export default function LoginForm({ next }: { next: string }) {
           {pending ? "Sending…" : "Send code"}
         </button>
 
-        <p className="pt-1 text-center text-xs text-stone-500">
+        <p className="pt-1 text-center text-xs text-stone-500 dark:text-stone-400">
           We&apos;ll email you a 6-digit code. No password required.
         </p>
       </form>
@@ -101,12 +101,12 @@ export default function LoginForm({ next }: { next: string }) {
 
   return (
     <form onSubmit={onCodeSubmit} className="mt-5 space-y-3" noValidate>
-      <div className="rounded-md bg-stone-50 px-3 py-2 text-sm text-stone-600">
-        Code sent to <span className="font-medium text-stone-800">{email}</span>
+      <div className="rounded-md bg-stone-50 px-3 py-2 text-sm text-stone-600 dark:bg-stone-900/40 dark:text-stone-400">
+        Code sent to <span className="font-medium text-stone-800 dark:text-stone-100">{email}</span>
       </div>
 
       <label className="block">
-        <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500">6-digit code</span>
+        <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">6-digit code</span>
         <input
           ref={codeInputRef}
           className="text-input tracking-[0.4em] text-center font-mono text-lg"
@@ -123,12 +123,12 @@ export default function LoginForm({ next }: { next: string }) {
       </label>
 
       {error && (
-        <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
           {error}
         </div>
       )}
       {info && !error && (
-        <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30">
           {info}
         </div>
       )}
@@ -137,7 +137,7 @@ export default function LoginForm({ next }: { next: string }) {
         {pending ? "Verifying…" : "Verify"}
       </button>
 
-      <div className="flex items-center justify-between pt-1 text-xs text-stone-500">
+      <div className="flex items-center justify-between pt-1 text-xs text-stone-500 dark:text-stone-400">
         <button
           type="button"
           className="underline-offset-2 hover:underline disabled:opacity-50"

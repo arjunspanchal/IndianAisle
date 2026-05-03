@@ -3,7 +3,19 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+
+  // Public + self-gating routes:
+  // - "/" landing
+  // - "/login" (couple OTP)
+  // - "/vendor/*" (vendor portal — pages handle their own auth gates)
+  // - "/admin/*" (admin layout calls requireAdmin())
+  // Everything else (the couple-side calculator/properties/etc.) still gets
+  // a hard redirect to /login when there's no session.
   const isLogin = path === "/login" || path.startsWith("/login/");
+  const isLanding = path === "/";
+  const isVendorPortal = path === "/vendor" || path.startsWith("/vendor/");
+  const isAdminPortal = path === "/admin" || path.startsWith("/admin/");
+  const isPublic = isLogin || isLanding || isVendorPortal || isAdminPortal;
 
   const res = NextResponse.next({ request: req });
 
@@ -27,10 +39,12 @@ export async function middleware(req: NextRequest) {
     },
   );
 
-  // Refreshes the session cookie if needed.
+  // Refresh the session cookie if needed. This is the main thing the
+  // middleware does for the vendor + admin routes — those pages handle
+  // their own gating server-side.
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && !isLogin) {
+  if (!user && !isPublic) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
@@ -41,7 +55,10 @@ export async function middleware(req: NextRequest) {
   if (user && isLogin) {
     const url = req.nextUrl.clone();
     const next = req.nextUrl.searchParams.get("next");
-    url.pathname = next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/login") ? next : "/";
+    url.pathname =
+      next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/login")
+        ? next
+        : "/";
     url.search = "";
     return NextResponse.redirect(url);
   }

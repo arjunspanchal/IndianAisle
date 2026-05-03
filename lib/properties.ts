@@ -1,5 +1,5 @@
-// Shared directory of candidate wedding venues / properties.
-// Persisted in Airtable so it's visible to every user of the app.
+// Per-owner directory of candidate wedding venues / properties.
+// Persisted in Supabase (table `wedding_properties`, RLS-scoped to owner_id).
 
 export type PropertyTier = 1 | 2 | 3;
 
@@ -15,6 +15,8 @@ export type PropertyStatus = (typeof PROPERTY_STATUS_OPTIONS)[number];
 
 export type Property = {
   id: string;
+  // Server-side row id once persisted (Supabase UUID). Same value as `id` for saved rows;
+  // unset for client-side blanks. Field name is legacy from the Airtable era.
   airtableId?: string;
 
   // Identity
@@ -63,6 +65,16 @@ export type Property = {
   rating?: number;           // 0–5
   visited?: boolean;
 
+  // Geo (populated from Google Places when the user picks a venue)
+  lat?: number;
+  lng?: number;
+  placeId?: string;
+
+  // Nearest airport (auto-derived from Google Distance Matrix on Place pick).
+  // `airportKm` (above) holds the driving distance.
+  nearestAirportName?: string;
+  nearestAirportPlaceId?: string;
+
   // Free-form
   notes?: string;
 };
@@ -94,38 +106,6 @@ export const blankProperty = (): Property => ({
   visited: false,
   notes: "",
 });
-
-export const defaultProperties = (): Property[] => [
-  {
-    id: "seed-storii",
-    name: "Storii by ITC Hotels — Naina Tikkar",
-    location: "Naina Tikkar, Himachal Pradesh",
-    address: "Sirmaur district, near Renuka Lake",
-    website: "https://www.itchotels.com/in/en/storii-nainatikkar",
-    rooms: 41,
-    maxGuests: 200,
-    eventSpaces: 3,
-    tier: 1,
-    banquet: true,
-    lawn: true,
-    poolside: true,
-    mandap: true,
-    bridalSuite: true,
-    airConditioned: true,
-    inHouseCatering: true,
-    outsideCateringAllowed: false,
-    outsideDecorAllowed: true,
-    liquorLicense: true,
-    avgRoomRate: 15000,
-    perPlateCost: 2400,
-    parkingSpots: 40,
-    airportKm: 90,
-    status: "Booked",
-    rating: 5,
-    visited: true,
-    notes: "Currently planned venue for the wedding.",
-  },
-];
 
 // Quick boolean-feature summary for list cards.
 export const FEATURE_FLAGS: { key: keyof Property; label: string }[] = [

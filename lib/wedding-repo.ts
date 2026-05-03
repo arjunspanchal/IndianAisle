@@ -4,11 +4,12 @@ import {
   LineItem,
   MealConfig,
   RoomCategory,
+  WeddingEvent,
   contingencyTotal,
   defaultBudget,
 } from "./budget";
 import { createSupabaseServerClient } from "./supabase/server";
-import type { SectionKey, WeddingRole, WeddingType } from "./supabase/types";
+import type { SectionKey, WeddingRole, WeddingTradition, WeddingType } from "./supabase/types";
 
 const SECTION_KEYS: SectionKey[] = [
   "decor", "entertainment", "photography", "attire",
@@ -20,36 +21,69 @@ const SECTION_KEYS: SectionKey[] = [
 export type WeddingListItem = {
   id: string;
   role: WeddingRole;
+  name: string;
   coupleNames: string;
   weddingDate: string | null;
   weddingType: WeddingType;
   updatedAt: string;
+  isShared: boolean; // true when current user is a collaborator, not the owner
 };
 
-// All reads are RLS-scoped to owner_id = auth.uid().
-// Collaborator/sharing is a future task.
+export type WeddingDashboardItem = WeddingListItem & {
+  guestCount: number;
+  eventCount: number;
+};
+
+// Per-wedding aggregates for the planner dashboard. One round-trip per wedding
+// per stat (count: 'exact', head: true is cheap — no rows returned).
+export async function listWeddingsWithStats(): Promise<WeddingDashboardItem[]> {
+  const sb = createSupabaseServerClient();
+  const list = await listWeddingsForCurrentUser();
+  if (list.length === 0) return [];
+  const enriched = await Promise.all(
+    list.map(async (w) => {
+      const [guestsRes, eventsRes] = await Promise.all([
+        sb.from("wedding_guests").select("*", { count: "exact", head: true }).eq("wedding_id", w.id),
+        sb.from("wedding_events").select("*", { count: "exact", head: true }).eq("wedding_id", w.id),
+      ]);
+      return {
+        ...w,
+        guestCount: guestsRes.count ?? 0,
+        eventCount: eventsRes.count ?? 0,
+      };
+    }),
+  );
+  return enriched;
+}
+
+// RLS now returns weddings owned by the user OR ones they collaborate on.
 export async function listWeddingsForCurrentUser(): Promise<WeddingListItem[]> {
   const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
   const { data, error } = await sb
     .from("weddings")
-    .select("id, role, couple_names, wedding_date, wedding_type, updated_at")
+    .select("id, role, name, couple_names, wedding_date, wedding_type, updated_at, owner_id")
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []).map((r) => ({
     id: r.id,
     role: r.role,
+    name: r.name ?? "",
     coupleNames: r.couple_names,
     weddingDate: r.wedding_date,
     weddingType: r.wedding_type,
     updatedAt: r.updated_at,
+    isShared: !!user && r.owner_id !== user.id,
   }));
 }
 
 export type CreateWeddingInput = {
   role: WeddingRole;
+  name: string;
   couple_names: string;
   wedding_date: string | null;
   wedding_type: WeddingType;
+  venue?: string;
 };
 
 export async function createWedding(input: CreateWeddingInput): Promise<string> {
@@ -62,9 +96,11 @@ export async function createWedding(input: CreateWeddingInput): Promise<string> 
     .insert({
       owner_id: user.id,
       role: input.role,
+      name: input.name,
       couple_names: input.couple_names,
       wedding_date: input.wedding_date,
       wedding_type: input.wedding_type,
+      venue: input.venue ?? "",
     })
     .select("id")
     .single();
@@ -72,9 +108,19 @@ export async function createWedding(input: CreateWeddingInput): Promise<string> 
   return wedding.id;
 }
 
+export async function updateWeddingName(weddingId: string, name: string): Promise<void> {
+  const sb = createSupabaseServerClient();
+  const { error } = await sb
+    .from("weddings")
+    .update({ name })
+    .eq("id", weddingId);
+  if (error) throw new Error(error.message);
+}
+
 export type WeddingRecord = {
   id: string;
   role: WeddingRole;
+  name: string;
   coupleNames: string;
   weddingDate: string | null;
   weddingType: WeddingType;
@@ -86,7 +132,7 @@ export async function getWeddingById(id: string): Promise<WeddingRecord | null> 
   const sb = createSupabaseServerClient();
   const { data, error } = await sb
     .from("weddings")
-    .select("id, role, couple_names, wedding_date, wedding_type, created_at, updated_at")
+    .select("id, role, name, couple_names, wedding_date, wedding_type, created_at, updated_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -94,6 +140,7 @@ export async function getWeddingById(id: string): Promise<WeddingRecord | null> 
   return {
     id: data.id,
     role: data.role,
+    name: data.name ?? "",
     coupleNames: data.couple_names,
     weddingDate: data.wedding_date,
     weddingType: data.wedding_type,
@@ -115,14 +162,16 @@ export async function getWeddingBudget(weddingId: string): Promise<Budget | null
   if (error) throw new Error(error.message);
   if (!wedding) return null;
 
-  const [roomsRes, mealsRes, linesRes] = await Promise.all([
+  const [roomsRes, mealsRes, linesRes, eventsRes] = await Promise.all([
     sb.from("wedding_rooms").select("*").eq("wedding_id", weddingId).order("position"),
     sb.from("wedding_meals").select("*").eq("wedding_id", weddingId).order("position"),
     sb.from("wedding_lines").select("*").eq("wedding_id", weddingId).order("position"),
+    sb.from("wedding_events").select("*").eq("wedding_id", weddingId).order("position"),
   ]);
   if (roomsRes.error) throw new Error(roomsRes.error.message);
   if (mealsRes.error) throw new Error(mealsRes.error.message);
   if (linesRes.error) throw new Error(linesRes.error.message);
+  if (eventsRes.error) throw new Error(eventsRes.error.message);
 
   const rooms: RoomCategory[] = (roomsRes.data ?? []).map((r) => ({
     id: r.id,
@@ -154,8 +203,18 @@ export async function getWeddingBudget(weddingId: string): Promise<Budget | null
       amount: Number(r.amount),
       source: r.source,
       note: r.note ?? undefined,
+      vendorId: r.vendor_id,
+      vendorSource: r.vendor_source,
     });
   }
+
+  const events: WeddingEvent[] = (eventsRes.data ?? []).map((e) => ({
+    id: e.id,
+    airtableId: e.id,
+    name: e.name,
+    space: e.space,
+    date: e.event_date ?? undefined,
+  }));
 
   const base = defaultBudget();
   return {
@@ -168,6 +227,7 @@ export async function getWeddingBudget(weddingId: string): Promise<Budget | null
       endDate: wedding.end_date ?? "",
       guests: wedding.guests,
       events: wedding.events,
+      tradition: wedding.tradition,
     },
     rooms: {
       nights: wedding.rooms_nights,
@@ -175,6 +235,7 @@ export async function getWeddingBudget(weddingId: string): Promise<Budget | null
       categories: rooms,
     },
     meals,
+    events,
     decor: buckets.decor,
     entertainment: buckets.entertainment,
     photography: buckets.photography,
@@ -203,7 +264,9 @@ export async function saveWeddingBudget(weddingId: string, b: Budget): Promise<v
         start_date: b.meta.startDate || null,
         end_date: b.meta.endDate || null,
         guests: b.meta.guests,
-        events: b.meta.events,
+        // events is now derived from the events array length
+        events: b.events?.length ?? b.meta.events,
+        tradition: (b.meta.tradition ?? null) as WeddingTradition | null,
         rooms_nights: b.rooms.nights,
         rooms_gst_pct: b.rooms.gstPct,
         contingency_pct: b.contingencyPct,
@@ -213,18 +276,21 @@ export async function saveWeddingBudget(weddingId: string, b: Budget): Promise<v
   }
 
   // Snapshot existing children to diff against.
-  const [roomsRes, mealsRes, linesRes] = await Promise.all([
+  const [roomsRes, mealsRes, linesRes, eventsRes] = await Promise.all([
     sb.from("wedding_rooms").select("id").eq("wedding_id", weddingId),
     sb.from("wedding_meals").select("id").eq("wedding_id", weddingId),
     sb.from("wedding_lines").select("id").eq("wedding_id", weddingId),
+    sb.from("wedding_events").select("id").eq("wedding_id", weddingId),
   ]);
   if (roomsRes.error) throw new Error(roomsRes.error.message);
   if (mealsRes.error) throw new Error(mealsRes.error.message);
   if (linesRes.error) throw new Error(linesRes.error.message);
+  if (eventsRes.error) throw new Error(eventsRes.error.message);
 
   const existingRooms = new Set((roomsRes.data ?? []).map((r) => r.id));
   const existingMeals = new Set((mealsRes.data ?? []).map((r) => r.id));
   const existingLines = new Set((linesRes.data ?? []).map((r) => r.id));
+  const existingEvents = new Set((eventsRes.data ?? []).map((r) => r.id));
 
   const roomKeep = new Set<string>();
   const roomInserts: ReturnType<typeof roomInsertRow>[] = [];
@@ -267,11 +333,25 @@ export async function saveWeddingBudget(weddingId: string, b: Budget): Promise<v
   }
   const lineDeletes = Array.from(existingLines).filter((id) => !lineKeep.has(id));
 
+  const eventKeep = new Set<string>();
+  const eventInserts: ReturnType<typeof eventInsertRow>[] = [];
+  const eventUpdates: { id: string; fields: ReturnType<typeof eventUpdateRow> }[] = [];
+  (b.events ?? []).forEach((e, i) => {
+    if (e.airtableId && existingEvents.has(e.airtableId)) {
+      eventKeep.add(e.airtableId);
+      eventUpdates.push({ id: e.airtableId, fields: eventUpdateRow(e, i) });
+    } else {
+      eventInserts.push(eventInsertRow(e, i, weddingId));
+    }
+  });
+  const eventDeletes = Array.from(existingEvents).filter((id) => !eventKeep.has(id));
+
   // Apply: deletes → updates → inserts. Children are independent so parallelise per phase.
   await Promise.all([
     roomDeletes.length ? sb.from("wedding_rooms").delete().in("id", roomDeletes) : Promise.resolve({ error: null }),
     mealDeletes.length ? sb.from("wedding_meals").delete().in("id", mealDeletes) : Promise.resolve({ error: null }),
     lineDeletes.length ? sb.from("wedding_lines").delete().in("id", lineDeletes) : Promise.resolve({ error: null }),
+    eventDeletes.length ? sb.from("wedding_events").delete().in("id", eventDeletes) : Promise.resolve({ error: null }),
   ]).then((rs) => {
     for (const r of rs as { error: { message: string } | null }[]) if (r.error) throw new Error(r.error.message);
   });
@@ -288,6 +368,10 @@ export async function saveWeddingBudget(weddingId: string, b: Budget): Promise<v
     const { error } = await sb.from("wedding_lines").update(u.fields).eq("id", u.id);
     if (error) throw new Error(error.message);
   }
+  for (const u of eventUpdates) {
+    const { error } = await sb.from("wedding_events").update(u.fields).eq("id", u.id);
+    if (error) throw new Error(error.message);
+  }
 
   if (roomInserts.length) {
     const { error } = await sb.from("wedding_rooms").insert(roomInserts);
@@ -299,6 +383,10 @@ export async function saveWeddingBudget(weddingId: string, b: Budget): Promise<v
   }
   if (lineInserts.length) {
     const { error } = await sb.from("wedding_lines").insert(lineInserts);
+    if (error) throw new Error(error.message);
+  }
+  if (eventInserts.length) {
+    const { error } = await sb.from("wedding_events").insert(eventInserts);
     if (error) throw new Error(error.message);
   }
 
@@ -358,6 +446,9 @@ function lineInsertRow(it: LineItem, section: SectionKey, position: number, wedd
     source: it.source ?? "Estimate",
     note: it.note ?? null,
     position,
+    // Both fields move together — only set if both present.
+    vendor_id: it.vendorId && it.vendorSource ? it.vendorId : null,
+    vendor_source: it.vendorId && it.vendorSource ? it.vendorSource : null,
   };
 }
 function lineUpdateRow(it: LineItem, section: SectionKey, position: number) {
@@ -367,6 +458,25 @@ function lineUpdateRow(it: LineItem, section: SectionKey, position: number) {
     amount: it.amount,
     source: it.source ?? "Estimate",
     note: it.note ?? null,
+    position,
+    vendor_id: it.vendorId && it.vendorSource ? it.vendorId : null,
+    vendor_source: it.vendorId && it.vendorSource ? it.vendorSource : null,
+  };
+}
+function eventInsertRow(e: WeddingEvent, position: number, weddingId: string) {
+  return {
+    wedding_id: weddingId,
+    name: e.name,
+    space: e.space,
+    event_date: e.date && e.date.length > 0 ? e.date : null,
+    position,
+  };
+}
+function eventUpdateRow(e: WeddingEvent, position: number) {
+  return {
+    name: e.name,
+    space: e.space,
+    event_date: e.date && e.date.length > 0 ? e.date : null,
     position,
   };
 }

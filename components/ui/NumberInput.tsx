@@ -24,7 +24,7 @@ export default function NumberInput({
       inputMode="decimal"
       step={step}
       value={Number.isFinite(value) ? value : 0}
-      className={`${inputBase} tabular ${alignCls} ${className ?? ""}`}
+      className={`${inputBase}tabular ${alignCls} ${className ?? ""}`}
       onChange={(e) => {
         const v = parseFloat(e.target.value);
         onChange(Number.isFinite(v) ? v : 0);

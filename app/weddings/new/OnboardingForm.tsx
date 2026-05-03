@@ -6,14 +6,18 @@ import type { WeddingRole, WeddingType } from "@/lib/supabase/types";
 import DateField from "@/components/ui/DateField";
 import { createWeddingAction } from "./actions";
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
+
+export type VenueOption = { id: string; name: string; location: string };
 
 type FormState = {
   role: WeddingRole | null;
+  name: string;
   coupleNames: string;
   weddingDate: string; // ISO yyyy-mm-dd, "" for not decided
   dateUnknown: boolean;
   weddingType: WeddingType | null;
+  venue: string; // property name; "" = not picked yet
 };
 
 const ROLE_OPTIONS: { value: WeddingRole; label: string; hint: string }[] = [
@@ -29,9 +33,10 @@ const TYPE_OPTIONS: { value: WeddingType; label: string; hint: string }[] = [
 
 const STEP_TITLES = [
   "Whose wedding is it?",
-  "Couple names",
+  "Name your wedding",
   "When is the wedding?",
   "Local or destination?",
+  "Pick a venue",
   "Review & create",
 ];
 
@@ -46,16 +51,18 @@ const TYPE_LABEL: Record<WeddingType, string> = {
   destination: "Destination",
 };
 
-export default function OnboardingForm() {
+export default function OnboardingForm({ venueOptions = [] }: { venueOptions?: VenueOption[] }) {
   const [step, setStep] = useState<Step>(0);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<FormState>({
     role: null,
+    name: "",
     coupleNames: "",
     weddingDate: "",
     dateUnknown: false,
     weddingType: null,
+    venue: "",
   });
 
   const goNext = () => {
@@ -68,7 +75,8 @@ export default function OnboardingForm() {
       }
     }
     if (step === 3 && !state.weddingType) return setError("Pick local or destination.");
-    setStep((s) => (s >= 4 ? 4 : ((s + 1) as Step)));
+    // Step 4 (venue) is optional — no validation.
+    setStep((s) => (s >= 5 ? 5 : ((s + 1) as Step)));
   };
 
   const goBack = () => {
@@ -84,9 +92,11 @@ export default function OnboardingForm() {
     }
     const fd = new FormData();
     fd.set("role", state.role);
+    fd.set("name", state.name.trim());
     fd.set("couple_names", state.coupleNames.trim());
     fd.set("wedding_date", state.dateUnknown ? "" : state.weddingDate);
     fd.set("wedding_type", state.weddingType);
+    fd.set("venue", state.venue);
     startTransition(async () => {
       try {
         await createWeddingAction(fd);
@@ -122,28 +132,47 @@ export default function OnboardingForm() {
       )}
 
       {step === 1 && (
-        <div className="space-y-2">
-          <label htmlFor="couple_names" className="block text-xs uppercase tracking-wide text-stone-500">
-            Couple names
-          </label>
-          <input
-            id="couple_names"
-            className="text-input text-base"
-            type="text"
-            placeholder="e.g. Kash & Arjun"
-            value={state.coupleNames}
-            onChange={(e) => setState((s) => ({ ...s, coupleNames: e.target.value }))}
-            autoFocus
-          />
-          <p className="text-xs text-stone-500">
-            However you&apos;d like to refer to the couple — use names, nicknames, or hashtags.
-          </p>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <label htmlFor="couple_names" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              Couple names
+            </label>
+            <input
+              id="couple_names"
+              className="text-input text-base"
+              type="text"
+              placeholder="e.g. Kash & Arjun"
+              value={state.coupleNames}
+              onChange={(e) => setState((s) => ({ ...s, coupleNames: e.target.value }))}
+              autoFocus
+            />
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              However you&apos;d like to refer to the couple — use names, nicknames, or hashtags.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="wedding_name" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              Wedding name <span className="normal-case text-stone-400">(optional)</span>
+            </label>
+            <input
+              id="wedding_name"
+              className="text-input text-base"
+              type="text"
+              placeholder="e.g. The Big Fat Indian Wedding"
+              value={state.name}
+              onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
+            />
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              A custom title for this wedding. Shown in headers and on your wedding list. If left blank, we&apos;ll use the couple names.
+            </p>
+          </div>
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-3">
-          <span id="wedding_date_label" className="block text-xs uppercase tracking-wide text-stone-500">
+          <span id="wedding_date_label" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
             Wedding date
           </span>
           <DateField
@@ -154,7 +183,7 @@ export default function OnboardingForm() {
             placeholder="Pick a date"
             onChange={(v) => setState((s) => ({ ...s, weddingDate: v }))}
           />
-          <label className="flex items-center gap-2 text-sm text-stone-700">
+          <label className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200">
             <input
               type="checkbox"
               checked={state.dateUnknown}
@@ -165,7 +194,7 @@ export default function OnboardingForm() {
                   weddingDate: e.target.checked ? "" : s.weddingDate,
                 }))
               }
-              className="h-4 w-4 rounded border-stone-300 text-ink focus:ring-gold"
+              className="h-4 w-4 rounded border-stone-300 text-ink focus:ring-gold dark:border-stone-700"
             />
             Not decided yet
           </label>
@@ -187,18 +216,55 @@ export default function OnboardingForm() {
       )}
 
       {step === 4 && (
+        <div className="space-y-3">
+          {venueOptions.length === 0 ? (
+            <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300">
+              You don&apos;t have any properties saved yet. You can{" "}
+              <Link href="/properties" className="underline-offset-2 hover:underline">
+                add one in Properties
+              </Link>{" "}
+              now and pick later, or skip this step and choose a venue from the calculator.
+            </div>
+          ) : (
+            <>
+              <label htmlFor="venue" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                Venue (optional)
+              </label>
+              <select
+                id="venue"
+                className="text-input text-base"
+                value={state.venue}
+                onChange={(e) => setState((s) => ({ ...s, venue: e.target.value }))}
+              >
+                <option value="">I&apos;ll pick later</option>
+                {venueOptions.map((o) => (
+                  <option key={o.id} value={o.name}>
+                    {o.name}
+                    {o.location ? ` — ${o.location}` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-stone-500 dark:text-stone-400">
+                Pre-fills the venue on this wedding. You can change it any time.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
+      {step === 5 && (
         <ReviewSummary state={state} onEdit={(s) => setStep(s)} />
       )}
 
       {error && (
-        <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
           {error}
         </div>
       )}
 
       <div className="flex items-center justify-between gap-3 pt-2">
         {step === 0 ? (
-          <Link href="/" className="text-sm text-stone-500 underline-offset-2 hover:underline">
+          <Link href="/" className="text-sm text-stone-500 underline-offset-2 hover:underline dark:text-stone-400">
             Cancel
           </Link>
         ) : (
@@ -212,7 +278,7 @@ export default function OnboardingForm() {
           </button>
         )}
 
-        {step < 4 ? (
+        {step < 5 ? (
           <button type="button" onClick={goNext} className="btn-primary" disabled={pending}>
             Continue
           </button>
@@ -234,7 +300,7 @@ function Stepper({ current }: { current: Step }) {
           key={i}
           aria-hidden
           className={`h-1.5 flex-1 rounded-full transition ${
-            i <= current ? "bg-gold" : "bg-stone-200"
+            i <= current ? "bg-gold" : "bg-stone-200 dark:bg-stone-800"
           }`}
         />
       ))}
@@ -259,12 +325,12 @@ function OptionCard({
       onClick={onClick}
       className={`block w-full rounded-xl border px-4 py-3 text-left transition ${
         selected
-          ? "border-ink bg-ink/5 ring-1 ring-ink"
-          : "border-stone-200 bg-white hover:border-stone-300"
+          ? "border-ink bg-stone-50 ring-1 ring-ink dark:border-stone-100 dark:bg-stone-800 dark:ring-stone-100"
+          : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
       }`}
     >
-      <div className="font-serif text-xl">{label}</div>
-      <div className="mt-0.5 text-sm text-stone-600">{hint}</div>
+      <div className="font-serif text-xl text-stone-900 dark:text-stone-50">{label}</div>
+      <div className="mt-0.5 text-sm text-stone-600 dark:text-stone-400">{hint}</div>
     </button>
   );
 }
@@ -287,22 +353,24 @@ function ReviewSummary({
   const rows: { label: string; value: string; step: Step }[] = [
     { label: "Whose wedding", value: state.role ? ROLE_LABEL[state.role] : "—", step: 0 },
     { label: "Couple", value: state.coupleNames.trim() || "—", step: 1 },
+    { label: "Wedding name", value: state.name.trim() || "—", step: 1 },
     { label: "Date", value: date, step: 2 },
     { label: "Type", value: state.weddingType ? TYPE_LABEL[state.weddingType] : "—", step: 3 },
+    { label: "Venue", value: state.venue || "Pick later", step: 4 },
   ];
 
   return (
-    <ul className="divide-y divide-stone-200 rounded-xl border border-stone-200 bg-white">
+    <ul className="divide-y divide-stone-200 rounded-xl border border-stone-200 bg-white dark:bg-stone-900 dark:border-stone-800 dark:divide-stone-800">
       {rows.map((r) => (
         <li key={r.label} className="flex items-center justify-between px-4 py-3">
           <div>
-            <div className="text-xs uppercase tracking-wide text-stone-500">{r.label}</div>
+            <div className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">{r.label}</div>
             <div className="mt-0.5 text-base">{r.value}</div>
           </div>
           <button
             type="button"
             onClick={() => onEdit(r.step)}
-            className="text-sm text-stone-500 underline-offset-2 hover:underline"
+            className="text-sm text-stone-500 underline-offset-2 hover:underline dark:text-stone-400"
           >
             Edit
           </button>
