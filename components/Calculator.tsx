@@ -10,6 +10,7 @@ import {
   TRADITION_LABEL,
   WeddingEvent,
   WeddingTradition,
+  buildDefaultAttire,
   buildDefaultEvents,
   contingencyTotal,
   coupleDisplayName,
@@ -125,7 +126,8 @@ const LINE_SECTIONS: { id: LineSectionKey; title: string }[] = [
 ];
 
 // Header height used both for sticky offset and scroll-margin on sections.
-const HEADER_OFFSET_PX = 96;
+// Includes the top row + the live KPI bar (md+).
+const HEADER_OFFSET_PX = 144;
 
 export default function Calculator({
   initialBudget,
@@ -148,6 +150,9 @@ export default function Calculator({
   const total = grandTotal(budget);
   const sub = subtotalBeforeContingency(budget);
   const cont = contingencyTotal(budget);
+  const roomsT = sectionTotal(budget, "rooms");
+  const mealsT = sectionTotal(budget, "meals");
+  const otherT = LINE_SECTIONS.reduce((s, ls) => s + sectionTotal(budget, ls.id), 0);
 
   const navItems: SectionNavItem[] = SECTION_DEFS.map((s) => {
     let t: number | undefined;
@@ -233,37 +238,57 @@ export default function Calculator({
     }));
 
   const addLineFromVendor = (key: LineSectionKey, vendor: VendorOption) =>
-    setBudget((b) => ({
-      ...b,
-      [key]: [
-        ...(b[key] as LineItem[]),
-        {
-          id: `${key}-${Date.now()}`,
-          label: vendor.name,
-          amount: vendor.quoteAmount,
-          source: "Estimate",
-        },
-      ],
-    }));
+    setBudget((b) => {
+      const { amount, label } = priceVendorLine(vendor, b);
+      return {
+        ...b,
+        [key]: [
+          ...(b[key] as LineItem[]),
+          {
+            id: `${key}-${Date.now()}`,
+            label,
+            amount,
+            source: "Estimate",
+          },
+        ],
+      };
+    });
 
   const removeLine = (key: LineSectionKey, idx: number) =>
     setBudget((b) => ({ ...b, [key]: (b[key] as LineItem[]).filter((_, i) => i !== idx) }));
 
-  // ---- events ----
+  // ---- events + tradition-driven seeds ----
   const setTradition = (t: WeddingTradition | "") =>
     setBudget((b) => {
       const tradition = t === "" ? null : t;
-      // If we have no events yet (or only client-side blanks), seed from the
-      // tradition defaults so the user gets the function list immediately.
+      // Seed events when none persisted yet.
       const hasPersistedEvents = (b.events ?? []).some((e) => Boolean(e.airtableId));
-      const seed = tradition && !hasPersistedEvents
+      const seedEvents = tradition && !hasPersistedEvents
         ? buildDefaultEvents(tradition)
         : (b.events ?? []);
+      // Seed attire when none persisted yet (gives bride/groom/family rows up-front).
+      const hasPersistedAttire = b.attire.some((it) => Boolean(it.airtableId));
+      const seedAttire = tradition && !hasPersistedAttire
+        ? buildDefaultAttire(tradition)
+        : b.attire;
       return {
         ...b,
         meta: { ...b.meta, tradition },
-        events: seed,
+        events: seedEvents,
+        attire: seedAttire,
       };
+    });
+
+  const insertAttireDefaults = () =>
+    setBudget((b) => {
+      if (!b.meta.tradition) return b;
+      if (
+        b.attire.length > 0 &&
+        !confirm("Replace the current attire list with the defaults for this tradition?")
+      ) {
+        return b;
+      }
+      return { ...b, attire: buildDefaultAttire(b.meta.tradition) };
     });
 
   const updateEvent = (idx: number, patch: Partial<WeddingEvent>) =>
@@ -348,10 +373,11 @@ export default function Calculator({
             </p>
           </div>
 
-          <div className="flex shrink-0 items-end gap-4 lg:gap-6">
-            <div className="text-right">
+          <div className="flex shrink-0 items-center gap-4 lg:gap-6">
+            {/* Compact total visible on small screens; full KPI bar shows below on md+. */}
+            <div className="text-right md:hidden">
               <div className="text-[10px] uppercase tracking-[0.22em] text-ink-mute">Total</div>
-              <div className="font-display text-2xl tabular leading-none text-ink lg:text-3xl">
+              <div className="font-display text-2xl tabular leading-none text-ink">
                 {formatINR(total)}
               </div>
             </div>
@@ -393,6 +419,16 @@ export default function Calculator({
             >
               {saving ? "Saving…" : "Save"}
             </Button>
+          </div>
+        </div>
+
+        {/* Live KPI bar — running totals visible at all times. */}
+        <div className="hidden border-t border-parchment-line bg-parchment/60 md:block print:hidden">
+          <div className="mx-auto grid max-w-6xl grid-cols-4 divide-x divide-parchment-line px-5 lg:px-10">
+            <KpiTile label="Rooms" value={roomsT} sectionId="rooms" offsetTop={HEADER_OFFSET_PX} />
+            <KpiTile label="Meals" value={mealsT} sectionId="meals" offsetTop={HEADER_OFFSET_PX} />
+            <KpiTile label="All other costs" value={otherT + cont} sectionId="summary" offsetTop={HEADER_OFFSET_PX} />
+            <KpiTile label="Grand total" value={total} sectionId="summary" offsetTop={HEADER_OFFSET_PX} emphasis />
           </div>
         </div>
       </header>
@@ -687,6 +723,15 @@ export default function Calculator({
                         vendors={vendorOptions}
                         onPick={(v) => addLineFromVendor(id, v)}
                       />
+                      {id === "attire" && budget.meta.tradition && (
+                        <button
+                          type="button"
+                          onClick={insertAttireDefaults}
+                          className="font-display text-sm italic text-ink-mute underline-offset-2 hover:text-ink hover:underline"
+                        >
+                          Insert {TRADITION_LABEL[budget.meta.tradition]} attire defaults (bride · groom · family)
+                        </button>
+                      )}
                     </div>
                   </SectionWrapper>
                   <Divider />
@@ -904,11 +949,57 @@ function VendorPicker({
       {matches.map((v) => (
         <option key={v.id} value={v.id}>
           {v.name}
-          {v.quoteAmount > 0 ? ` — ${formatINR(v.quoteAmount)}` : ""}
+          {v.quoteAmount > 0 ? ` — ${formatINR(v.quoteAmount)}${VENDOR_RATE_HINT[v.rateType]}` : ""}
         </option>
       ))}
     </Select>
   );
+}
+
+const VENDOR_RATE_HINT: Record<VendorOption["rateType"], string> = {
+  fixed: "",
+  per_event: " /event",
+  per_day: " /day",
+};
+
+// Compute the price + label for a budget line from a vendor pick.
+// per_event multiplies by budget.meta.events; per_day by inclusive day count.
+function priceVendorLine(vendor: VendorOption, budget: Budget): { amount: number; label: string } {
+  if (vendor.rateType === "per_event") {
+    const n = Math.max(0, Math.round(budget.meta.events ?? 0));
+    if (n <= 0) {
+      return {
+        amount: vendor.quoteAmount,
+        label: `${vendor.name} (set events count)`,
+      };
+    }
+    return {
+      amount: Math.round(vendor.quoteAmount * n),
+      label: `${vendor.name} (× ${n} events)`,
+    };
+  }
+  if (vendor.rateType === "per_day") {
+    const days = inclusiveDayCount(budget.meta.startDate, budget.meta.endDate);
+    if (days <= 0) {
+      return {
+        amount: vendor.quoteAmount,
+        label: `${vendor.name} (set wedding dates)`,
+      };
+    }
+    return {
+      amount: Math.round(vendor.quoteAmount * days),
+      label: `${vendor.name} (× ${days} days)`,
+    };
+  }
+  return { amount: vendor.quoteAmount, label: vendor.name };
+}
+
+function inclusiveDayCount(startISO: string, endISO: string): number {
+  if (!startISO || !endISO) return 0;
+  const s = new Date(startISO + "T00:00:00").getTime();
+  const e = new Date(endISO + "T00:00:00").getTime();
+  if (Number.isNaN(s) || Number.isNaN(e) || e < s) return 0;
+  return Math.floor((e - s) / 86_400_000) + 1;
 }
 
 function SummaryRow({ label, value }: { label: string; value: number }) {
@@ -917,6 +1008,48 @@ function SummaryRow({ label, value }: { label: string; value: number }) {
       <dt className="text-ink-soft">{label}</dt>
       <dd className="tabular text-ink">{formatINR(value)}</dd>
     </div>
+  );
+}
+
+function KpiTile({
+  label,
+  value,
+  sectionId,
+  offsetTop,
+  emphasis = false,
+}: {
+  label: string;
+  value: number;
+  sectionId: string;
+  offsetTop: number;
+  emphasis?: boolean;
+}) {
+  const onClick = () => {
+    const el = document.getElementById(`section-${sectionId}`);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - offsetTop + 1;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "group flex flex-col items-start gap-1 px-4 py-3 text-left transition-colors " +
+        "hover:bg-parchment-deep focus:outline-none focus:bg-parchment-deep " +
+        (emphasis ? "bg-parchment-deep/40" : "")
+      }
+    >
+      <span className="text-[10px] uppercase tracking-[0.22em] text-ink-mute">{label}</span>
+      <span
+        className={
+          "font-display tabular leading-none " +
+          (emphasis ? "text-2xl text-ink lg:text-3xl" : "text-xl text-ink-soft lg:text-2xl")
+        }
+      >
+        {formatINR(value)}
+      </span>
+    </button>
   );
 }
 

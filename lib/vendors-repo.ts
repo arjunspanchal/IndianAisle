@@ -25,6 +25,7 @@ function fromRow(r: VendorRow): Vendor {
     name: r.name,
     category: r.category,
     quoteAmount: Number(r.quote_amount),
+    rateType: r.rate_type,
     contactName: r.contact_name,
     contactPhone: r.contact_phone,
     contactEmail: r.contact_email,
@@ -40,6 +41,7 @@ function toRowFields(v: Vendor): Omit<VendorInsert, "owner_id"> {
     name: v.name,
     category: v.category,
     quote_amount: v.quoteAmount,
+    rate_type: v.rateType,
     contact_name: v.contactName,
     contact_phone: v.contactPhone,
     contact_email: v.contactEmail,
@@ -65,7 +67,7 @@ export async function listVendorOptions(): Promise<VendorOption[]> {
   const sb = createSupabaseServerClient();
   const { data, error } = await sb
     .from("wedding_vendors")
-    .select("id, name, category, quote_amount")
+    .select("id, name, category, quote_amount, rate_type")
     .order("category", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw new Error(error.message);
@@ -74,6 +76,7 @@ export async function listVendorOptions(): Promise<VendorOption[]> {
     name: r.name,
     category: r.category as VendorCategory,
     quoteAmount: Number(r.quote_amount),
+    rateType: r.rate_type,
   }));
 }
 

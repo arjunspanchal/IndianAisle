@@ -45,6 +45,8 @@ export type VendorStatus =
   | "Booked"
   | "Rejected";
 
+export type VendorRateType = "fixed" | "per_event" | "per_day";
+
 type Empty = { [_ in never]: never };
 
 export type Database = {
@@ -431,6 +433,7 @@ export type Database = {
           name: string;
           category: VendorCategory;
           quote_amount: number;
+          rate_type: VendorRateType;
           contact_name: string;
           contact_phone: string;
           contact_email: string;
@@ -446,6 +449,7 @@ export type Database = {
           name: string;
           category: VendorCategory;
           quote_amount?: number;
+          rate_type?: VendorRateType;
           contact_name?: string;
           contact_phone?: string;
           contact_email?: string;
@@ -458,6 +462,7 @@ export type Database = {
           name: string;
           category: VendorCategory;
           quote_amount: number;
+          rate_type: VendorRateType;
           contact_name: string;
           contact_phone: string;
           contact_email: string;

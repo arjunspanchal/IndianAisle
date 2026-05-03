@@ -4,11 +4,15 @@ import { useMemo, useState } from "react";
 import {
   blankVendor,
   isPersistedVendor,
+  QUOTE_FIELD_LABEL,
   VENDOR_CATEGORIES,
   VENDOR_CATEGORY_LABEL,
+  VENDOR_RATE_SUFFIX,
+  VENDOR_RATE_TYPES,
   VENDOR_STATUS_OPTIONS,
   type Vendor,
   type VendorCategory,
+  type VendorRateType,
   type VendorStatus,
 } from "@/lib/vendors";
 import { formatINR } from "@/lib/budget";
@@ -313,6 +317,7 @@ function VendorCard({
             {vendor.quoteAmount > 0 && (
               <span className="tabular-nums font-medium text-stone-800">
                 {formatINR(vendor.quoteAmount)}
+                {VENDOR_RATE_SUFFIX[vendor.rateType]}
               </span>
             )}
             {vendor.contactName && <span>{vendor.contactName}</span>}
@@ -407,7 +412,28 @@ function VendorEditor({
               ))}
             </Select>
           </Field>
-          <Field label="Quote (₹)">
+          <Field label="Rate type">
+            <Select
+              value={vendor.rateType}
+              onChange={(e) => set("rateType", e.target.value as VendorRateType)}
+            >
+              {VENDOR_RATE_TYPES.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field
+            label={QUOTE_FIELD_LABEL[vendor.rateType]}
+            helper={
+              vendor.rateType === "per_event"
+                ? "Calculator multiplies by the wedding's event count when this vendor is picked."
+                : vendor.rateType === "per_day"
+                ? "Calculator multiplies by the number of days between start and end date."
+                : null
+            }
+          >
             <NumberInput
               value={vendor.quoteAmount}
               onChange={(v) => set("quoteAmount", v)}
