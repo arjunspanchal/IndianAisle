@@ -221,7 +221,15 @@ export default async function HomePage() {
           href="/vendors"
           icon="handshake"
           title="Vendors"
-          subtitle="Photographers, decor, catering"
+          subtitle={
+            <>
+              <span className="block">Photographers, decor, catering</span>
+              <span className="mt-0.5 block text-stone-500 dark:text-stone-400">
+                Curated directory · 30+ vetted vendors
+              </span>
+            </>
+          }
+          badge="Pro"
         />
         <LibraryLink
           href="/profile"
@@ -359,11 +367,13 @@ function LibraryLink({
   icon,
   title,
   subtitle,
+  badge,
 }: {
   href: string;
   icon: IconName;
   title: string;
-  subtitle: string;
+  subtitle: React.ReactNode;
+  badge?: string;
 }) {
   return (
     <Link
@@ -373,8 +383,15 @@ function LibraryLink({
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-stone-200 text-stone-600 transition group-hover:border-stone-300 group-hover:text-stone-900 dark:border-stone-700 dark:text-stone-400 dark:group-hover:text-stone-100">
         <Icon name={icon} size={16} />
       </span>
-      <div className="min-w-0">
-        <div className="font-medium text-stone-800 dark:text-stone-100">{title}</div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-medium text-stone-800 dark:text-stone-100">{title}</div>
+          {badge && (
+            <span className="shrink-0 rounded-full border border-gold-line bg-gold-soft/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-gold">
+              {badge}
+            </span>
+          )}
+        </div>
         <div className="text-xs text-stone-500 dark:text-stone-400">{subtitle}</div>
       </div>
     </Link>

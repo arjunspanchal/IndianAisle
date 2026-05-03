@@ -83,6 +83,7 @@ export async function listVendorOptions(): Promise<VendorOption[]> {
     category: r.category as VendorCategory,
     quoteAmount: Number(r.quote_amount),
     rateType: r.rate_type,
+    source: "personal" as const,
   }));
 }
 
@@ -111,7 +112,50 @@ export async function listVendorOptionsForWedding(weddingId: string): Promise<Ve
     category: r.category as VendorCategory,
     quoteAmount: Number(r.quote_amount),
     rateType: r.rate_type,
+    source: "personal" as const,
   }));
+}
+
+// Unified picker source: personal vendors (always) + saved curated vendors
+// (only when the current user is Pro — RLS on curated_vendor_saves hides
+// rows for free users, so the curated branch yields []). Returned sorted:
+// personal first by category/name, then curated by name. The Calculator
+// picker reads from this single function.
+//
+// Implemented as two queries (saves → vendor ids → curated_vendors) instead
+// of a PostgREST embed because the Database type's empty Relationships
+// arrays don't expose the FK to the type system.
+export async function listVendorsForWedding(weddingId: string): Promise<VendorOption[]> {
+  const personal = await listVendorOptionsForWedding(weddingId);
+
+  const sb = createSupabaseServerClient();
+  const { data: savesData, error: savesErr } = await sb
+    .from("curated_vendor_saves")
+    .select("vendor_id");
+  if (savesErr) throw new Error(savesErr.message);
+  const ids = Array.from(new Set((savesData ?? []).map((r) => r.vendor_id)));
+
+  const curated: VendorOption[] = [];
+  if (ids.length > 0) {
+    const { data, error } = await sb
+      .from("curated_vendors")
+      .select("id, name, category, quote_amount, rate_type")
+      .in("id", ids);
+    if (error) throw new Error(error.message);
+    for (const v of data ?? []) {
+      curated.push({
+        id: v.id,
+        name: v.name,
+        category: v.category as VendorCategory,
+        quoteAmount: Number(v.quote_amount),
+        rateType: v.rate_type,
+        source: "curated",
+      });
+    }
+    curated.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return [...personal, ...curated];
 }
 
 export async function createVendor(v: Vendor): Promise<Vendor> {

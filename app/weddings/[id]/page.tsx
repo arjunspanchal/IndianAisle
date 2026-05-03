@@ -4,7 +4,8 @@ import Calculator, { type VenueOption } from "@/components/Calculator";
 import ShareWedding from "@/components/ShareWedding";
 import { getWeddingBudget } from "@/lib/wedding-repo";
 import { listPropertiesForWedding } from "@/lib/properties-repo";
-import { listVendorOptionsForWedding } from "@/lib/vendors-repo";
+import { listVendorsForWedding } from "@/lib/vendors-repo";
+import { getCurrentUserEntitlement, isPro } from "@/lib/entitlement";
 import { getPlannerHeaderForCurrentUser } from "@/lib/profile-repo";
 import { getWeddingAccess } from "@/lib/collaborators-repo";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -41,9 +42,40 @@ export default async function WeddingPage({ params }: { params: { id: string } }
 
   let vendorOptions: VendorOption[] = [];
   try {
-    vendorOptions = await listVendorOptionsForWedding(params.id);
+    // Unified picker source: personal + saved curated (curated only when Pro,
+    // since the saves table RLS hides rows from free users).
+    vendorOptions = await listVendorsForWedding(params.id);
   } catch (e) {
-    console.error("[vendor-picker] listVendorOptionsForWedding failed:", e);
+    console.error("[vendor-picker] listVendorsForWedding failed:", e);
+  }
+
+  const entitlement = await getCurrentUserEntitlement();
+  const userIsPro = isPro(entitlement);
+
+  // Some lines may reference curated vendors that aren't currently in the
+  // picker — e.g. the user lapsed Pro, or unsaved this vendor since pinning
+  // it to a line. We fetch a *display-safe* projection of those vendors
+  // (name, category, base_city) via the SECURITY DEFINER RPC, which is the
+  // only way a non-Pro user can read curated vendor names without bypassing
+  // RLS on the full table.
+  const curatedRefs = new Set<string>();
+  for (const section of [
+    "decor","entertainment","photography","attire","travel","rituals","gifting","misc",
+  ] as const) {
+    for (const it of budget[section]) {
+      if (it.vendorSource === "curated" && it.vendorId) curatedRefs.add(it.vendorId);
+    }
+  }
+  const curatedDisplays: Record<string, { name: string; category: string; baseCity: string }> = {};
+  if (curatedRefs.size > 0) {
+    const sb = createSupabaseServerClient();
+    await Promise.all(
+      [...curatedRefs].map(async (vid) => {
+        const { data } = await sb.rpc("get_curated_vendor_display", { p_vendor_id: vid });
+        const row = (data ?? [])[0];
+        if (row) curatedDisplays[vid] = { name: row.name, category: row.category, baseCity: row.base_city };
+      }),
+    );
   }
 
   const plannerHeader = await getPlannerHeaderForCurrentUser().catch(() => "");
@@ -79,6 +111,8 @@ export default async function WeddingPage({ params }: { params: { id: string } }
         venueOptions={venueOptions}
         venuesError={venuesError}
         vendorOptions={vendorOptions}
+        curatedDisplays={curatedDisplays}
+        userIsPro={userIsPro}
         plannerHeader={plannerHeader}
       />
     </div>

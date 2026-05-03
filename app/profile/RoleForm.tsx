@@ -52,7 +52,7 @@ export default function RoleForm({ initialRole, initialCompanyName }: Props) {
             key={o.value}
             className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition ${
               role === o.value
-                ? "border-ink bg-stone-50 dark:border-stone-100 dark:bg-stone-800"
+                ? "border-ink bg-stone-50 ring-1 ring-ink dark:border-stone-100 dark:bg-stone-800 dark:ring-stone-100"
                 : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
             }`}
           >

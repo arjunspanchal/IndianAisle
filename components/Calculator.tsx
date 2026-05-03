@@ -60,7 +60,16 @@ type Props = {
   weddingId: string;
   venueOptions?: VenueOption[];
   venuesError?: string | null;
+  /** Personal + saved-curated vendors available in the picker. */
   vendorOptions?: VendorOption[];
+  /**
+   * Display-safe metadata for curated vendors referenced on existing budget
+   * lines that aren't currently in the picker (un-saved or downgrade case).
+   * Sourced via the get_curated_vendor_display SECURITY DEFINER RPC.
+   */
+  curatedDisplays?: Record<string, { name: string; category: string; baseCity: string }>;
+  /** Whether the current user is on the Pro tier (or admin). */
+  userIsPro?: boolean;
   /**
    * Wedding-planner company name. When present, rendered as a "Prepared by"
    * banner at the top of PDF prints and as a header row in the Excel export.
@@ -135,6 +144,8 @@ export default function Calculator({
   venueOptions = [],
   venuesError = null,
   vendorOptions = [],
+  curatedDisplays = {},
+  userIsPro = false,
   plannerHeader = "",
 }: Props) {
   const [budget, setBudget] = useState<Budget>(initialBudget ?? defaultBudget());
@@ -249,6 +260,8 @@ export default function Calculator({
             label,
             amount,
             source: "Estimate",
+            vendorId: vendor.id,
+            vendorSource: vendor.source,
           },
         ],
       };
@@ -681,38 +694,73 @@ export default function Calculator({
                 <div key={id}>
                   <SectionWrapper id={id} n={def.n} title={title} total={t}>
                     <ProgrammeTable headers={["Item", "Source", "Amount", ""]}>
-                      {items.map((it, idx) => (
-                        <tr key={it.id} className="border-t border-parchment-line align-middle">
-                          <td className="py-3 pr-3">
-                            <Input
-                              value={it.label}
-                              onChange={(e) => updateLine(id, idx, { label: e.target.value })}
-                            />
-                          </td>
-                          <td className="py-3 pr-3 w-40">
-                            <Select
-                              value={it.source ?? "Estimate"}
-                              onChange={(e) =>
-                                updateLine(id, idx, { source: e.target.value as LineItem["source"] })
-                              }
-                            >
-                              <option>Confirmed</option>
-                              <option>Estimate</option>
-                            </Select>
-                          </td>
-                          <td className="py-3 pr-3 w-36">
-                            <NumberInput
-                              value={it.amount}
-                              onChange={(v) => updateLine(id, idx, { amount: v })}
-                            />
-                          </td>
-                          <td className="py-3 pr-0 text-right">
-                            <IconButton label="Remove" onClick={() => removeLine(id, idx)}>
-                              ×
-                            </IconButton>
-                          </td>
-                        </tr>
-                      ))}
+                      {items.map((it, idx) => {
+                        // Downgrade-aware render: a curated-vendor reference
+                        // on a free-tier account is shown name-only with the
+                        // amount still editable. Personal references and Pro
+                        // users get the full editor.
+                        const isLockedCurated =
+                          it.vendorSource === "curated" && !userIsPro;
+                        const display =
+                          (it.vendorId && curatedDisplays[it.vendorId]?.name) || it.label;
+                        return (
+                          <tr key={it.id} className="border-t border-parchment-line align-middle">
+                            <td className="py-3 pr-3">
+                              {isLockedCurated ? (
+                                <div className="space-y-0.5">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-display text-base text-ink">
+                                      {display}
+                                    </span>
+                                    <span className="rounded-full border border-gold-line bg-parchment-deep px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold">
+                                      Curated
+                                    </span>
+                                  </div>
+                                  <p className="font-display text-xs italic text-ink-mute">
+                                    Re-upgrade to edit
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="space-y-0.5">
+                                  <Input
+                                    value={it.label}
+                                    onChange={(e) =>
+                                      updateLine(id, idx, { label: e.target.value })
+                                    }
+                                  />
+                                  {it.vendorSource === "curated" && (
+                                    <span className="ml-1 inline-block rounded-full border border-gold-line bg-parchment-deep px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold">
+                                      Curated
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 pr-3 w-40">
+                              <Select
+                                value={it.source ?? "Estimate"}
+                                onChange={(e) =>
+                                  updateLine(id, idx, { source: e.target.value as LineItem["source"] })
+                                }
+                              >
+                                <option>Confirmed</option>
+                                <option>Estimate</option>
+                              </Select>
+                            </td>
+                            <td className="py-3 pr-3 w-36">
+                              <NumberInput
+                                value={it.amount}
+                                onChange={(v) => updateLine(id, idx, { amount: v })}
+                              />
+                            </td>
+                            <td className="py-3 pr-0 text-right">
+                              <IconButton label="Remove" onClick={() => removeLine(id, idx)}>
+                                ×
+                              </IconButton>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </ProgrammeTable>
                     <div className="mt-4 flex flex-wrap items-center gap-3 print:hidden">
                       <Button variant="ghost" onClick={() => addLine(id)}>
@@ -933,37 +981,71 @@ function VendorPicker({
   onPick: (vendor: VendorOption) => void;
 }) {
   const matches = vendors.filter((v) => v.category === category);
+  const personal = matches.filter((v) => v.source === "personal");
+  const curated = matches.filter((v) => v.source === "curated");
 
   if (matches.length === 0) {
     return (
-      <a
-        href="/vendors"
-        className="font-display text-sm italic text-ink-mute underline-offset-2 hover:text-ink hover:underline"
-      >
-        + Add from vendor directory →
-      </a>
+      <div className="flex flex-wrap items-center gap-3">
+        <a
+          href="/vendors"
+          className="font-display text-sm italic text-ink-mute underline-offset-2 hover:text-ink hover:underline"
+        >
+          + Add from vendor directory →
+        </a>
+        <a
+          href="/vendors?tab=curated"
+          className="font-display text-sm italic text-gold underline-offset-2 hover:text-ink hover:underline"
+        >
+          ★ Browse curated →
+        </a>
+      </div>
     );
   }
 
   return (
-    <Select
-      aria-label="Add from vendor directory"
-      className="w-auto min-w-[14rem]"
-      value=""
-      onChange={(e) => {
-        const v = matches.find((x) => x.id === e.target.value);
-        if (v) onPick(v);
-        e.currentTarget.value = "";
-      }}
-    >
-      <option value="">+ Add from vendor directory…</option>
-      {matches.map((v) => (
-        <option key={v.id} value={v.id}>
-          {v.name}
-          {v.quoteAmount > 0 ? ` — ${formatINR(v.quoteAmount)}${VENDOR_RATE_HINT[v.rateType]}` : ""}
-        </option>
-      ))}
-    </Select>
+    <div className="flex flex-wrap items-center gap-3">
+      <Select
+        aria-label="Add from vendor directory"
+        className="w-auto min-w-[14rem]"
+        value=""
+        onChange={(e) => {
+          const v = matches.find((x) => x.id === e.target.value);
+          if (v) onPick(v);
+          e.currentTarget.value = "";
+        }}
+      >
+        <option value="">+ Add a vendor…</option>
+        {personal.length > 0 && (
+          <optgroup label="Your vendors">
+            {personal.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+                {v.quoteAmount > 0 ? ` — ${formatINR(v.quoteAmount)}${VENDOR_RATE_HINT[v.rateType]}` : ""}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        {curated.length > 0 && (
+          <optgroup label="From the directory">
+            {curated.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name} · Curated
+                {v.quoteAmount > 0 ? ` — ${formatINR(v.quoteAmount)}${VENDOR_RATE_HINT[v.rateType]}` : ""}
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </Select>
+      {curated.length === 0 && (
+        <a
+          href="/vendors?tab=curated"
+          className="font-display text-sm italic text-gold underline-offset-2 hover:text-ink hover:underline"
+        >
+          ★ Browse curated →
+        </a>
+      )}
+    </div>
   );
 }
 

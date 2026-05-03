@@ -6,7 +6,9 @@ import type { WeddingRole, WeddingType } from "@/lib/supabase/types";
 import DateField from "@/components/ui/DateField";
 import { createWeddingAction } from "./actions";
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
+
+export type VenueOption = { id: string; name: string; location: string };
 
 type FormState = {
   role: WeddingRole | null;
@@ -15,6 +17,7 @@ type FormState = {
   weddingDate: string; // ISO yyyy-mm-dd, "" for not decided
   dateUnknown: boolean;
   weddingType: WeddingType | null;
+  venue: string; // property name; "" = not picked yet
 };
 
 const ROLE_OPTIONS: { value: WeddingRole; label: string; hint: string }[] = [
@@ -33,6 +36,7 @@ const STEP_TITLES = [
   "Name your wedding",
   "When is the wedding?",
   "Local or destination?",
+  "Pick a venue",
   "Review & create",
 ];
 
@@ -47,7 +51,7 @@ const TYPE_LABEL: Record<WeddingType, string> = {
   destination: "Destination",
 };
 
-export default function OnboardingForm() {
+export default function OnboardingForm({ venueOptions = [] }: { venueOptions?: VenueOption[] }) {
   const [step, setStep] = useState<Step>(0);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -58,6 +62,7 @@ export default function OnboardingForm() {
     weddingDate: "",
     dateUnknown: false,
     weddingType: null,
+    venue: "",
   });
 
   const goNext = () => {
@@ -70,7 +75,8 @@ export default function OnboardingForm() {
       }
     }
     if (step === 3 && !state.weddingType) return setError("Pick local or destination.");
-    setStep((s) => (s >= 4 ? 4 : ((s + 1) as Step)));
+    // Step 4 (venue) is optional — no validation.
+    setStep((s) => (s >= 5 ? 5 : ((s + 1) as Step)));
   };
 
   const goBack = () => {
@@ -90,6 +96,7 @@ export default function OnboardingForm() {
     fd.set("couple_names", state.coupleNames.trim());
     fd.set("wedding_date", state.dateUnknown ? "" : state.weddingDate);
     fd.set("wedding_type", state.weddingType);
+    fd.set("venue", state.venue);
     startTransition(async () => {
       try {
         await createWeddingAction(fd);
@@ -209,6 +216,43 @@ export default function OnboardingForm() {
       )}
 
       {step === 4 && (
+        <div className="space-y-3">
+          {venueOptions.length === 0 ? (
+            <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300">
+              You don&apos;t have any properties saved yet. You can{" "}
+              <Link href="/properties" className="underline-offset-2 hover:underline">
+                add one in Properties
+              </Link>{" "}
+              now and pick later, or skip this step and choose a venue from the calculator.
+            </div>
+          ) : (
+            <>
+              <label htmlFor="venue" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                Venue (optional)
+              </label>
+              <select
+                id="venue"
+                className="text-input text-base"
+                value={state.venue}
+                onChange={(e) => setState((s) => ({ ...s, venue: e.target.value }))}
+              >
+                <option value="">I&apos;ll pick later</option>
+                {venueOptions.map((o) => (
+                  <option key={o.id} value={o.name}>
+                    {o.name}
+                    {o.location ? ` — ${o.location}` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-stone-500 dark:text-stone-400">
+                Pre-fills the venue on this wedding. You can change it any time.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
+      {step === 5 && (
         <ReviewSummary state={state} onEdit={(s) => setStep(s)} />
       )}
 
@@ -234,7 +278,7 @@ export default function OnboardingForm() {
           </button>
         )}
 
-        {step < 4 ? (
+        {step < 5 ? (
           <button type="button" onClick={goNext} className="btn-primary" disabled={pending}>
             Continue
           </button>
@@ -312,6 +356,7 @@ function ReviewSummary({
     { label: "Wedding name", value: state.name.trim() || "—", step: 1 },
     { label: "Date", value: date, step: 2 },
     { label: "Type", value: state.weddingType ? TYPE_LABEL[state.weddingType] : "—", step: 3 },
+    { label: "Venue", value: state.venue || "Pick later", step: 4 },
   ];
 
   return (

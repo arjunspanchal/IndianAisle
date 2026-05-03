@@ -8,6 +8,9 @@ export type LineItem = {
   note?: string;
   amount: number;
   source?: "Confirmed" | "Estimate";
+  /** Optional reference to a vendor (personal or curated). Both move together. */
+  vendorId?: string | null;
+  vendorSource?: "personal" | "curated" | null;
 };
 
 export type RoomCategory = {

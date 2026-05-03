@@ -83,6 +83,7 @@ export type CreateWeddingInput = {
   couple_names: string;
   wedding_date: string | null;
   wedding_type: WeddingType;
+  venue?: string;
 };
 
 export async function createWedding(input: CreateWeddingInput): Promise<string> {
@@ -99,6 +100,7 @@ export async function createWedding(input: CreateWeddingInput): Promise<string> 
       couple_names: input.couple_names,
       wedding_date: input.wedding_date,
       wedding_type: input.wedding_type,
+      venue: input.venue ?? "",
     })
     .select("id")
     .single();
@@ -201,6 +203,8 @@ export async function getWeddingBudget(weddingId: string): Promise<Budget | null
       amount: Number(r.amount),
       source: r.source,
       note: r.note ?? undefined,
+      vendorId: r.vendor_id,
+      vendorSource: r.vendor_source,
     });
   }
 
@@ -442,6 +446,9 @@ function lineInsertRow(it: LineItem, section: SectionKey, position: number, wedd
     source: it.source ?? "Estimate",
     note: it.note ?? null,
     position,
+    // Both fields move together — only set if both present.
+    vendor_id: it.vendorId && it.vendorSource ? it.vendorId : null,
+    vendor_source: it.vendorId && it.vendorSource ? it.vendorSource : null,
   };
 }
 function lineUpdateRow(it: LineItem, section: SectionKey, position: number) {
@@ -452,6 +459,8 @@ function lineUpdateRow(it: LineItem, section: SectionKey, position: number) {
     source: it.source ?? "Estimate",
     note: it.note ?? null,
     position,
+    vendor_id: it.vendorId && it.vendorSource ? it.vendorId : null,
+    vendor_source: it.vendorId && it.vendorSource ? it.vendorSource : null,
   };
 }
 function eventInsertRow(e: WeddingEvent, position: number, weddingId: string) {

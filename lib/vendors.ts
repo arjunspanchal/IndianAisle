@@ -2,9 +2,64 @@
 // (table: public.wedding_vendors). Categories align with the calculator's
 // line-item sections so the picker can filter.
 
-import type { VendorCategory, VendorRateType, VendorStatus } from "./supabase/types";
+import type {
+  CuratedPriceBand,
+  CuratedSaveStatus,
+  CuratedVendorTier,
+  LineVendorSource,
+  VendorCategory,
+  VendorRateType,
+  VendorStatus,
+} from "./supabase/types";
 
-export type { VendorCategory, VendorRateType, VendorStatus };
+export type {
+  CuratedPriceBand,
+  CuratedSaveStatus,
+  CuratedVendorTier,
+  LineVendorSource,
+  VendorCategory,
+  VendorRateType,
+  VendorStatus,
+};
+
+export const CURATED_VENDOR_TIERS: { value: CuratedVendorTier; label: string; hint: string }[] = [
+  { value: "signature", label: "Signature", hint: "The very top — limited bookings, marquee names." },
+  { value: "established", label: "Established", hint: "Reliable veterans with extensive bodies of work." },
+  { value: "emerging", label: "Emerging", hint: "Newer and exciting; great value with some flexibility." },
+];
+
+export const CURATED_VENDOR_TIER_LABEL: Record<CuratedVendorTier, string> =
+  CURATED_VENDOR_TIERS.reduce(
+    (acc, { value, label }) => ({ ...acc, [value]: label }),
+    {} as Record<CuratedVendorTier, string>,
+  );
+
+export const CURATED_PRICE_BANDS: { value: CuratedPriceBand; label: string }[] = [
+  { value: "budget", label: "Budget" },
+  { value: "mid", label: "Mid" },
+  { value: "premium", label: "Premium" },
+  { value: "luxury", label: "Luxury" },
+];
+
+export const CURATED_PRICE_BAND_LABEL: Record<CuratedPriceBand, string> =
+  CURATED_PRICE_BANDS.reduce(
+    (acc, { value, label }) => ({ ...acc, [value]: label }),
+    {} as Record<CuratedPriceBand, string>,
+  );
+
+export const CURATED_SAVE_STATUSES: { value: CuratedSaveStatus; label: string }[] = [
+  { value: "saved", label: "Saved" },
+  { value: "inquired", label: "Inquired" },
+  { value: "shortlisted", label: "Shortlisted" },
+  { value: "booked", label: "Booked" },
+  { value: "passed", label: "Passed" },
+];
+
+export const CURATED_SAVE_STATUS_LABEL: Record<CuratedSaveStatus, string> =
+  CURATED_SAVE_STATUSES.reduce(
+    (acc, { value, label }) => ({ ...acc, [value]: label }),
+    {} as Record<CuratedSaveStatus, string>,
+  );
 
 export const VENDOR_RATE_TYPES: { value: VendorRateType; label: string; quoteLabel: string; pricedLabel: (qty: number) => string }[] = [
   { value: "fixed", label: "Fixed total", quoteLabel: "Quote (₹)", pricedLabel: () => "" },
@@ -95,4 +150,53 @@ export type VendorOption = {
   category: VendorCategory;
   quoteAmount: number;
   rateType: VendorRateType;
+  /** "personal" = user's own directory, "curated" = platform-managed catalog (Pro). */
+  source: "personal" | "curated";
+};
+
+// Curated vendor — directory entry. Persisted in public.curated_vendors,
+// read-gated to Pro users + admins via RLS.
+export type CuratedVendor = {
+  id: string;
+  slug: string;
+  name: string;
+  category: VendorCategory;
+  vendorTier: CuratedVendorTier;
+  priceBand: CuratedPriceBand | null;
+  quoteAmount: number;
+  rateType: VendorRateType;
+  baseCity: string;
+  regionsServed: string[];
+  travelsForDestination: boolean;
+  tagline: string;
+  about: string;
+  strengths: string[];
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
+  website: string;
+  instagram: string;
+  heroImageUrl: string;
+  isFeatured: boolean;
+  isVerified: boolean;
+};
+
+export type CuratedVendorImage = {
+  id: string;
+  vendorId: string;
+  url: string;
+  caption: string;
+  kind: string;
+  sortOrder: number;
+};
+
+export type CuratedVendorSave = {
+  userId: string;
+  /** null when the save is global to the user (v1 default). */
+  weddingId: string | null;
+  vendorId: string;
+  status: CuratedSaveStatus;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
 };

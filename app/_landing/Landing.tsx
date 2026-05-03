@@ -27,9 +27,9 @@ const FEATURES: Feature[] = [
     body: "Manage RSVPs, sides, food preferences, and travel needs without spreadsheets that fight you back.",
   },
   {
-    icon: "handshake",
-    title: "A vendors library you reuse",
-    body: "Photographers, decor, catering — saved once, attached to any wedding, with notes that travel with you.",
+    icon: "user",
+    title: "Plan together, share with care",
+    body: "Bring co-planners, families, or assistants into a wedding — they see what they need, nothing they don't.",
   },
   {
     icon: "building",
@@ -40,6 +40,86 @@ const FEATURES: Feature[] = [
     icon: "sparkle",
     title: "Plan with an assistant",
     body: "An AI co-planner that knows your weddings — ask it to draft tasks, summarize a venue, or chase a vendor.",
+  },
+];
+
+type DirCategory = "Photography" | "Decor" | "Catering" | "Mehendi" | "Choreography" | "DJ";
+type DirTier = "Signature" | "Established" | "Emerging";
+type DirCity = "Mumbai" | "Delhi" | "Goa" | "Udaipur" | "Jaipur" | "Bengaluru";
+type DirTone = "gold" | "rose" | "sage";
+
+type DirCard = {
+  name: string;
+  monogram: string;
+  category: DirCategory;
+  tier: DirTier;
+  city: DirCity;
+  strengths: [string, string, string];
+  tone: DirTone;
+};
+
+const DIRECTORY_CATEGORIES: DirCategory[] = [
+  "Photography", "Decor", "Catering", "Mehendi", "Choreography", "DJ",
+];
+const DIRECTORY_TIERS: DirTier[] = ["Signature", "Established", "Emerging"];
+const DIRECTORY_CITIES: DirCity[] = [
+  "Mumbai", "Delhi", "Goa", "Udaipur", "Jaipur", "Bengaluru",
+];
+
+const DIRECTORY_SAMPLE: DirCard[] = [
+  {
+    name: "Stillframe Studio",
+    monogram: "S",
+    category: "Photography",
+    tier: "Signature",
+    city: "Mumbai",
+    strengths: ["candid", "destination", "christian"],
+    tone: "gold",
+  },
+  {
+    name: "Bloom & Bough",
+    monogram: "B",
+    category: "Decor",
+    tier: "Established",
+    city: "Delhi",
+    strengths: ["floral", "mandap", "intimate"],
+    tone: "rose",
+  },
+  {
+    name: "Saffron Table",
+    monogram: "S",
+    category: "Catering",
+    tier: "Signature",
+    city: "Udaipur",
+    strengths: ["vegetarian", "regional", "fine-dining"],
+    tone: "sage",
+  },
+  {
+    name: "Marigold Mehendi",
+    monogram: "M",
+    category: "Mehendi",
+    tier: "Established",
+    city: "Jaipur",
+    strengths: ["bridal", "intricate", "traditional"],
+    tone: "gold",
+  },
+  {
+    name: "Anhad Sound",
+    monogram: "A",
+    category: "DJ",
+    tier: "Emerging",
+    city: "Goa",
+    strengths: ["sangeet", "fusion", "late-night"],
+    tone: "rose",
+  },
+  {
+    name: "Studio Eleven",
+    monogram: "11",
+    category: "Photography",
+    tier: "Established",
+    city: "Bengaluru",
+    strengths: ["editorial", "candid", "south-indian"],
+    tone: "sage",
   },
 ];
 
@@ -148,6 +228,14 @@ export default function Landing() {
         <div className="divider-ornament">✦</div>
       </div>
 
+      {/* Directory — the curated vendor pitch */}
+      <DirectorySection />
+
+      {/* Divider */}
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="divider-ornament">✦</div>
+      </div>
+
       {/* Features */}
       <section id="features" className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
@@ -225,6 +313,192 @@ export default function Landing() {
     </div>
   );
 }
+
+// ---------- Directory section --------------------------------------------
+
+function DirectorySection() {
+  return (
+    <section
+      id="directory"
+      className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 lg:px-8"
+    >
+      <div className="max-w-2xl">
+        <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold-soft">
+          ✦ Inside the app
+        </div>
+        <h2 className="mt-3 font-serif text-3xl tracking-tight text-stone-900 dark:text-stone-50 sm:text-4xl">
+          A directory we{" "}
+          <span className="italic text-gold">vetted ourselves.</span>
+        </h2>
+        <p className="mt-3 text-stone-600 dark:text-stone-300">
+          Hand-picked photographers, decorators, caterers, and crew across
+          India — sorted into tiers, filtered by city and category, kept honest
+          by what they're actually good at. Not a marketplace. Not a list of
+          listings.
+        </p>
+      </div>
+
+      {/* Filter chip strip — visual only, deliberately not interactive */}
+      <div
+        aria-hidden
+        className="mt-10 space-y-3"
+      >
+        <ChipRow label="Category">
+          {DIRECTORY_CATEGORIES.map((c) => (
+            <Chip key={c}>{c}</Chip>
+          ))}
+        </ChipRow>
+        <ChipRow label="Tier">
+          {DIRECTORY_TIERS.map((t) => (
+            <Chip key={t} variant="tier">
+              {t}
+            </Chip>
+          ))}
+        </ChipRow>
+        <ChipRow label="City">
+          {DIRECTORY_CITIES.map((c) => (
+            <Chip key={c}>{c}</Chip>
+          ))}
+        </ChipRow>
+      </div>
+
+      {/* Sample cards */}
+      <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {DIRECTORY_SAMPLE.map((v) => (
+          <DirectoryCard key={v.name} v={v} />
+        ))}
+      </ul>
+
+      {/* CTA */}
+      <div className="mt-12 flex flex-col items-center gap-2">
+        <Link
+          href="/login?next=/vendors"
+          className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment shadow-sm transition hover:opacity-90"
+        >
+          Browse the directory
+          <Icon name="link" size={12} />
+        </Link>
+        <span className="font-serif text-xs italic text-ink-mute">
+          Included with Pro
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function ChipRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span className="text-[10px] uppercase tracking-[0.22em] text-stone-400 dark:text-stone-500 sm:w-20 sm:shrink-0">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+function Chip({
+  children,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  variant?: "default" | "tier";
+}) {
+  const base =
+    "select-none rounded-full px-3 py-1 text-[11px] tracking-[0.05em]";
+  const styles =
+    variant === "tier"
+      ? "border border-gold-line bg-gold-soft/10 text-gold font-medium"
+      : "border border-stone-200 bg-white/60 text-stone-600 dark:border-stone-800 dark:bg-stone-900/50 dark:text-stone-300";
+  return <span className={`${base} ${styles}`}>{children}</span>;
+}
+
+function DirectoryCard({ v }: { v: DirCard }) {
+  const tierBadge =
+    v.tier === "Signature"
+      ? "border-gold-line bg-gold-soft/15 text-gold"
+      : v.tier === "Established"
+        ? "border-stone-300 bg-white/60 text-stone-700 dark:border-stone-700 dark:bg-stone-900/40 dark:text-stone-200"
+        : "border-sage/40 bg-sage/10 text-sage";
+
+  return (
+    <li className="group overflow-hidden rounded-2xl border border-stone-200 bg-white/80 backdrop-blur transition hover:-translate-y-0.5 hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900/70 dark:hover:border-stone-700">
+      <Placeholder tone={v.tone} monogram={v.monogram} category={v.category} />
+
+      <div className="p-4">
+        <h3 className="font-serif text-lg leading-tight text-stone-900 dark:text-stone-50">
+          {v.name}
+        </h3>
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+          <span className="rounded-full border border-stone-200 bg-white/60 px-2 py-0.5 text-stone-600 dark:border-stone-800 dark:bg-stone-900/40 dark:text-stone-300">
+            {v.category}
+          </span>
+          <span
+            className={`rounded-full border px-2 py-0.5 font-medium ${tierBadge}`}
+          >
+            {v.tier}
+          </span>
+          <span className="rounded-full border border-stone-200 bg-white/60 px-2 py-0.5 text-stone-600 dark:border-stone-800 dark:bg-stone-900/40 dark:text-stone-300">
+            {v.city}
+          </span>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {v.strengths.map((s) => (
+            <span
+              key={s}
+              className="rounded-full border border-gold-line/70 bg-transparent px-2 py-0.5 text-[10px] tracking-wide text-stone-600 dark:text-stone-300"
+            >
+              {s}
+            </span>
+          ))}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function Placeholder({
+  tone,
+  monogram,
+  category,
+}: {
+  tone: DirTone;
+  monogram: string;
+  category: DirCategory;
+}) {
+  // Token-driven CSS gradients — no images, no network.
+  const gradient =
+    tone === "gold"
+      ? "radial-gradient(120% 100% at 20% 0%, rgb(var(--c-gold-soft) / 0.45), transparent 55%), linear-gradient(135deg, rgb(var(--c-parchment-deep)) 0%, rgb(var(--c-parchment)) 100%)"
+      : tone === "rose"
+        ? "radial-gradient(120% 100% at 80% 0%, rgb(var(--c-rose) / 0.30), transparent 55%), linear-gradient(135deg, rgb(var(--c-parchment-deep)) 0%, rgb(var(--c-parchment)) 100%)"
+        : "radial-gradient(120% 100% at 50% 100%, rgb(var(--c-sage) / 0.30), transparent 55%), linear-gradient(135deg, rgb(var(--c-parchment-deep)) 0%, rgb(var(--c-parchment)) 100%)";
+
+  return (
+    <div
+      aria-hidden
+      className="relative h-32 border-b border-stone-200 dark:border-stone-800"
+      style={{ background: gradient }}
+    >
+      <span className="absolute left-4 top-4 font-serif text-3xl leading-none text-stone-900/80 dark:text-stone-50/80">
+        {monogram}
+      </span>
+      <span className="absolute right-3 bottom-3 text-[10px] uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
+        {category}
+      </span>
+    </div>
+  );
+}
+
+// ---------- Hero preview --------------------------------------------------
 
 function HeroPreview() {
   return (

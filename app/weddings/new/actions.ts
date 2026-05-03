@@ -18,6 +18,7 @@ export async function createWeddingAction(formData: FormData): Promise<void> {
   const coupleNames = String(formData.get("couple_names") ?? "").trim();
   const weddingDateRaw = String(formData.get("wedding_date") ?? "").trim();
   const weddingType = String(formData.get("wedding_type") ?? "");
+  const venue = String(formData.get("venue") ?? "").trim();
 
   if (!ROLES.includes(role as WeddingRole)) throw new Error("Pick whose wedding it is");
   if (!coupleNames) throw new Error("Couple names are required");
@@ -32,6 +33,7 @@ export async function createWeddingAction(formData: FormData): Promise<void> {
     couple_names: coupleNames,
     wedding_date: weddingDateRaw || null,
     wedding_type: weddingType as WeddingType,
+    venue: venue || undefined,
   });
 
   revalidatePath("/", "layout");
