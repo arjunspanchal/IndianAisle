@@ -162,6 +162,12 @@ export default function Landing() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Link
+            href="/vendor/signup"
+            className="hidden text-sm text-stone-600 transition hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 sm:inline"
+          >
+            For Vendors
+          </Link>
+          <Link
             href="/login"
             className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 px-3.5 py-1.5 text-sm text-stone-800 transition hover:border-stone-500 dark:border-stone-700 dark:text-stone-100 dark:hover:border-stone-500"
           >
