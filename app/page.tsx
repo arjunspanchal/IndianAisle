@@ -1,7 +1,10 @@
 import Link from "next/link";
 import InlineChat from "@/components/InlineChat";
+import Icon from "@/components/ui/Icon";
 import { listWeddingsForCurrentUser, type WeddingListItem } from "@/lib/wedding-repo";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
+
+type IconName = React.ComponentProps<typeof Icon>["name"];
 
 export const dynamic = "force-dynamic";
 
@@ -77,13 +80,13 @@ export default async function HomePage() {
         />
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <ChipLink href="/weddings/new" emoji="💍" label="New wedding" />
-          <ChipLink href="/weddings" emoji="📋" label="Manage weddings" />
-          <ChipLink href="/properties" emoji="🏨" label="Properties" />
+          <ChipLink href="/weddings/new" icon="ring" label="New wedding" />
+          <ChipLink href="/weddings" icon="list" label="Manage weddings" />
+          <ChipLink href="/properties" icon="building" label="Properties" />
           {hasWeddings && (
             <ChipLink
               href={`/weddings/${weddings[0].id}/guests`}
-              emoji="🎟️"
+              icon="ticket"
               label="Guest list"
             />
           )}
@@ -119,13 +122,13 @@ export default async function HomePage() {
   );
 }
 
-function ChipLink({ href, emoji, label }: { href: string; emoji: string; label: string }) {
+function ChipLink({ href, icon, label }: { href: string; icon: IconName; label: string }) {
   return (
     <Link
       href={href}
       className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-sm text-stone-700 shadow-sm transition hover:border-stone-300 hover:bg-stone-50"
     >
-      <span aria-hidden>{emoji}</span>
+      <Icon name={icon} size={14} className="text-stone-500" />
       <span>{label}</span>
     </Link>
   );

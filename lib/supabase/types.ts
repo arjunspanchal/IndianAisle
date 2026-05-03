@@ -473,12 +473,43 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      wedding_collaborators: {
+        Row: {
+          wedding_id: string;
+          user_id: string;
+          added_at: string;
+          added_by: string | null;
+        };
+        Insert: {
+          wedding_id: string;
+          user_id: string;
+          added_by?: string | null;
+        };
+        Update: Partial<{ added_by: string | null }>;
+        Relationships: [];
+      };
     };
     Views: Empty;
     Functions: {
       delete_account: {
         Args: Record<string, never>;
         Returns: void;
+      };
+      add_wedding_collaborator_by_email: {
+        Args: { p_wedding_id: string; p_email: string };
+        Returns: { user_id: string; email: string }[];
+      };
+      list_wedding_collaborators: {
+        Args: { p_wedding_id: string };
+        Returns: { user_id: string; email: string; added_at: string }[];
+      };
+      remove_wedding_collaborator: {
+        Args: { p_wedding_id: string; p_user_id: string };
+        Returns: void;
+      };
+      user_can_access_wedding: {
+        Args: { p_wedding_id: string };
+        Returns: boolean;
       };
     };
     Enums: {

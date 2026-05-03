@@ -3,15 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOutAction } from "@/app/login/actions";
+import Icon from "@/components/ui/Icon";
 
-type Item = { href: string; label: string; emoji: string };
+type IconName = React.ComponentProps<typeof Icon>["name"];
+type Item = { href: string; label: string; icon: IconName };
 
 const ITEMS: Item[] = [
-  { href: "/", label: "Home", emoji: "🏠" },
-  { href: "/weddings", label: "Manage weddings", emoji: "💍" },
-  { href: "/properties", label: "Properties", emoji: "🏨" },
-  { href: "/vendors", label: "Vendors", emoji: "🤝" },
-  { href: "/profile", label: "Manage profile", emoji: "👤" },
+  { href: "/", label: "Home", icon: "home" },
+  { href: "/weddings", label: "Manage weddings", icon: "ring" },
+  { href: "/properties", label: "Properties", icon: "building" },
+  { href: "/vendors", label: "Vendors", icon: "handshake" },
+  { href: "/profile", label: "Manage profile", icon: "user" },
 ];
 
 type User = { email: string } | null;
@@ -44,13 +46,13 @@ export default function AppNav({ user }: { user: User }) {
             <Link
               key={it.href}
               href={it.href}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition ${
+              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition ${
                 isActive
                   ? "bg-ink text-parchment"
                   : "text-stone-700 hover:bg-stone-100"
               }`}
             >
-              <span aria-hidden>{it.emoji}</span>
+              <Icon name={it.icon} size={16} className="shrink-0 opacity-80" />
               <span>{it.label}</span>
             </Link>
           );
@@ -69,9 +71,9 @@ export default function AppNav({ user }: { user: User }) {
             <form action={signOutAction}>
               <button
                 type="submit"
-                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
+                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
               >
-                <span aria-hidden>🚪</span>
+                <Icon name="logout" size={16} className="shrink-0 opacity-80" />
                 <span>Sign out</span>
               </button>
             </form>
@@ -79,9 +81,9 @@ export default function AppNav({ user }: { user: User }) {
         ) : (
           <Link
             href="/login"
-            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
+            className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
           >
-            <span aria-hidden>🔑</span>
+            <Icon name="key" size={16} className="shrink-0 opacity-80" />
             <span>Sign in</span>
           </Link>
         )}
