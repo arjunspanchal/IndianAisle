@@ -152,7 +152,7 @@ export default function VendorManager({ initial, serverReady, loadError }: Props
       <header className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h1 className="font-serif text-4xl tracking-tight sm:text-5xl">Vendor manager</h1>
-          <p className="mt-1 text-sm text-stone-600">
+          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
             Quotes, contacts, and status for everyone supplying your wedding.
           </p>
         </div>
@@ -168,14 +168,14 @@ export default function VendorManager({ initial, serverReady, loadError }: Props
       )}
 
       {!serverReady && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:bg-amber-900/30">
           Supabase isn&apos;t configured for this environment. Edits stay in this tab only.
         </div>
       )}
 
       {status && (
         <div
-          className={`mb-4 rounded-md px-4 py-2 text-sm ${
+          className={`mb-4 rounded-md px-4 py-2 text-sm${
             status.kind === "ok" ? "border border-emerald-200 bg-emerald-50 text-emerald-800" : "border border-rose-200 bg-rose-50 text-rose-800"
           }`}
         >
@@ -184,7 +184,7 @@ export default function VendorManager({ initial, serverReady, loadError }: Props
       )}
 
       {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm dark:bg-stone-900 dark:border-stone-800">
         <Field label="Search" className="min-w-[14rem] flex-1">
           <Input
             placeholder="Name, contact, notes…"
@@ -218,7 +218,7 @@ export default function VendorManager({ initial, serverReady, loadError }: Props
             ))}
           </Select>
         </Field>
-        <div className="ml-auto text-xs text-stone-500">
+        <div className="ml-auto text-xs text-stone-500 dark:text-stone-400">
           {filtered.length} vendor{filtered.length === 1 ? "" : "s"}
           {totalQuotes > 0 && (
             <>
@@ -230,11 +230,11 @@ export default function VendorManager({ initial, serverReady, loadError }: Props
 
       {/* List */}
       {grouped.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-white p-10 text-center">
+        <div className="rounded-xl border border-dashed border-stone-300 bg-white p-10 text-center dark:bg-stone-900 dark:border-stone-700">
           <p className="font-serif text-2xl">
             {items.length === 0 ? "No vendors yet" : "No matches"}
           </p>
-          <p className="mt-1 text-sm text-stone-500">
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
             {items.length === 0
               ? "Add your first vendor to start tracking quotes and contacts."
               : "Try clearing the filters above."}
@@ -251,7 +251,7 @@ export default function VendorManager({ initial, serverReady, loadError }: Props
             <section key={category}>
               <header className="mb-2 flex items-baseline justify-between">
                 <h2 className="font-serif text-xl text-ink">{VENDOR_CATEGORY_LABEL[category]}</h2>
-                <span className="text-xs text-stone-500 tabular-nums">
+                <span className="text-xs text-stone-500 tabular-nums dark:text-stone-400">
                   {vendors.length} · {formatINR(vendors.reduce((s, v) => s + v.quoteAmount, 0))} quoted
                 </span>
               </header>
@@ -294,7 +294,7 @@ function VendorCard({
 }) {
   const tone = vendor.status ? STATUS_TONE[vendor.status] : "bg-stone-100 text-stone-500";
   return (
-    <li className="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-stone-300">
+    <li className="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-stone-300 dark:bg-stone-900 dark:border-stone-800 dark:hover:border-stone-700">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
@@ -302,7 +302,7 @@ function VendorCard({
               {vendor.name || "(unnamed vendor)"}
             </h3>
             {vendor.status && (
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${tone}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider${tone}`}>
                 {vendor.status}
               </span>
             )}
@@ -313,9 +313,9 @@ function VendorCard({
               </span>
             )}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-600">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-600 dark:text-stone-400">
             {vendor.quoteAmount > 0 && (
-              <span className="tabular-nums font-medium text-stone-800">
+              <span className="tabular-nums font-medium text-stone-800 dark:text-stone-100">
                 {formatINR(vendor.quoteAmount)}
                 {VENDOR_RATE_SUFFIX[vendor.rateType]}
               </span>
@@ -323,13 +323,13 @@ function VendorCard({
             {vendor.contactName && <span>{vendor.contactName}</span>}
             {vendor.contactPhone && <span>{vendor.contactPhone}</span>}
             {vendor.contactEmail && (
-              <a className="text-stone-700 underline-offset-2 hover:underline" href={`mailto:${vendor.contactEmail}`}>
+              <a className="text-stone-700 underline-offset-2 hover:underline dark:text-stone-200" href={`mailto:${vendor.contactEmail}`}>
                 {vendor.contactEmail}
               </a>
             )}
             {vendor.website && (
               <a
-                className="text-stone-700 underline-offset-2 hover:underline"
+                className="text-stone-700 underline-offset-2 hover:underline dark:text-stone-200"
                 href={vendor.website}
                 target="_blank"
                 rel="noreferrer"
@@ -339,7 +339,7 @@ function VendorCard({
             )}
           </div>
           {vendor.notes && (
-            <p className="mt-1 text-xs italic text-stone-500 line-clamp-2">{vendor.notes}</p>
+            <p className="mt-1 text-xs italic text-stone-500 line-clamp-2 dark:text-stone-400">{vendor.notes}</p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -379,7 +379,7 @@ function VendorEditor({
       onClick={onCancel}
     >
       <div
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-stone-200 bg-parchment p-6 shadow-2xl"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-stone-200 bg-parchment p-6 shadow-2xl dark:border-stone-800"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="mb-4 flex items-baseline justify-between gap-3">

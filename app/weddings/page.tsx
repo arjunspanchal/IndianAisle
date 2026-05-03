@@ -30,7 +30,7 @@ export default async function ManageWeddingsPage() {
       <header className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h1 className="font-serif text-3xl tracking-tight sm:text-4xl">Manage weddings</h1>
-          <p className="mt-1 text-sm text-stone-600">
+          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
             Edit, open, or remove the weddings on your account.
           </p>
         </div>
@@ -40,9 +40,9 @@ export default async function ManageWeddingsPage() {
       </header>
 
       {weddings.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-white p-10 text-center">
+        <div className="rounded-xl border border-dashed border-stone-300 bg-white p-10 text-center dark:bg-stone-900 dark:border-stone-700">
           <p className="font-serif text-2xl">No weddings yet</p>
-          <p className="mt-1 text-sm text-stone-500">
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
             Create your first wedding to start building a budget.
           </p>
           <Link href="/weddings/new" className="btn-primary mt-4 inline-flex">
@@ -56,16 +56,16 @@ export default async function ManageWeddingsPage() {
             return (
               <li
                 key={w.id}
-                className="flex items-center gap-4 rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm transition hover:border-stone-300 hover:shadow"
+                className="flex items-center gap-4 rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm transition hover:border-stone-300 hover:shadow dark:bg-stone-900 dark:border-stone-800 dark:hover:border-stone-700"
               >
                 <Link href={`/weddings/${w.id}`} className="block flex-1">
                   <div className="font-serif text-2xl">{couple}</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-600">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-600 dark:text-stone-400">
                     <span>{formatWeddingDate(w.weddingDate)}</span>
                     <span aria-hidden className="text-stone-300">·</span>
                     <span>{TYPE_LABEL[w.weddingType]}</span>
                     <span aria-hidden className="text-stone-300">·</span>
-                    <span className="text-xs uppercase tracking-wide text-stone-500">
+                    <span className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
                       {ROLE_LABEL[w.role]}
                     </span>
                   </div>
@@ -80,7 +80,7 @@ export default async function ManageWeddingsPage() {
                     type="submit"
                     aria-label={`Delete ${couple}`}
                     title="Delete"
-                    className="rounded-md px-3 py-1.5 text-sm text-stone-500 transition hover:bg-rose-50 hover:text-rose-700"
+                    className="rounded-md px-3 py-1.5 text-sm text-stone-500 transition hover:bg-rose-50 hover:text-rose-700 dark:text-stone-400"
                   >
                     Delete
                   </button>

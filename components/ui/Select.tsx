@@ -5,7 +5,7 @@ type Props = React.SelectHTMLAttributes<HTMLSelectElement>;
 
 export default function Select({ className, children, ...rest }: Props) {
   return (
-    <select className={`${inputBase} pr-8 ${className ?? ""}`} {...rest}>
+    <select className={`${inputBase}pr-8${className ?? ""}`} {...rest}>
       {children}
     </select>
   );

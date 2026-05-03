@@ -68,7 +68,7 @@ export default function SectionSubNav({ items, offsetTop = 96 }: Props) {
   return (
     <div
       ref={containerRef}
-      className="overflow-x-auto border-t border-stone-200 print:hidden"
+      className="overflow-x-auto border-t border-stone-200 print:hidden dark:border-stone-800"
     >
       <ul className="mx-auto flex max-w-5xl gap-4 whitespace-nowrap px-4 py-2 text-xs sm:px-6 lg:px-8">
         {items.map((it) => {
@@ -82,7 +82,7 @@ export default function SectionSubNav({ items, offsetTop = 96 }: Props) {
                 href={`#section-${it.id}`}
                 onClick={(e) => onClick(e, it.id)}
                 aria-current={isActive ? "true" : undefined}
-                className={`inline-block border-b-2 px-1 pb-1 transition ${
+                className={`inline-block border-b-2 px-1 pb-1 transition${
                   isActive
                     ? "border-gold text-ink"
                     : "border-transparent text-stone-500 hover:border-gold/60 hover:text-ink"

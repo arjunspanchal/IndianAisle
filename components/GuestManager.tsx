@@ -151,7 +151,7 @@ export default function GuestManager({ weddingId, initial }: Props) {
 
       {status && (
         <div
-          className={`mb-3 rounded-md px-4 py-2 text-sm ${
+          className={`mb-3 rounded-md px-4 py-2 text-sm${
             status.kind === "ok"
               ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
               : "border border-rose-200 bg-rose-50 text-rose-800"
@@ -162,7 +162,7 @@ export default function GuestManager({ weddingId, initial }: Props) {
       )}
 
       {/* toolbar */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm dark:bg-stone-900 dark:border-stone-800">
         <FilterField label="Search">
           <input
             className="text-input"
@@ -222,7 +222,7 @@ export default function GuestManager({ weddingId, initial }: Props) {
           </select>
         </FilterField>
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-stone-500">
+          <span className="text-xs text-stone-500 dark:text-stone-400">
             {filtered.length} of {guests.length}
           </span>
           <button className="btn-ghost text-xs" onClick={() => setShowImport((v) => !v)} disabled={pending}>
@@ -255,15 +255,15 @@ export default function GuestManager({ weddingId, initial }: Props) {
       )}
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-white px-6 py-10 text-center text-sm text-stone-500">
+        <div className="rounded-xl border border-dashed border-stone-300 bg-white px-6 py-10 text-center text-sm text-stone-500 dark:bg-stone-900 dark:border-stone-700 dark:text-stone-400">
           {guests.length === 0
             ? "No guests yet. Add one or use Bulk import to paste from a spreadsheet."
             : "No guests match the current filters."}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-stone-200 text-sm">
-            <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+        <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm dark:bg-stone-900 dark:border-stone-800">
+          <table className="min-w-full divide-y divide-stone-200 text-sm dark:divide-stone-800">
+            <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500 dark:bg-stone-900/40 dark:text-stone-400">
               <tr>
                 <th className="px-3 py-2 font-medium">Name</th>
                 <th className="px-3 py-2 font-medium">Group</th>
@@ -306,10 +306,10 @@ function SummaryStrip({ summary }: { summary: ReturnType<typeof summarize> }) {
       {items.map((it) => (
         <div
           key={it.label}
-          className="rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm"
+          className="rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm dark:bg-stone-900 dark:border-stone-800"
         >
-          <div className="text-[10px] uppercase tracking-wide text-stone-500">{it.label}</div>
-          <div className={`mt-0.5 font-serif text-2xl ${toneToText(it.tone)}`}>{it.value}</div>
+          <div className="text-[10px] uppercase tracking-wide text-stone-500 dark:text-stone-400">{it.label}</div>
+          <div className={`mt-0.5 font-serif text-2xl${toneToText(it.tone)}`}>{it.value}</div>
         </div>
       ))}
     </div>
@@ -333,19 +333,19 @@ function toneToText(tone?: string): string {
 
 function GuestRow({ g, onEdit }: { g: Guest; onEdit: () => void }) {
   return (
-    <tr className="hover:bg-stone-50">
+    <tr className="hover:bg-stone-50 dark:hover:bg-stone-800/60">
       <td className="px-3 py-2">
-        <div className="font-medium text-ink">{g.name || <span className="italic text-stone-400">(no name)</span>}</div>
-        {!g.invited && <span className="mt-0.5 inline-block text-[10px] uppercase tracking-wide text-rose-700">Not invited</span>}
+        <div className="font-medium text-ink">{g.name || <span className="italic text-stone-400 dark:text-stone-500">(no name)</span>}</div>
+        {!g.invited && <span className="mt-0.5 inline-block text-[10px] uppercase tracking-wide text-rose-700 dark:text-rose-300">Not invited</span>}
         {g.notes && (
-          <div className="mt-0.5 line-clamp-1 max-w-[20rem] text-xs text-stone-500" title={g.notes}>
+          <div className="mt-0.5 line-clamp-1 max-w-[20rem] text-xs text-stone-500 dark:text-stone-400" title={g.notes}>
             {g.notes}
           </div>
         )}
       </td>
-      <td className="px-3 py-2 text-stone-700">{g.guestType || <span className="text-stone-300">—</span>}</td>
-      <td className="px-3 py-2 text-stone-600">{sideLabel(g.side)}</td>
-      <td className="px-3 py-2 text-stone-700">
+      <td className="px-3 py-2 text-stone-700 dark:text-stone-200">{g.guestType || <span className="text-stone-300">—</span>}</td>
+      <td className="px-3 py-2 text-stone-600 dark:text-stone-400">{sideLabel(g.side)}</td>
+      <td className="px-3 py-2 text-stone-700 dark:text-stone-200">
         {g.phone ? (
           <a className="hover:underline" href={`tel:${g.phone}`}>{g.phone}</a>
         ) : (
@@ -353,11 +353,11 @@ function GuestRow({ g, onEdit }: { g: Guest; onEdit: () => void }) {
         )}
       </td>
       <td className="px-3 py-2"><RsvpBadge status={g.rsvpStatus} /></td>
-      <td className="px-3 py-2 text-center tabular-nums text-stone-700">{g.plusOnes || ""}</td>
-      <td className="px-3 py-2 text-center text-stone-700">{g.hotelRequired ? "✓" : ""}</td>
-      <td className="px-3 py-2 text-stone-700">{formatDate(g.arrivalDate)}</td>
+      <td className="px-3 py-2 text-center tabular-nums text-stone-700 dark:text-stone-200">{g.plusOnes || ""}</td>
+      <td className="px-3 py-2 text-center text-stone-700 dark:text-stone-200">{g.hotelRequired ? "✓" : ""}</td>
+      <td className="px-3 py-2 text-stone-700 dark:text-stone-200">{formatDate(g.arrivalDate)}</td>
       <td className="px-3 py-2 text-right">
-        <button className="text-xs text-stone-600 hover:underline" onClick={onEdit}>
+        <button className="text-xs text-stone-600 hover:underline dark:text-stone-400" onClick={onEdit}>
           Edit
         </button>
       </td>
@@ -377,7 +377,7 @@ function RsvpBadge({ status }: { status: RsvpStatus }) {
           ? "border-amber-300 bg-amber-50 text-amber-800"
           : "border-stone-300 bg-stone-50 text-stone-700";
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${cls}`}>
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs${cls}`}>
       {RSVP_LABEL[status]}
     </span>
   );
@@ -417,7 +417,7 @@ function GuestForm({
     onChange({ ...value, [k]: v });
 
   return (
-    <section className="mb-6 rounded-xl border border-ink/20 bg-white p-5 shadow-md">
+    <section className="mb-6 rounded-xl border border-ink/20 bg-white p-5 shadow-md dark:bg-stone-900">
       <h2 className="mb-4 font-serif text-2xl">{value.id ? "Edit guest" : "Add guest"}</h2>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -549,7 +549,7 @@ function GuestForm({
       <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
         {onDelete && (
           <button
-            className="mr-auto text-xs text-rose-700 hover:underline disabled:opacity-50"
+            className="mr-auto text-xs text-rose-700 hover:underline disabled:opacity-50 dark:text-rose-300"
             onClick={onDelete}
             disabled={saving}
           >
@@ -577,8 +577,8 @@ function FormField({
   className?: string;
 }) {
   return (
-    <label className={`block ${className ?? ""}`}>
-      <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500">{label}</span>
+    <label className={`block${className ?? ""}`}>
+      <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">{label}</span>
       {children}
     </label>
   );
@@ -594,7 +594,7 @@ function CheckboxField({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 rounded-md border border-stone-200 bg-stone-50/50 px-3 py-2 text-sm">
+    <label className="flex items-center gap-2 rounded-md border border-stone-200 bg-stone-50/50 px-3 py-2 text-sm dark:border-stone-800">
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>{label}</span>
     </label>
@@ -604,7 +604,7 @@ function CheckboxField({
 function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] uppercase tracking-wide text-stone-500">{label}</span>
+      <span className="mb-1 block text-[11px] uppercase tracking-wide text-stone-500 dark:text-stone-400">{label}</span>
       {children}
     </label>
   );
@@ -625,12 +625,12 @@ function ImportPanel({
 }) {
   const previewCount = parseImport(value).length;
   return (
-    <section className="mb-6 rounded-xl border border-ink/20 bg-white p-5 shadow-md">
+    <section className="mb-6 rounded-xl border border-ink/20 bg-white p-5 shadow-md dark:bg-stone-900">
       <h2 className="mb-2 font-serif text-2xl">Bulk import</h2>
-      <p className="mb-3 text-sm text-stone-600">
+      <p className="mb-3 text-sm text-stone-600 dark:text-stone-400">
         Paste tab- or comma-separated rows. First row is treated as a header if it contains
         &ldquo;name&rdquo;. Recognised columns:{" "}
-        <code className="rounded bg-stone-100 px-1 text-xs">
+        <code className="rounded bg-stone-100 px-1 text-xs dark:bg-stone-800">
           name, address, invited, phone, guest type, rsvp, hotel, arrival
         </code>
         . Only <b>name</b> is required.
@@ -642,7 +642,7 @@ function ImportPanel({
         onChange={(e) => onChange(e.target.value)}
       />
       <div className="mt-3 flex items-center justify-end gap-3">
-        <span className="text-xs text-stone-500">
+        <span className="text-xs text-stone-500 dark:text-stone-400">
           {previewCount} row{previewCount === 1 ? "" : "s"} detected
         </span>
         <button

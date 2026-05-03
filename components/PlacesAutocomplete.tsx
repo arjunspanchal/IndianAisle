@@ -105,15 +105,15 @@ export default function PlacesAutocomplete({
 
   if (!apiKey) {
     return (
-      <div className="rounded-md border border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-xs text-stone-500">
-        Set <code className="rounded bg-white px-1 py-0.5">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> in <code>.env.local</code> to enable Google search for venues.
+      <div className="rounded-md border border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-xs text-stone-500 dark:bg-stone-900/40 dark:border-stone-700 dark:text-stone-400">
+        Set <code className="rounded bg-white px-1 py-0.5 dark:bg-stone-900">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> in <code>.env.local</code> to enable Google search for venues.
       </div>
     );
   }
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-xs uppercase tracking-wide text-stone-500">
+      <label htmlFor={id} className="mb-1 block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
         Find venue with Google
       </label>
       <input
@@ -129,7 +129,7 @@ export default function PlacesAutocomplete({
         <p className="mt-1 text-xs text-rose-600">Google Maps failed to load: {error}</p>
       )}
       {ready && !error && (
-        <p className="mt-1 text-xs text-stone-500">
+        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
           Pick a result to auto-fill name, address, city, website, and phone.
         </p>
       )}

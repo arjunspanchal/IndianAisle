@@ -25,15 +25,16 @@ export type WeddingListItem = {
   weddingDate: string | null;
   weddingType: WeddingType;
   updatedAt: string;
+  isShared: boolean; // true when current user is a collaborator, not the owner
 };
 
-// All reads are RLS-scoped to owner_id = auth.uid().
-// Collaborator/sharing is a future task.
+// RLS now returns weddings owned by the user OR ones they collaborate on.
 export async function listWeddingsForCurrentUser(): Promise<WeddingListItem[]> {
   const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
   const { data, error } = await sb
     .from("weddings")
-    .select("id, role, couple_names, wedding_date, wedding_type, updated_at")
+    .select("id, role, couple_names, wedding_date, wedding_type, updated_at, owner_id")
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []).map((r) => ({
@@ -43,6 +44,7 @@ export async function listWeddingsForCurrentUser(): Promise<WeddingListItem[]> {
     weddingDate: r.wedding_date,
     weddingType: r.wedding_type,
     updatedAt: r.updated_at,
+    isShared: !!user && r.owner_id !== user.id,
   }));
 }
 

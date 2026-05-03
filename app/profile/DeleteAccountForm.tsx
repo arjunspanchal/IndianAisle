@@ -14,7 +14,7 @@ export default function DeleteAccountForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="btn border border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
+        className="btn border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 dark:bg-stone-900 dark:text-rose-300"
       >
         Delete account
       </button>
@@ -60,7 +60,7 @@ export default function DeleteAccountForm() {
       </label>
 
       {error && (
-        <div className="rounded border border-rose-200 bg-white px-3 py-2 text-sm text-rose-700">{error}</div>
+        <div className="rounded border border-rose-200 bg-white px-3 py-2 text-sm text-rose-700 dark:bg-stone-900 dark:text-rose-300">{error}</div>
       )}
 
       <div className="flex items-center gap-2">

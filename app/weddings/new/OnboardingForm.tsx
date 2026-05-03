@@ -123,7 +123,7 @@ export default function OnboardingForm() {
 
       {step === 1 && (
         <div className="space-y-2">
-          <label htmlFor="couple_names" className="block text-xs uppercase tracking-wide text-stone-500">
+          <label htmlFor="couple_names" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
             Couple names
           </label>
           <input
@@ -135,7 +135,7 @@ export default function OnboardingForm() {
             onChange={(e) => setState((s) => ({ ...s, coupleNames: e.target.value }))}
             autoFocus
           />
-          <p className="text-xs text-stone-500">
+          <p className="text-xs text-stone-500 dark:text-stone-400">
             However you&apos;d like to refer to the couple — use names, nicknames, or hashtags.
           </p>
         </div>
@@ -143,7 +143,7 @@ export default function OnboardingForm() {
 
       {step === 2 && (
         <div className="space-y-3">
-          <span id="wedding_date_label" className="block text-xs uppercase tracking-wide text-stone-500">
+          <span id="wedding_date_label" className="block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
             Wedding date
           </span>
           <DateField
@@ -154,7 +154,7 @@ export default function OnboardingForm() {
             placeholder="Pick a date"
             onChange={(v) => setState((s) => ({ ...s, weddingDate: v }))}
           />
-          <label className="flex items-center gap-2 text-sm text-stone-700">
+          <label className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200">
             <input
               type="checkbox"
               checked={state.dateUnknown}
@@ -165,7 +165,7 @@ export default function OnboardingForm() {
                   weddingDate: e.target.checked ? "" : s.weddingDate,
                 }))
               }
-              className="h-4 w-4 rounded border-stone-300 text-ink focus:ring-gold"
+              className="h-4 w-4 rounded border-stone-300 text-ink focus:ring-gold dark:border-stone-700"
             />
             Not decided yet
           </label>
@@ -191,14 +191,14 @@ export default function OnboardingForm() {
       )}
 
       {error && (
-        <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
           {error}
         </div>
       )}
 
       <div className="flex items-center justify-between gap-3 pt-2">
         {step === 0 ? (
-          <Link href="/" className="text-sm text-stone-500 underline-offset-2 hover:underline">
+          <Link href="/" className="text-sm text-stone-500 underline-offset-2 hover:underline dark:text-stone-400">
             Cancel
           </Link>
         ) : (
@@ -233,7 +233,7 @@ function Stepper({ current }: { current: Step }) {
         <span
           key={i}
           aria-hidden
-          className={`h-1.5 flex-1 rounded-full transition ${
+          className={`h-1.5 flex-1 rounded-full transition${
             i <= current ? "bg-gold" : "bg-stone-200"
           }`}
         />
@@ -257,14 +257,14 @@ function OptionCard({
     <button
       type="button"
       onClick={onClick}
-      className={`block w-full rounded-xl border px-4 py-3 text-left transition ${
+      className={`block w-full rounded-xl border px-4 py-3 text-left transition${
         selected
           ? "border-ink bg-ink/5 ring-1 ring-ink"
           : "border-stone-200 bg-white hover:border-stone-300"
       }`}
     >
       <div className="font-serif text-xl">{label}</div>
-      <div className="mt-0.5 text-sm text-stone-600">{hint}</div>
+      <div className="mt-0.5 text-sm text-stone-600 dark:text-stone-400">{hint}</div>
     </button>
   );
 }
@@ -292,17 +292,17 @@ function ReviewSummary({
   ];
 
   return (
-    <ul className="divide-y divide-stone-200 rounded-xl border border-stone-200 bg-white">
+    <ul className="divide-y divide-stone-200 rounded-xl border border-stone-200 bg-white dark:bg-stone-900 dark:border-stone-800 dark:divide-stone-800">
       {rows.map((r) => (
         <li key={r.label} className="flex items-center justify-between px-4 py-3">
           <div>
-            <div className="text-xs uppercase tracking-wide text-stone-500">{r.label}</div>
+            <div className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">{r.label}</div>
             <div className="mt-0.5 text-base">{r.value}</div>
           </div>
           <button
             type="button"
             onClick={() => onEdit(r.step)}
-            className="text-sm text-stone-500 underline-offset-2 hover:underline"
+            className="text-sm text-stone-500 underline-offset-2 hover:underline dark:text-stone-400"
           >
             Edit
           </button>

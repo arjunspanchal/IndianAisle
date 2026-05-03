@@ -46,7 +46,7 @@ export default function RoleForm({ initialRole, initialCompanyName }: Props) {
   return (
     <form onSubmit={onSubmit} className="mt-4 space-y-4">
       <fieldset className="space-y-2">
-        <legend className="text-xs uppercase tracking-wide text-stone-500">How are you involved?</legend>
+        <legend className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">How are you involved?</legend>
         {OPTIONS.map((o) => (
           <label
             key={o.value}
@@ -66,8 +66,8 @@ export default function RoleForm({ initialRole, initialCompanyName }: Props) {
               disabled={pending}
             />
             <span className="flex-1">
-              <span className="block text-sm font-medium text-stone-800">{o.label}</span>
-              <span className="block text-xs text-stone-500">{o.hint}</span>
+              <span className="block text-sm font-medium text-stone-800 dark:text-stone-100">{o.label}</span>
+              <span className="block text-xs text-stone-500 dark:text-stone-400">{o.hint}</span>
             </span>
           </label>
         ))}
@@ -75,7 +75,7 @@ export default function RoleForm({ initialRole, initialCompanyName }: Props) {
 
       {role === "planner" && (
         <label className="block">
-          <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500">
+          <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
             Company name
           </span>
           <input
@@ -88,7 +88,7 @@ export default function RoleForm({ initialRole, initialCompanyName }: Props) {
             maxLength={120}
             disabled={pending}
           />
-          <span className="mt-1 block text-xs text-stone-500">
+          <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
             Shown as a header at the top of every PDF and Excel budget you export.
           </span>
         </label>
@@ -99,7 +99,7 @@ export default function RoleForm({ initialRole, initialCompanyName }: Props) {
       {role !== "planner" && <input type="hidden" name="companyName" value="" />}
 
       {error && (
-        <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
           {error}
         </div>
       )}
@@ -109,7 +109,7 @@ export default function RoleForm({ initialRole, initialCompanyName }: Props) {
           {pending ? "Saving…" : "Save"}
         </button>
         {savedAt && !error && !dirty && (
-          <span className="text-xs text-stone-500">Saved at {savedAt}</span>
+          <span className="text-xs text-stone-500 dark:text-stone-400">Saved at {savedAt}</span>
         )}
       </div>
     </form>

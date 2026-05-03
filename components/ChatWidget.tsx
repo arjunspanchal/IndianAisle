@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import Icon from "@/components/ui/Icon";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
@@ -86,21 +87,25 @@ export default function ChatWidget() {
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-ink text-parchment shadow-lg transition hover:scale-105 print:hidden"
       >
-        <span className="text-2xl" aria-hidden>
-          {open ? "×" : "💬"}
-        </span>
+        {open ? (
+          <span className="text-2xl leading-none" aria-hidden>
+            ×
+          </span>
+        ) : (
+          <Icon name="message" size={22} />
+        )}
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-5 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl print:hidden">
-          <header className="border-b border-stone-200 bg-white/90 px-4 py-3">
+        <div className="fixed bottom-24 right-5 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl dark:border-stone-800 dark:bg-stone-900 print:hidden">
+          <header className="border-b border-stone-200 bg-white/90 px-4 py-3 dark:border-stone-800 dark:bg-stone-900/90">
             <div className="font-serif text-lg leading-tight">Wedding Assistant</div>
-            <div className="text-xs text-stone-500">Ask about budgets, venues, traditions…</div>
+            <div className="text-xs text-stone-500 dark:text-stone-400">Ask about budgets, venues, traditions…</div>
           </header>
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {messages.length === 0 && (
-              <div className="rounded-lg bg-stone-50 px-3 py-2 text-sm text-stone-600">
+              <div className="rounded-lg bg-stone-50 px-3 py-2 text-sm text-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:bg-stone-900/40 dark:text-stone-400">
                 Hi! I can help you plan an Indian wedding — try asking{" "}
                 <em>“What does a 250-guest sangeet usually cost?”</em>
               </div>
@@ -114,13 +119,13 @@ export default function ChatWidget() {
               return (
                 <div
                   key={m.id}
-                  className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                  className={`flex${isUser ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${
+                    className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm${
                       isUser
                         ? "bg-ink text-parchment"
-                        : "bg-stone-100 text-stone-800"
+                        : "bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-100"
                     }`}
                   >
                     {text || (isStreaming ? "…" : "")}
@@ -130,7 +135,7 @@ export default function ChatWidget() {
             })}
 
             {error && (
-              <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+              <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-300">
                 Something went wrong. Check that <code>ANTHROPIC_API_KEY</code> is set.
               </div>
             )}
@@ -138,7 +143,7 @@ export default function ChatWidget() {
 
           <form
             onSubmit={handleSubmit}
-            className="border-t border-stone-200 bg-white px-3 py-3"
+            className="border-t border-stone-200 bg-white px-3 py-3 dark:border-stone-800 dark:bg-stone-900"
           >
             <input
               ref={fileInputRef}
@@ -153,16 +158,16 @@ export default function ChatWidget() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isStreaming}
                 title="Attach a vendor PDF"
-                className="rounded-md p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-40"
+                className="rounded-md p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-40 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
                 aria-label="Attach a PDF"
               >
-                <span aria-hidden>📎</span>
+                <Icon name="paperclip" size={18} />
               </button>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask anything…"
-                className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-500"
+                className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-stone-500"
                 disabled={isStreaming}
               />
               <button
@@ -174,13 +179,13 @@ export default function ChatWidget() {
               </button>
             </div>
             {attached && (
-              <div className="mt-2 inline-flex max-w-full items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-700">
-                <span aria-hidden>📄</span>
+              <div className="mt-2 inline-flex max-w-full items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-700 dark:bg-stone-800 dark:text-stone-200">
+                <Icon name="file" size={12} className="text-stone-500 dark:text-stone-400" />
                 <span className="truncate">{attached.name}</span>
                 <button
                   type="button"
                   onClick={() => onPickFile(null)}
-                  className="text-stone-500 hover:text-rose-700"
+                  className="text-stone-500 hover:text-rose-700 dark:text-stone-400"
                   aria-label="Remove attachment"
                 >
                   ×
@@ -188,7 +193,7 @@ export default function ChatWidget() {
               </div>
             )}
             {fileError && (
-              <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
                 {fileError}
               </div>
             )}

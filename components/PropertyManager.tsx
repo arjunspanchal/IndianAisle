@@ -13,6 +13,7 @@ import {
 import { formatINR } from "@/lib/budget";
 import { removeProperty, saveProperty } from "@/app/properties/actions";
 import PlacesAutocomplete, { type PlacePick } from "@/components/PlacesAutocomplete";
+import Icon from "@/components/ui/Icon";
 import { findNearestAirport } from "@/lib/google-maps-client";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -160,7 +161,7 @@ export default function PropertyManager({ initial, serverReady, loadError }: Pro
       <header className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h1 className="font-serif text-4xl tracking-tight sm:text-5xl">Property manager</h1>
-          <p className="mt-1 text-sm text-stone-600">
+          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
             Your candidate venues — only visible to you.
           </p>
         </div>
@@ -175,13 +176,13 @@ export default function PropertyManager({ initial, serverReady, loadError }: Pro
         </div>
       )}
       {!serverReady && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:bg-amber-900/30">
           Supabase not configured — changes won&apos;t persist until <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> are set.
         </div>
       )}
       {status && (
         <div
-          className={`mb-4 rounded-md px-4 py-2 text-sm ${
+          className={`mb-4 rounded-md px-4 py-2 text-sm${
             status.kind === "ok"
               ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
               : "border border-rose-200 bg-rose-50 text-rose-800"
@@ -192,7 +193,7 @@ export default function PropertyManager({ initial, serverReady, loadError }: Pro
       )}
 
       {/* filters */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm dark:bg-stone-900 dark:border-stone-800">
         <Field label="Search">
           <input
             className="text-input"
@@ -240,7 +241,7 @@ export default function PropertyManager({ initial, serverReady, loadError }: Pro
             ))}
           </select>
         </Field>
-        <div className="ml-auto text-xs text-stone-500">
+        <div className="ml-auto text-xs text-stone-500 dark:text-stone-400">
           {filtered.length} of {items.length} shown
         </div>
       </div>
@@ -256,7 +257,7 @@ export default function PropertyManager({ initial, serverReady, loadError }: Pro
       )}
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-white px-6 py-10 text-center text-sm text-stone-500">
+        <div className="rounded-xl border border-dashed border-stone-300 bg-white px-6 py-10 text-center text-sm text-stone-500 dark:bg-stone-900 dark:border-stone-700 dark:text-stone-400">
           No properties match. Try clearing filters or add a new one.
         </div>
       ) : (
@@ -302,7 +303,7 @@ function PropertyCard({
   const airportDir = airportDirectionsUrl(p);
 
   return (
-    <li className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+    <li className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
@@ -310,35 +311,35 @@ function PropertyCard({
             <TierBadge tier={p.tier} />
             {p.status && <StatusBadge status={p.status} />}
             {typeof p.rating === "number" && p.rating > 0 && (
-              <span className="text-xs text-amber-700" title={`Rating: ${p.rating}/5`}>
+              <span className="text-xs text-amber-700 dark:text-amber-300" title={`Rating: ${p.rating}/5`}>
                 {"★".repeat(p.rating)}{"☆".repeat(Math.max(0, 5 - p.rating))}
               </span>
             )}
             {p.visited && <Badge tone="stone">Visited</Badge>}
           </div>
-          <div className="mt-1 text-sm text-stone-600">
-            {p.location || <span className="italic text-stone-400">No location</span>}
-            {p.address && <span className="text-stone-500"> · {p.address}</span>}
+          <div className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+            {p.location || <span className="italic text-stone-400 dark:text-stone-500">No location</span>}
+            {p.address && <span className="text-stone-500 dark:text-stone-400"> · {p.address}</span>}
           </div>
           {capacityBits.length > 0 && (
-            <div className="mt-1 text-xs text-stone-500">{capacityBits.join(" · ")}</div>
+            <div className="mt-1 text-xs text-stone-500 dark:text-stone-400">{capacityBits.join(" · ")}</div>
           )}
 
           {(p.nearestAirportName || p.airportKm != null) && (
-            <div className="mt-1 text-xs text-stone-500">
-              <span aria-hidden>✈️ </span>
+            <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
+              <Icon name="plane" size={12} className="shrink-0" />
               {p.nearestAirportName ? (
                 airportDir ? (
                   <a
                     href={airportDir}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-stone-700 underline-offset-2 hover:underline"
+                    className="text-stone-700 underline-offset-2 hover:underline dark:text-stone-200"
                   >
                     {p.nearestAirportName}
                   </a>
                 ) : (
-                  <span className="text-stone-700">{p.nearestAirportName}</span>
+                  <span className="text-stone-700 dark:text-stone-200">{p.nearestAirportName}</span>
                 )
               ) : (
                 <span>Nearest airport</span>
@@ -360,7 +361,7 @@ function PropertyCard({
           )}
 
           {hasPricing && (
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600">
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600 dark:text-stone-400">
               {p.avgRoomRate ? <span>Room/night: <b className="font-medium">{formatINR(p.avgRoomRate)}</b></span> : null}
               {p.perPlateCost ? <span>Per plate: <b className="font-medium">{formatINR(p.perPlateCost)}</b></span> : null}
               {p.banquetRental ? <span>Banquet rental: <b className="font-medium">{formatINR(p.banquetRental)}</b></span> : null}
@@ -369,34 +370,52 @@ function PropertyCard({
           )}
 
           {(p.contactName || p.contactPhone || p.contactEmail || p.website || mapsUrl(p)) && (
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600">
-              {p.contactName && <span>👤 {p.contactName}</span>}
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600 dark:text-stone-400">
+              {p.contactName && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="user" size={12} className="text-stone-400 dark:text-stone-500" />
+                  {p.contactName}
+                </span>
+              )}
               {p.contactPhone && (
-                <a className="hover:underline" href={`tel:${p.contactPhone}`}>📞 {p.contactPhone}</a>
+                <a className="inline-flex items-center gap-1.5 hover:underline" href={`tel:${p.contactPhone}`}>
+                  <Icon name="phone" size={12} className="text-stone-400 dark:text-stone-500" />
+                  {p.contactPhone}
+                </a>
               )}
               {p.contactEmail && (
-                <a className="hover:underline" href={`mailto:${p.contactEmail}`}>✉ {p.contactEmail}</a>
+                <a className="inline-flex items-center gap-1.5 hover:underline" href={`mailto:${p.contactEmail}`}>
+                  <Icon name="mail" size={12} className="text-stone-400 dark:text-stone-500" />
+                  {p.contactEmail}
+                </a>
               )}
               {p.website && (
-                <a className="hover:underline" href={p.website} target="_blank" rel="noreferrer">
-                  🔗 Website
+                <a
+                  className="inline-flex items-center gap-1.5 hover:underline"
+                  href={p.website}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Icon name="link" size={12} className="text-stone-400 dark:text-stone-500" />
+                  Website
                 </a>
               )}
               {mapsUrl(p) && (
                 <a
-                  className="hover:underline"
+                  className="inline-flex items-center gap-1.5 hover:underline"
                   href={mapsUrl(p) as string}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  📍 Open in Maps
+                  <Icon name="pin" size={12} className="text-stone-400 dark:text-stone-500" />
+                  Open in Maps
                 </a>
               )}
             </div>
           )}
 
           {p.notes && (
-            <p className="mt-2 whitespace-pre-wrap text-sm text-stone-700">{p.notes}</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-stone-700 dark:text-stone-200">{p.notes}</p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -404,7 +423,7 @@ function PropertyCard({
             Edit
           </button>
           <button
-            className="text-xs text-rose-700 hover:underline disabled:opacity-50"
+            className="text-xs text-rose-700 hover:underline disabled:opacity-50 dark:text-rose-300"
             onClick={onDelete}
             disabled={busy}
           >
@@ -493,7 +512,7 @@ function PropertyForm({
   );
 
   return (
-    <section className="mb-6 rounded-xl border border-ink/20 bg-white p-5 shadow-md">
+    <section className="mb-6 rounded-xl border border-ink/20 bg-white p-5 shadow-md dark:bg-stone-900">
       <h2 className="mb-4 font-serif text-2xl">
         {value.airtableId ? "Edit property" : "New property"}
       </h2>
@@ -695,18 +714,19 @@ function PropertyForm({
             onChange={(e) => setNum("airportKm", e.target.value)}
           />
           {airportPending ? (
-            <p className="mt-1 text-xs text-stone-500">
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
               Computing nearest airport via Google Maps…
             </p>
           ) : value.nearestAirportName ? (
-            <p className="mt-1 text-xs text-stone-500">
-              ✈️ Nearest: <span className="text-stone-700">{value.nearestAirportName}</span>
+            <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
+              <Icon name="plane" size={12} className="shrink-0" />
+              Nearest: <span className="text-stone-700 dark:text-stone-200">{value.nearestAirportName}</span>
               {value.airportKm != null && (
                 <span> · {value.airportKm} km driving</span>
               )}
             </p>
           ) : airportError ? (
-            <p className="mt-1 text-xs text-amber-700">
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
               Couldn&rsquo;t auto-detect airport: {airportError}
             </p>
           ) : null}
@@ -780,11 +800,11 @@ function FormGroup({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="mb-5 border-t border-stone-200 pt-4 first:mt-0 first:border-t-0 first:pt-0">
-      <legend className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-500">
+    <fieldset className="mb-5 border-t border-stone-200 pt-4 first:mt-0 first:border-t-0 first:pt-0 dark:border-stone-800">
+      <legend className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
         {title}
       </legend>
-      <div className={`grid gap-4 ${cols === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
+      <div className={`grid gap-4${cols === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
         {children}
       </div>
     </fieldset>
@@ -824,7 +844,7 @@ function Badge({
           ? "border-rose-300 bg-rose-50 text-rose-800"
           : "border-stone-300 bg-stone-50 text-stone-700";
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${cls}`}>
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs${cls}`}>
       {children}
     </span>
   );
@@ -840,8 +860,8 @@ function Field({
   className?: string;
 }) {
   return (
-    <label className={`block ${className ?? ""}`}>
-      <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500">{label}</span>
+    <label className={`block${className ?? ""}`}>
+      <span className="mb-1 block text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">{label}</span>
       {children}
     </label>
   );
@@ -857,7 +877,7 @@ function CheckboxField({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 rounded-md border border-stone-200 bg-stone-50/50 px-3 py-2 text-sm">
+    <label className="flex items-center gap-2 rounded-md border border-stone-200 bg-stone-50/50 px-3 py-2 text-sm dark:border-stone-800">
       <input
         type="checkbox"
         checked={checked}

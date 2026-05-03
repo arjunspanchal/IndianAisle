@@ -19,9 +19,9 @@ export async function listCollaborators(weddingId: string): Promise<Collaborator
   const { data, error } = await sb.rpc("list_wedding_collaborators", { p_wedding_id: weddingId });
   if (error) throw new Error(error.message);
   return (data ?? []).map((r) => ({
-    userId: r.user_id,
-    email: r.email,
-    addedAt: r.added_at,
+    userId: r.o_user_id,
+    email: r.o_email,
+    addedAt: r.o_added_at,
   }));
 }
 
@@ -38,8 +38,8 @@ export async function addCollaboratorByEmail(
   const row = data?.[0];
   if (!row) throw new Error("No collaborator returned");
   return {
-    userId: row.user_id,
-    email: row.email,
+    userId: row.o_user_id,
+    email: row.o_email,
     addedAt: new Date().toISOString(),
   };
 }

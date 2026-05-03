@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Calculator, { type VenueOption } from "@/components/Calculator";
+import ShareWedding from "@/components/ShareWedding";
 import { getWeddingBudget } from "@/lib/wedding-repo";
 import { listProperties } from "@/lib/properties-repo";
 import { listVendorOptions } from "@/lib/vendors-repo";
 import { getPlannerHeaderForCurrentUser } from "@/lib/profile-repo";
+import { getWeddingAccess } from "@/lib/collaborators-repo";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { VendorOption } from "@/lib/vendors";
 
 export const dynamic = "force-dynamic";
@@ -45,18 +48,30 @@ export default async function WeddingPage({ params }: { params: { id: string } }
 
   const plannerHeader = await getPlannerHeaderForCurrentUser().catch(() => "");
 
+  const access = await getWeddingAccess(params.id).catch(() => null);
+  const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+
   return (
     <div>
-      <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6 lg:px-8 print:hidden">
-        <nav className="inline-flex gap-1 rounded-md border border-stone-200 bg-white p-1 text-sm shadow-sm">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 pt-4 sm:px-6 lg:px-8 print:hidden">
+        <nav className="inline-flex gap-1 rounded-md border border-stone-200 bg-white p-1 text-sm shadow-sm dark:bg-stone-900 dark:border-stone-800">
           <span className="rounded-sm bg-ink px-3 py-1.5 text-parchment">Budget</span>
           <Link
             href={`/weddings/${params.id}/guests`}
-            className="rounded-sm px-3 py-1.5 text-stone-700 hover:bg-stone-100"
+            className="rounded-sm px-3 py-1.5 text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-800"
           >
             Guests
           </Link>
         </nav>
+        {access && user && (
+          <ShareWedding
+            weddingId={params.id}
+            isOwner={access.isOwner}
+            currentUserId={user.id}
+            initialCollaborators={access.collaborators}
+          />
+        )}
       </div>
       <Calculator
         initialBudget={budget}

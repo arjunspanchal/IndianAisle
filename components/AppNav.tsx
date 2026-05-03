@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOutAction } from "@/app/login/actions";
 import Icon from "@/components/ui/Icon";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type IconName = React.ComponentProps<typeof Icon>["name"];
 type Item = { href: string; label: string; icon: IconName };
@@ -32,12 +33,13 @@ export default function AppNav({ user }: { user: User }) {
     : "";
 
   return (
-    <aside className="flex flex-col border-b border-stone-200 bg-white/70 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:w-56 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r print:hidden">
-      <div className="px-5 pt-5 pb-3">
+    <aside className="flex flex-col border-b border-stone-200 bg-white/70 backdrop-blur dark:border-stone-800 dark:bg-stone-950/70 lg:sticky lg:top-0 lg:h-screen lg:w-56 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r print:hidden">
+      <div className="flex items-start justify-between gap-2 px-5 pt-5 pb-3">
         <Link href="/" className="block">
           <h1 className="font-serif text-2xl leading-tight">The Indian Aisle</h1>
-          <p className="mt-0.5 text-xs text-stone-500">Wedding budget calculator</p>
+          <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">Wedding budget calculator</p>
         </Link>
+        <ThemeToggle />
       </div>
       <nav className="flex-1 px-3 py-2">
         {ITEMS.map((it) => {
@@ -46,10 +48,10 @@ export default function AppNav({ user }: { user: User }) {
             <Link
               key={it.href}
               href={it.href}
-              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition ${
+              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition${
                 isActive
                   ? "bg-ink text-parchment"
-                  : "text-stone-700 hover:bg-stone-100"
+                  : "text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/60"
               }`}
             >
               <Icon name={it.icon} size={16} className="shrink-0 opacity-80" />
@@ -59,19 +61,19 @@ export default function AppNav({ user }: { user: User }) {
         })}
       </nav>
 
-      <div className="border-t border-stone-200 px-3 py-3">
+      <div className="border-t border-stone-200 px-3 py-3 dark:border-stone-800">
         {user ? (
           <div className="space-y-2">
             <div className="px-2">
-              <div className="text-xs uppercase tracking-wide text-stone-500">Signed in as</div>
-              <div className="mt-0.5 truncate text-sm text-stone-800" title={user.email}>
+              <div className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">Signed in as</div>
+              <div className="mt-0.5 truncate text-sm text-stone-800 dark:text-stone-200 dark:text-stone-100" title={user.email}>
                 {truncatedEmail}
               </div>
             </div>
             <form action={signOutAction}>
               <button
                 type="submit"
-                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
+                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/60 dark:text-stone-200 dark:hover:bg-stone-800"
               >
                 <Icon name="logout" size={16} className="shrink-0 opacity-80" />
                 <span>Sign out</span>
@@ -81,7 +83,7 @@ export default function AppNav({ user }: { user: User }) {
         ) : (
           <Link
             href="/login"
-            className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
+            className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/60 dark:text-stone-200 dark:hover:bg-stone-800"
           >
             <Icon name="key" size={16} className="shrink-0 opacity-80" />
             <span>Sign in</span>

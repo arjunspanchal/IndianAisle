@@ -63,7 +63,7 @@ export default async function HomePage() {
       <div className="mt-6 text-center sm:mt-12">
         <div className="inline-flex items-center gap-3">
           <span aria-hidden className="text-3xl text-gold sm:text-4xl">✸</span>
-          <h1 className="font-serif text-4xl tracking-tight text-stone-800 sm:text-5xl">
+          <h1 className="font-serif text-4xl tracking-tight text-stone-800 dark:text-stone-100 sm:text-5xl">
             {greeting}, {firstName}
           </h1>
         </div>
@@ -95,20 +95,27 @@ export default async function HomePage() {
 
       {hasWeddings && (
         <div className="mt-12">
-          <h2 className="font-serif text-xl tracking-tight text-stone-700">Your weddings</h2>
+          <h2 className="font-serif text-xl tracking-tight text-stone-700 dark:text-stone-200">Your weddings</h2>
           <ul className="mt-3 space-y-2">
             {weddings.map((w) => {
               const couple = w.coupleNames.trim() || "Untitled wedding";
               return (
                 <li
                   key={w.id}
-                  className="rounded-lg border border-stone-200 bg-white shadow-sm transition hover:border-stone-300 hover:shadow"
+                  className="rounded-lg border border-stone-200 bg-white shadow-sm transition hover:border-stone-300 hover:shadow dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
                 >
                   <Link href={`/weddings/${w.id}`} className="block px-4 py-3">
-                    <div className="font-serif text-xl">{couple}</div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-600">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="font-serif text-xl text-stone-900 dark:text-stone-100 dark:text-stone-50">{couple}</span>
+                      {w.isShared && (
+                        <span className="rounded-full border border-stone-300 bg-stone-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-stone-600 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:bg-stone-900/40 dark:text-stone-400">
+                          Shared
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-600 dark:text-stone-400">
                       <span>{formatWeddingDate(w.weddingDate)}</span>
-                      <span aria-hidden className="text-stone-300">·</span>
+                      <span aria-hidden className="text-stone-300 dark:text-stone-600">·</span>
                       <span>{TYPE_LABEL[w.weddingType]}</span>
                     </div>
                   </Link>
@@ -126,9 +133,9 @@ function ChipLink({ href, icon, label }: { href: string; icon: IconName; label: 
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-sm text-stone-700 shadow-sm transition hover:border-stone-300 hover:bg-stone-50"
+      className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-sm text-stone-700 shadow-sm transition hover:border-stone-300 hover:bg-stone-50 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-200 dark:hover:border-stone-700 dark:hover:bg-stone-800 dark:hover:bg-stone-800/60"
     >
-      <Icon name={icon} size={14} className="text-stone-500" />
+      <Icon name={icon} size={14} className="text-stone-500 dark:text-stone-400" />
       <span>{label}</span>
     </Link>
   );

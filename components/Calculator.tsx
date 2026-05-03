@@ -351,8 +351,8 @@ export default function Calculator({
     <div className="flex min-h-screen flex-col bg-parchment">
       {plannerHeader && (
         <div className="hidden print:block">
-          <div className="border-b border-stone-300 px-10 py-4 text-center">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Prepared by</p>
+          <div className="border-b border-stone-300 px-10 py-4 text-center dark:border-stone-700">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500 dark:text-stone-400">Prepared by</p>
             <p className="mt-1 font-display text-2xl text-ink">{plannerHeader}</p>
           </div>
         </div>
@@ -898,7 +898,7 @@ function ProgrammeTable({
             {headers.map((h, i) => (
               <th
                 key={i}
-                className={`pb-2 pr-3 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-mute ${
+                className={`pb-2 pr-3 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-mute${
                   i >= headers.length - 2 ? "text-right" : "text-left"
                 }`}
               >
@@ -1199,7 +1199,7 @@ function VenueField({
 
   let helper: React.ReactNode = undefined;
   if (hasError) {
-    helper = <span className="text-rose-700">Couldn&apos;t load Properties: {error}</span>;
+    helper = <span className="text-rose-700 dark:text-rose-300">Couldn&apos;t load Properties: {error}</span>;
   } else if (empty) {
     helper = (
       <>

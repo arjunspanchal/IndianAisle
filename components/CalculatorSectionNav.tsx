@@ -21,7 +21,7 @@ export default function CalculatorSectionNav({
   items,
   formatTotal,
   offsetTop = 96,
-  className = "",
+  className="",
 }: Props) {
   // Initialise from the first section so SSR and the first client render agree.
   const [activeId, setActiveId] = useState<string>(items[0]?.id ?? "");
@@ -86,7 +86,7 @@ export default function CalculatorSectionNav({
                 <span className="w-6 shrink-0 font-display text-xs italic tabular text-gold-soft">
                   {String(it.n).padStart(2, "0")}
                 </span>
-                <span className={`flex-1 text-sm ${isActive ? "font-medium" : ""}`}>{it.title}</span>
+                <span className={`flex-1 text-sm${isActive ? "font-medium" : ""}`}>{it.title}</span>
                 {typeof it.total === "number" && (
                   <span className="shrink-0 text-[11px] tabular text-ink-mute">
                     {formatTotal ? formatTotal(it.total) : it.total.toString()}

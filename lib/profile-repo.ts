@@ -20,7 +20,26 @@ export async function getProfileForCurrentUser(): Promise<Profile> {
     .select("display_name, role, company_name")
     .eq("id", userData.user.id)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+
+  if (error) {
+    // Migration 0006 (role + company_name) may not be applied yet on this
+    // environment. Fall back to the pre-migration columns so /profile still
+    // loads with sensible defaults; planner-mode UI just won't be functional
+    // until the migration runs.
+    if (/column.*(role|company_name)/i.test(error.message)) {
+      const { data: legacy, error: legacyErr } = await sb
+        .from("wedding_profiles")
+        .select("display_name")
+        .eq("id", userData.user.id)
+        .maybeSingle();
+      if (legacyErr) throw new Error(legacyErr.message);
+      return {
+        ...DEFAULT_PROFILE,
+        displayName: (legacy as { display_name?: string } | null)?.display_name ?? "",
+      };
+    }
+    throw new Error(error.message);
+  }
   if (!data) return DEFAULT_PROFILE;
 
   return {
@@ -54,5 +73,12 @@ export async function updateProfile(patch: Partial<Profile>): Promise<void> {
   const { error } = await sb
     .from("wedding_profiles")
     .upsert(row, { onConflict: "id" });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (/column.*(role|company_name)/i.test(error.message)) {
+      throw new Error(
+        "Profile schema isn't up to date. Apply migration 0006_profile_role_company.sql to your Supabase project, then try again.",
+      );
+    }
+    throw new Error(error.message);
+  }
 }
