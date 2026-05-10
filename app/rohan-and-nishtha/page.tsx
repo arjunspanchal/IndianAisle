@@ -5,6 +5,8 @@ import GiftButton from "./GiftButton";
 import MusicToggle from "./MusicToggle";
 import CornerFleurons from "./CornerFleurons";
 import PhotoFrame from "./PhotoFrame";
+import EnvelopeOpener from "./EnvelopeOpener";
+import VideoFrame from "./VideoFrame";
 
 export const metadata: Metadata = {
   title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
@@ -39,10 +41,6 @@ const lightTokens: React.CSSProperties = {
 // fixed paper-grain layer for stationery texture.
 const pageStyles = `
 html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !important; }
-@keyframes envelope-in {
-  0% { opacity: 0; transform: scale(0.995); }
-  100% { opacity: 1; transform: scale(1); }
-}
 @keyframes reveal-in {
   0% { opacity: 0; transform: translateY(12px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -51,10 +49,78 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   0%, 100% { opacity: 0.25; transform: translateY(0); }
   50%      { opacity: 0.85; transform: translateY(4px); }
 }
+@keyframes flap-open {
+  0%   { transform: rotateX(0deg); }
+  100% { transform: rotateX(180deg); }
+}
+@keyframes card-emerge {
+  0%   { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-30%) scale(1.02); opacity: 1; }
+}
+@keyframes seal-break {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  60%  { transform: translate(-50%, -50%) scale(1.4); opacity: 0.4; }
+  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}
+@keyframes stage-out {
+  0%   { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
 @media (prefers-reduced-motion: no-preference) {
-  .envelope-in    { animation: envelope-in 800ms ease-out both; }
-  .reveal-in      { animation: reveal-in 1100ms ease-out both; }
+  .reveal-in          { animation: reveal-in 1100ms ease-out both; }
   .scroll-prompt-line { animation: scroll-prompt 2.6s ease-in-out infinite; }
+  .envelope-flap      { animation: flap-open 1200ms cubic-bezier(.5,0,.2,1) 700ms both; }
+  .envelope-card      { animation: card-emerge 1100ms cubic-bezier(.4,0,.2,1) 1500ms both; }
+  .envelope-seal      { animation: seal-break 600ms cubic-bezier(.6,0,.4,1) 500ms both; }
+  .envelope-stage     { animation: stage-out 700ms ease-out 2200ms both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .envelope-stage     { display: none; }
+}
+.envelope-stage {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  background: rgb(250 247 242);
+  perspective: 1200px;
+  pointer-events: none;
+}
+.envelope {
+  position: relative;
+  width: min(340px, 75vw);
+  aspect-ratio: 8 / 5;
+  transform-style: preserve-3d;
+}
+.envelope-back, .envelope-card, .envelope-flap {
+  position: absolute;
+  border: 1px solid rgb(222 196 158);
+  background: rgb(241 235 224);
+  box-sizing: border-box;
+}
+.envelope-back {
+  inset: 0;
+  box-shadow: 0 18px 40px -22px rgba(24,22,20,0.28);
+}
+.envelope-card {
+  inset: 8% 6% 6% 6%;
+  background: rgb(254 251 244);
+  z-index: 1;
+}
+.envelope-flap {
+  inset: 0;
+  clip-path: polygon(0 0, 100% 0, 50% 60%);
+  transform-origin: top;
+  z-index: 2;
+  backface-visibility: hidden;
+}
+.envelope-seal {
+  position: absolute;
+  top: 60%; left: 50%;
+  width: 26px; height: 26px;
+  border-radius: 9999px;
+  background: rgb(168 105 46);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 4px 8px -2px rgba(24,22,20,0.4);
+  z-index: 3;
+  transform: translate(-50%, -50%);
 }
 .paper-grain {
   position: fixed; inset: 0; pointer-events: none; z-index: 1;
@@ -68,9 +134,10 @@ export default function GiftPage() {
   return (
     <main
       style={lightTokens}
-      className="envelope-in relative flex min-h-screen flex-col bg-parchment text-ink-soft"
+      className="relative flex min-h-screen flex-col bg-parchment text-ink-soft"
     >
       <style dangerouslySetInnerHTML={{ __html: pageStyles }} />
+      <EnvelopeOpener />
       <div className="paper-grain" aria-hidden />
       <CornerFleurons />
       <MusicToggle />
@@ -122,6 +189,8 @@ export default function GiftPage() {
               width={720}
               height={941}
               priority
+              tilt="right"
+              caption="Rohan & Nishtha"
             />
           </Reveal>
         </section>
@@ -147,6 +216,21 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
+        {/* Wedding moment — bowing to the crowd */}
+        <Reveal>
+          <section>
+            <VideoFrame
+              src="/rohan-and-nishtha/wedding.mov"
+              tilt="right"
+              caption="the bow"
+            />
+          </section>
+        </Reveal>
+
+        <Reveal>
+          <Ornament className="my-12" />
+        </Reveal>
+
         {/* Visual interlude — the walk forward */}
         <Reveal>
           <section>
@@ -155,6 +239,8 @@ export default function GiftPage() {
               alt="Rohan and Nishtha walking together on the beach"
               width={900}
               height={1202}
+              tilt="left"
+              caption="10.05.2026"
             />
           </section>
         </Reveal>
