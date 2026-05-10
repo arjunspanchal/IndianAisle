@@ -393,17 +393,22 @@ export default function GiftPage() {
         {/* Block 4 — The gift */}
         <section className="text-center">
           <Reveal>
-            <h2 className="font-display text-3xl leading-tight tracking-tight text-ink sm:text-4xl">
+            <div className="text-[11px] uppercase tracking-[0.32em] text-gold-soft">
+              for Rohan &amp; Nishtha
+            </div>
+          </Reveal>
+          <Reveal delay={120}>
+            <h2 className="mt-5 font-display text-3xl leading-tight tracking-tight text-ink sm:text-4xl">
               A small token, with all our love
             </h2>
           </Reveal>
-          <Reveal delay={150}>
+          <Reveal delay={280}>
             <p className="mx-auto mt-5 max-w-[36rem] font-body text-base leading-relaxed text-ink-soft sm:text-lg">
               We&rsquo;ve sent something ahead. Pick out the first thing for
               your new home together, or honestly, anything you want.
             </p>
           </Reveal>
-          <Reveal delay={350}>
+          <Reveal delay={450}>
             <div className="mt-9">
               <GiftButton />
             </div>
