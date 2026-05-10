@@ -93,18 +93,19 @@ export default function GiftPage() {
             </p>
           </Reveal>
 
-          {/* Scroll-to-open prompt at bottom of cover */}
-          <Reveal delay={1100}>
-            <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-ink-mute sm:bottom-12">
-              <span className="font-body text-[10px] uppercase tracking-[0.32em]">
-                turn the page
-              </span>
-              <span
-                aria-hidden
-                className="scroll-prompt-line block h-7 w-px bg-gold-line"
-              />
-            </div>
-          </Reveal>
+          {/* Scroll-to-open prompt at bottom of cover. Kept outside Reveal
+              because Reveal applies a transform, which would make it the
+              containing block for this absolute element instead of the
+              cover section. */}
+          <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-ink-mute sm:bottom-12">
+            <span className="font-body text-[10px] uppercase tracking-[0.32em]">
+              turn the page
+            </span>
+            <span
+              aria-hidden
+              className="scroll-prompt-line block h-7 w-px bg-gold-line"
+            />
+          </div>
         </section>
 
         {/* Inside of card — portrait spread */}
