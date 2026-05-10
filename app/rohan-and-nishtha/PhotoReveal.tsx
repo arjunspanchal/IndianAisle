@@ -2,15 +2,16 @@
 // the viewport. Pure CSS via animation-timeline: view() — no
 // IntersectionObserver, no client component, no React state.
 //
-// Technique: each tile is a viewport (overflow:hidden) over a full-sized
-// img that sits at the SAME absolute position in every tile. Each tile
-// is then placed in its grid cell so its viewport shows only that slice.
-// Because every tile references the image at the same coordinates,
-// adjacent tile edges align perfectly with no visible seams.
+// Technique: each tile is a FULL-container-sized div containing a single
+// img that also fills the container. Each tile uses a clip-path polygon
+// to show only its slice. Because every tile renders the image at the
+// exact same coordinates and clip-path uses exact percentages, adjacent
+// tile edges line up pixel-perfectly with no seams.
 //
 // Fallback for older browsers (no scroll-driven animation support):
-// tiles render in their final assembled positions. Image is visible
-// regardless of JS / browser features.
+// tiles render at transform(0), so all clip-paths align and the photo
+// appears assembled. Image is visible regardless of JS / browser
+// features.
 
 type Props = {
   src: string;
@@ -39,7 +40,12 @@ export default function PhotoReveal({
     const offsetX = Math.round(Math.sin(seed * 1.71) * 60);
     const offsetY = Math.round(Math.cos(seed * 2.31) * 60);
     const rot = Math.round(Math.sin(seed * 3.13) * 9 * 10) / 10;
-    return { r, c, offsetX, offsetY, rot };
+    const x1 = (c / cols) * 100;
+    const y1 = (r / rows) * 100;
+    const x2 = ((c + 1) / cols) * 100;
+    const y2 = ((r + 1) / rows) * 100;
+    const clipPath = `polygon(${x1}% ${y1}%, ${x2}% ${y1}%, ${x2}% ${y2}%, ${x1}% ${y2}%)`;
+    return { r, c, offsetX, offsetY, rot, clipPath };
   });
 
   return (
@@ -54,10 +60,8 @@ export default function PhotoReveal({
             className="photo-reveal-tile"
             style={
               {
-                left: `${(t.c / cols) * 100}%`,
-                top: `${(t.r / rows) * 100}%`,
-                width: `${100 / cols}%`,
-                height: `${100 / rows}%`,
+                clipPath: t.clipPath,
+                WebkitClipPath: t.clipPath,
                 ["--tx" as string]: `${t.offsetX}px`,
                 ["--ty" as string]: `${t.offsetY}px`,
                 ["--rot" as string]: `${t.rot}deg`,
@@ -66,17 +70,7 @@ export default function PhotoReveal({
             aria-hidden
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt=""
-              className="photo-reveal-tile-img"
-              style={{
-                width: `${cols * 100}%`,
-                height: `${rows * 100}%`,
-                left: `-${t.c * 100}%`,
-                top: `-${t.r * 100}%`,
-              }}
-            />
+            <img src={src} alt="" className="photo-reveal-tile-img" />
           </div>
         ))}
         {/* Visually hidden image carrying alt text for SEO + screen readers.

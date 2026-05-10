@@ -74,14 +74,17 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
 .photo-reveal { view-timeline-name: --photo-reveal; view-timeline-axis: block; }
 .photo-reveal-tile {
   position: absolute;
-  overflow: hidden;
+  inset: 0;
   will-change: transform, opacity;
-  /* Default (no scroll-driven animation): tiles already in place. */
+  /* Default (no scroll-driven animation): all tiles at transform(0), each
+     showing only its own clip-path slice. They tile perfectly into the
+     full image. */
 }
 .photo-reveal-tile-img {
-  position: absolute;
   display: block;
-  max-width: none;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
   user-select: none;
   pointer-events: none;
 }
