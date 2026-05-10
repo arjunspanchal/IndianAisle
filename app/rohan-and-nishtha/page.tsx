@@ -266,13 +266,13 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
-        {/* Wedding moment — bowing to the crowd */}
+        {/* Wedding ceremony — bowing to the crowd after the seven steps */}
         <Reveal>
           <section>
             <VideoFrame
               src="/rohan-and-nishtha/wedding.mov"
               tilt="none"
-              caption="the bow"
+              caption="after the seven steps"
             />
           </section>
         </Reveal>
