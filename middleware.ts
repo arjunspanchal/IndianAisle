@@ -15,7 +15,8 @@ export async function middleware(req: NextRequest) {
   const isLanding = path === "/";
   const isVendorPortal = path === "/vendor" || path.startsWith("/vendor/");
   const isAdminPortal = path === "/admin" || path.startsWith("/admin/");
-  const isPublic = isLogin || isLanding || isVendorPortal || isAdminPortal;
+  const isGiftPage = path === "/rohan-and-nishtha";
+  const isPublic = isLogin || isLanding || isVendorPortal || isAdminPortal || isGiftPage;
 
   const res = NextResponse.next({ request: req });
 

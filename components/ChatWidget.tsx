@@ -77,6 +77,7 @@ export default function ChatWidget() {
   };
 
   if (pathname === "/login" || pathname.startsWith("/login/")) return null;
+  if (pathname === "/rohan-and-nishtha") return null;
 
   return (
     <>

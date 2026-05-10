@@ -24,6 +24,7 @@ export default function AppNav({ user }: { user: User }) {
 
   // Hide AppNav entirely on the login route, and on the public landing page.
   if (pathname === "/login" || pathname.startsWith("/login/")) return null;
+  if (pathname === "/rohan-and-nishtha") return null;
   if (!user && pathname === "/") return null;
 
   const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
