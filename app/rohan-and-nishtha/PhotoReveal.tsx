@@ -28,8 +28,8 @@ export default function PhotoReveal({
   width,
   height,
   caption,
-  rows = 4,
-  cols = 4,
+  rows = 6,
+  cols = 6,
 }: Props) {
   const tiles = Array.from({ length: rows * cols }, (_, i) => {
     const r = Math.floor(i / cols);
