@@ -67,36 +67,6 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   60%  { opacity: 0.5; transform: scale(1.03); }
   100% { opacity: 0; transform: scale(1.06); visibility: hidden; }
 }
-@keyframes photo-shatter-assemble {
-  0%   { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--rot, 0deg)); opacity: 0; }
-  100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-}
-.photo-reveal { view-timeline-name: --photo-reveal; view-timeline-axis: block; }
-.photo-reveal-tile {
-  position: absolute;
-  inset: 0;
-  will-change: transform, opacity;
-  /* Default (no scroll-driven animation): all tiles at transform(0), each
-     showing only its own clip-path slice. They tile perfectly into the
-     full image. */
-}
-.photo-reveal-tile-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  user-select: none;
-  pointer-events: none;
-}
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .photo-reveal-tile {
-      animation: photo-shatter-assemble linear both;
-      animation-timeline: --photo-reveal;
-      animation-range: entry 0% cover 35%;
-    }
-  }
-}
 /* Reveal elements stay invisible until the user clicks the open button
    (which adds .opened to the GiftStage wrapper). The envelope animations
    work the same way — they only run after the user opens the gift. */
