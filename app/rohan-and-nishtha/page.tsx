@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Reveal from "./Reveal";
 import Ornament from "./Ornament";
 import GiftButton from "./GiftButton";
 import MusicToggle from "./MusicToggle";
 import CornerFleurons from "./CornerFleurons";
+import PhotoFrame from "./PhotoFrame";
 
 export const metadata: Metadata = {
   title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
@@ -116,17 +116,13 @@ export default function GiftPage() {
         {/* Inside of card — portrait spread */}
         <section className="pt-16 text-center sm:pt-24">
           <Reveal>
-            <figure className="overflow-hidden rounded-[2px] ring-1 ring-gold-line/60 shadow-[0_18px_40px_-22px_rgba(24,22,20,0.18)]">
-              <Image
-                src="/rohan-and-nishtha/portrait.jpg"
-                alt="Rohan and Nishtha"
-                width={720}
-                height={941}
-                priority
-                sizes="(min-width: 640px) 640px, 100vw"
-                className="h-auto w-full"
-              />
-            </figure>
+            <PhotoFrame
+              src="/rohan-and-nishtha/portrait.jpg"
+              alt="Rohan and Nishtha"
+              width={720}
+              height={941}
+              priority
+            />
           </Reveal>
         </section>
 
@@ -154,16 +150,12 @@ export default function GiftPage() {
         {/* Visual interlude — the walk forward */}
         <Reveal>
           <section>
-            <figure className="overflow-hidden rounded-[2px] ring-1 ring-gold-line/60 shadow-[0_18px_40px_-22px_rgba(24,22,20,0.18)]">
-              <Image
-                src="/rohan-and-nishtha/beach.jpg"
-                alt="Rohan and Nishtha walking together on the beach"
-                width={900}
-                height={1202}
-                sizes="(min-width: 640px) 640px, 100vw"
-                className="h-auto w-full"
-              />
-            </figure>
+            <PhotoFrame
+              src="/rohan-and-nishtha/beach.jpg"
+              alt="Rohan and Nishtha walking together on the beach"
+              width={900}
+              height={1202}
+            />
           </section>
         </Reveal>
 
