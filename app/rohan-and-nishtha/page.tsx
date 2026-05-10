@@ -307,9 +307,9 @@ export default function GiftPage() {
             <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
               Nishtha, you looked stunning at every event. Quietly,
               beautifully, the whole weekend. Rohan, you held your own
-              beside her, calm and present and completely yours. A Gujarati
-              boy and a Marwari girl finding each other this gracefully
-              feels like the universe getting something exactly right.
+              beside her, calm and present and completely yours. School
+              love becoming the forever kind is rare, and getting to watch
+              it land for you both is a quiet joy.
             </p>
           </section>
         </Reveal>
