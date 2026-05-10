@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Reveal from "./Reveal";
 import Ornament from "./Ornament";
+import GiftButton from "./GiftButton";
+import MusicToggle from "./MusicToggle";
+import CornerFleurons from "./CornerFleurons";
 
 export const metadata: Metadata = {
   title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
@@ -32,16 +35,36 @@ const lightTokens: React.CSSProperties = {
 
 // Override html/body bg + color so iOS rubber-band overscroll and any
 // inherited dark-mode styling can't leak through behind the page.
-const forceLightChrome = `html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !important; }`;
+// Also: one-time envelope reveal on page load (fade + micro-scale), and a
+// fixed paper-grain layer for stationery texture.
+const pageStyles = `
+html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !important; }
+@keyframes envelope-in {
+  0% { opacity: 0; transform: scale(0.995); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .envelope-in { animation: envelope-in 800ms ease-out both; }
+}
+.paper-grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  mix-blend-mode: multiply; opacity: 0.04;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 200px 200px;
+}
+`;
 
 export default function GiftPage() {
   return (
     <main
       style={lightTokens}
-      className="flex min-h-screen items-center justify-center bg-parchment px-6 py-16 text-ink-soft"
+      className="envelope-in relative flex min-h-screen items-center justify-center bg-parchment px-6 py-16 text-ink-soft"
     >
-      <style dangerouslySetInnerHTML={{ __html: forceLightChrome }} />
-      <article className="w-full max-w-[640px]">
+      <style dangerouslySetInnerHTML={{ __html: pageStyles }} />
+      <div className="paper-grain" aria-hidden />
+      <CornerFleurons />
+      <MusicToggle />
+      <article className="relative z-[2] w-full max-w-[640px]">
         {/* Block 1 — Hero portrait (carries the names). Staggered entrance. */}
         <section className="text-center">
           <Reveal>
@@ -64,7 +87,7 @@ export default function GiftPage() {
           </Reveal>
           <Reveal delay={500}>
             <p className="mt-6 font-display text-lg italic text-ink-mute sm:text-xl">
-              10 May 2026 · La Kailasa Lawns, Surat
+              10 May 2026 · Surat
             </p>
           </Reveal>
         </section>
@@ -140,14 +163,7 @@ export default function GiftPage() {
           </Reveal>
           <Reveal delay={350}>
             <div className="mt-9">
-              <a
-                href="https://www.amazon.in/g/VFS4VBANJ6AGV5ED?ref=gc_typ"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex cursor-pointer items-center justify-center rounded-sm border border-ink bg-ink px-5 py-2.5 font-display text-xs uppercase tracking-[0.18em] text-parchment transition-colors duration-200 hover:border-rose-deep hover:bg-rose-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-parchment"
-              >
-                Open your gift
-              </a>
+              <GiftButton />
             </div>
           </Reveal>
         </section>
