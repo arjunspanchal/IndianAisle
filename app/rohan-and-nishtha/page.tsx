@@ -43,8 +43,13 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   0% { opacity: 0; transform: scale(0.995); }
   100% { opacity: 1; transform: scale(1); }
 }
+@keyframes scroll-prompt {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  50%      { opacity: 0.85; transform: translateY(4px); }
+}
 @media (prefers-reduced-motion: no-preference) {
   .envelope-in { animation: envelope-in 800ms ease-out both; }
+  .scroll-prompt-line { animation: scroll-prompt 2.6s ease-in-out infinite; }
 }
 .paper-grain {
   position: fixed; inset: 0; pointer-events: none; z-index: 1;
@@ -58,22 +63,54 @@ export default function GiftPage() {
   return (
     <main
       style={lightTokens}
-      className="envelope-in relative flex min-h-screen items-center justify-center bg-parchment px-6 py-16 text-ink-soft"
+      className="envelope-in relative flex min-h-screen flex-col bg-parchment text-ink-soft"
     >
       <style dangerouslySetInnerHTML={{ __html: pageStyles }} />
       <div className="paper-grain" aria-hidden />
       <CornerFleurons />
       <MusicToggle />
-      <article className="relative z-[2] w-full max-w-[640px]">
-        {/* Block 1 — Hero portrait (carries the names). Staggered entrance. */}
-        <section className="text-center">
+      <article className="relative z-[2] mx-auto w-full max-w-[640px] px-6 pb-24">
+        {/* Cover — first viewport, the front of the gift card */}
+        <section className="relative flex min-h-[100svh] flex-col items-center justify-center text-center">
           <Reveal>
             <div className="text-[11px] uppercase tracking-[0.32em] text-gold-soft">
-              celebrating
+              with our warmest
             </div>
           </Reveal>
           <Reveal delay={250}>
-            <figure className="mt-6 overflow-hidden rounded-[2px] ring-1 ring-gold-line/60 shadow-[0_18px_40px_-22px_rgba(24,22,20,0.18)]">
+            <h1 className="mt-6 font-display text-6xl leading-[1.05] tracking-tight text-ink sm:text-7xl">
+              Congratulations
+            </h1>
+          </Reveal>
+          <Reveal delay={500}>
+            <p className="mt-6 font-display text-xl italic text-ink-mute sm:text-2xl">
+              to Rohan &amp; Nishtha
+            </p>
+          </Reveal>
+          <Reveal delay={750}>
+            <p className="mt-6 font-body text-[10px] uppercase tracking-[0.32em] text-gold-soft sm:text-xs">
+              10 May 2026 · Surat
+            </p>
+          </Reveal>
+
+          {/* Scroll-to-open prompt at bottom of cover */}
+          <Reveal delay={1100}>
+            <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-ink-mute sm:bottom-12">
+              <span className="font-body text-[10px] uppercase tracking-[0.32em]">
+                turn the page
+              </span>
+              <span
+                aria-hidden
+                className="scroll-prompt-line block h-7 w-px bg-gold-line"
+              />
+            </div>
+          </Reveal>
+        </section>
+
+        {/* Inside of card — portrait spread */}
+        <section className="pt-16 text-center sm:pt-24">
+          <Reveal>
+            <figure className="overflow-hidden rounded-[2px] ring-1 ring-gold-line/60 shadow-[0_18px_40px_-22px_rgba(24,22,20,0.18)]">
               <Image
                 src="/rohan-and-nishtha/portrait.jpg"
                 alt="Rohan and Nishtha"
@@ -84,11 +121,6 @@ export default function GiftPage() {
                 className="h-auto w-full"
               />
             </figure>
-          </Reveal>
-          <Reveal delay={500}>
-            <p className="mt-6 font-display text-lg italic text-ink-mute sm:text-xl">
-              10 May 2026 · Surat
-            </p>
           </Reveal>
         </section>
 
