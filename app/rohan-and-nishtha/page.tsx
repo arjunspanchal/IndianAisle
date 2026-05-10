@@ -153,6 +153,35 @@ export default function GiftPage() {
       className="relative flex min-h-screen flex-col bg-parchment text-ink-soft"
     >
       <style dangerouslySetInnerHTML={{ __html: pageStyles }} />
+      {/* Defensive fallback — if React hydration is slow or fails, this
+          inline script still wires up the click so the gift can always be
+          opened. Adds .opened to the gift-stage and best-effort plays the
+          music. React's own onClick fires too; .opened ends up the same. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+(function(){
+  function attach(){
+    var btn = document.querySelector('.open-gift-btn');
+    var stage = document.querySelector('.gift-stage');
+    if (!btn || !stage) { setTimeout(attach, 50); return; }
+    btn.addEventListener('click', function(){
+      stage.classList.add('opened');
+      try {
+        var a = document.querySelector('audio');
+        if (a) { a.volume = 0.55; a.play().catch(function(){}); }
+      } catch(e) {}
+    }, { once: true });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attach);
+  } else {
+    attach();
+  }
+})();
+          `.trim(),
+        }}
+      />
       <div className="paper-grain" aria-hidden />
       <CornerFleurons />
       <MusicToggle />
