@@ -310,7 +310,7 @@ export default function GiftPage() {
               width={1400}
               height={1050}
               tilt="right"
-              caption="Kashika, Arjun & Shashank"
+              caption="the three of us"
             />
           </section>
         </Reveal>
