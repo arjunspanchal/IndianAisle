@@ -320,9 +320,17 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
-        {/* The three of us — lead-in to the sangeet story + thank-you */}
+        {/* Salutation eyebrow — pivots from the R&N notes to the
+            Shashank+Harshika section that follows */}
         <Reveal>
-          <section>
+          <div className="text-center text-[11px] uppercase tracking-[0.32em] text-gold-soft">
+            dear Shashank &amp; Harshika
+          </div>
+        </Reveal>
+
+        {/* The three of us — lead-in to the sangeet story + thank-you */}
+        <Reveal delay={120}>
+          <section className="mt-8">
             <PhotoReveal
               src="/rohan-and-nishtha/with-shashank.jpg"
               alt="Kashika, Arjun, and Shashank"
