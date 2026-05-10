@@ -62,8 +62,9 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
 }
 @keyframes stage-out {
-  0%   { opacity: 1; visibility: visible; }
-  100% { opacity: 0; visibility: hidden; }
+  0%   { opacity: 1; transform: scale(1);    visibility: visible; }
+  60%  { opacity: 0.5; transform: scale(1.03); }
+  100% { opacity: 0; transform: scale(1.06); visibility: hidden; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .reveal-in          { animation: reveal-in 1100ms ease-out both; }
@@ -71,7 +72,7 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   .envelope-flap      { animation: flap-open 1200ms cubic-bezier(.5,0,.2,1) 700ms both; }
   .envelope-card      { animation: card-emerge 1100ms cubic-bezier(.4,0,.2,1) 1500ms both; }
   .envelope-seal      { animation: seal-break 600ms cubic-bezier(.6,0,.4,1) 500ms both; }
-  .envelope-stage     { animation: stage-out 700ms ease-out 2200ms both; }
+  .envelope-stage     { animation: stage-out 1300ms cubic-bezier(.4,0,.2,1) 1700ms both; }
 }
 @media (prefers-reduced-motion: reduce) {
   .envelope-stage     { display: none; }
@@ -141,24 +142,26 @@ export default function GiftPage() {
       <CornerFleurons />
       <MusicToggle />
       <article className="relative z-[2] mx-auto w-full max-w-[640px] px-6 pb-24">
-        {/* Cover — first viewport, the front of the gift card */}
+        {/* Cover — first viewport, the front of the gift card.
+            Reveal delays start ~1500ms so the cover fades in THROUGH the
+            envelope dissolve (which runs 1700–3000ms), not before it. */}
         <section className="relative flex min-h-[100svh] flex-col items-center justify-center text-center">
-          <Reveal>
+          <Reveal delay={1500}>
             <div className="text-[11px] uppercase tracking-[0.32em] text-gold-soft">
               with our warmest
             </div>
           </Reveal>
-          <Reveal delay={250}>
+          <Reveal delay={1750}>
             <h1 className="mt-6 font-display text-6xl leading-[1.05] tracking-tight text-ink sm:text-7xl">
               Congratulations
             </h1>
           </Reveal>
-          <Reveal delay={500}>
+          <Reveal delay={2000}>
             <p className="mt-6 font-display text-xl italic text-ink-mute sm:text-2xl">
               to Rohan &amp; Nishtha
             </p>
           </Reveal>
-          <Reveal delay={750}>
+          <Reveal delay={2250}>
             <p className="mt-6 font-body text-[10px] uppercase tracking-[0.32em] text-gold-soft sm:text-xs">
               10 May 2026 · Surat
             </p>
@@ -168,8 +171,11 @@ export default function GiftPage() {
               because Reveal applies a transform, which would make it the
               containing block for this absolute element instead of the
               cover section. */}
-          <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-ink-mute sm:bottom-12">
-            <span className="font-body text-[10px] uppercase tracking-[0.32em]">
+          <div
+            className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-ink-mute sm:bottom-12"
+            style={{ animationDelay: "2700ms" }}
+          >
+            <span className="font-body text-[10px] uppercase tracking-[0.32em] reveal-in" style={{ animationDelay: "2700ms" }}>
               turn the page
             </span>
             <span
