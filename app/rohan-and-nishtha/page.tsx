@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Reveal from "./Reveal";
+import Ornament from "./Ornament";
 
 export const metadata: Metadata = {
   title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
@@ -49,7 +50,7 @@ export default function GiftPage() {
             </div>
           </Reveal>
           <Reveal delay={250}>
-            <figure className="mt-6 overflow-hidden rounded-[2px] ring-1 ring-gold-line/60">
+            <figure className="mt-6 overflow-hidden rounded-[2px] ring-1 ring-gold-line/60 shadow-[0_18px_40px_-22px_rgba(24,22,20,0.18)]">
               <Image
                 src="/rohan-and-nishtha/portrait.jpg"
                 alt="Rohan and Nishtha"
@@ -69,9 +70,7 @@ export default function GiftPage() {
         </section>
 
         <Reveal>
-          <div className="my-12 divider-ornament" aria-hidden>
-            ✦
-          </div>
+          <Ornament className="my-12" />
         </Reveal>
 
         {/* Block 2 — The story */}
@@ -88,15 +87,13 @@ export default function GiftPage() {
         </Reveal>
 
         <Reveal>
-          <div className="my-12 divider-ornament" aria-hidden>
-            ✦
-          </div>
+          <Ornament className="my-12" />
         </Reveal>
 
         {/* Visual interlude — the walk forward */}
         <Reveal>
           <section>
-            <figure className="overflow-hidden rounded-[2px] ring-1 ring-gold-line/60">
+            <figure className="overflow-hidden rounded-[2px] ring-1 ring-gold-line/60 shadow-[0_18px_40px_-22px_rgba(24,22,20,0.18)]">
               <Image
                 src="/rohan-and-nishtha/beach.jpg"
                 alt="Rohan and Nishtha walking together on the beach"
@@ -110,9 +107,7 @@ export default function GiftPage() {
         </Reveal>
 
         <Reveal>
-          <div className="my-12 divider-ornament" aria-hidden>
-            ✦
-          </div>
+          <Ornament className="my-12" />
         </Reveal>
 
         {/* Block 3 — Thank you */}
@@ -127,9 +122,7 @@ export default function GiftPage() {
         </Reveal>
 
         <Reveal>
-          <div className="my-12 divider-ornament" aria-hidden>
-            ✦
-          </div>
+          <Ornament className="my-12" />
         </Reveal>
 
         {/* Block 4 — The gift */}
@@ -151,7 +144,7 @@ export default function GiftPage() {
                 href="https://www.amazon.in/g/VFS4VBANJ6AGV5ED?ref=gc_typ"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-sm border border-ink bg-ink px-5 py-2.5 font-display text-xs uppercase tracking-[0.18em] text-parchment transition-colors hover:border-rose-deep hover:bg-rose-deep"
+                className="inline-flex cursor-pointer items-center justify-center rounded-sm border border-ink bg-ink px-5 py-2.5 font-display text-xs uppercase tracking-[0.18em] text-parchment transition-colors duration-200 hover:border-rose-deep hover:bg-rose-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-parchment"
               >
                 Open your gift
               </a>
