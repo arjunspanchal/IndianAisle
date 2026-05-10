@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
@@ -39,15 +40,23 @@ export default function GiftPage() {
     >
       <style dangerouslySetInnerHTML={{ __html: forceLightChrome }} />
       <article className="w-full max-w-[640px]">
-        {/* Block 1 — Hero */}
+        {/* Block 1 — Hero portrait (carries the names) */}
         <section className="text-center">
           <div className="text-[11px] uppercase tracking-[0.32em] text-gold-soft">
             celebrating
           </div>
-          <h1 className="mt-5 font-display text-5xl leading-tight tracking-tight text-ink sm:text-6xl">
-            Rohan &amp; Nishtha
-          </h1>
-          <p className="mt-4 font-display text-lg italic text-ink-mute sm:text-xl">
+          <figure className="mt-6 overflow-hidden rounded-[2px]">
+            <Image
+              src="/rohan-and-nishtha/portrait.jpg"
+              alt="Rohan and Nishtha"
+              width={720}
+              height={941}
+              priority
+              sizes="(min-width: 640px) 640px, 100vw"
+              className="h-auto w-full"
+            />
+          </figure>
+          <p className="mt-6 font-display text-lg italic text-ink-mute sm:text-xl">
             10 May 2026 · La Kailasa Lawns, Surat
           </p>
         </section>
@@ -65,6 +74,24 @@ export default function GiftPage() {
             the way you both lit up that floor — it&rsquo;s been hard to look
             away.
           </p>
+        </section>
+
+        <div className="my-12 divider-ornament" aria-hidden>
+          ✦
+        </div>
+
+        {/* Visual interlude — the walk forward */}
+        <section>
+          <figure className="overflow-hidden rounded-[2px]">
+            <Image
+              src="/rohan-and-nishtha/beach.jpg"
+              alt="Rohan and Nishtha walking together on the beach"
+              width={900}
+              height={1202}
+              sizes="(min-width: 640px) 640px, 100vw"
+              className="h-auto w-full"
+            />
+          </figure>
         </section>
 
         <div className="my-12 divider-ornament" aria-hidden>
