@@ -9,11 +9,11 @@ import GiftStage from "./GiftStage";
 import VideoFrame from "./VideoFrame";
 
 export const metadata: Metadata = {
-  title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
+  title: "Rohan & Nishtha · A wedding wish from Arjun & Kashika",
   description: "A little gift, with all our love.",
   robots: { index: false, follow: false },
   openGraph: {
-    title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
+    title: "Rohan & Nishtha · A wedding wish from Arjun & Kashika",
     description: "A little gift, with all our love.",
   },
 };
@@ -255,10 +255,10 @@ export default function GiftPage() {
             <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
               What a weekend. The red and gold of last night&rsquo;s sangeet at
               Avadh Utopia is still ringing in our ears, and now we get to
-              watch you take the seven steps. Shashank stole the floor —
+              watch you take the seven steps. Shashank stole the floor on
               every number, with the whole family behind him and Harshika
               beat for beat. Between all the dancing, the laughter, and the
-              way you both lit up the room — it&rsquo;s been hard to look
+              way you both lit up the room, it&rsquo;s been hard to look
               away.
             </p>
           </section>
@@ -323,7 +323,7 @@ export default function GiftPage() {
         <Reveal>
           <section>
             <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
-              Shashank and Harshika — thank you for opening your home and your
+              Shashank and Harshika, thank you for opening your home and your
               family to us this weekend. Every detail, every meal, every hug
               has been a masterclass in hosting.
             </p>
@@ -338,7 +338,7 @@ export default function GiftPage() {
         <Reveal>
           <section>
             <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
-              Harshika — we missed catching a photo with you, and we slipped
+              Harshika, we missed catching a photo with you, and we slipped
               out before we could say a proper goodbye. Until very soon.
             </p>
           </section>
@@ -357,7 +357,7 @@ export default function GiftPage() {
           </Reveal>
           <Reveal delay={150}>
             <p className="mx-auto mt-5 max-w-[36rem] font-body text-base leading-relaxed text-ink-soft sm:text-lg">
-              We&rsquo;ve sent something ahead — pick out the first thing for
+              We&rsquo;ve sent something ahead. Pick out the first thing for
               your new home together, or honestly, anything you want.
             </p>
           </Reveal>
