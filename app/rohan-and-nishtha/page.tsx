@@ -5,7 +5,7 @@ import GiftButton from "./GiftButton";
 import MusicToggle from "./MusicToggle";
 import CornerFleurons from "./CornerFleurons";
 import PhotoFrame from "./PhotoFrame";
-import EnvelopeOpener from "./EnvelopeOpener";
+import GiftStage from "./GiftStage";
 
 export const metadata: Metadata = {
   title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
@@ -66,23 +66,39 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   60%  { opacity: 0.5; transform: scale(1.03); }
   100% { opacity: 0; transform: scale(1.06); visibility: hidden; }
 }
+/* Reveal elements stay invisible until the user clicks the open button
+   (which adds .opened to the GiftStage wrapper). The envelope animations
+   work the same way — they only run after the user opens the gift. */
+.reveal-in { opacity: 0; }
+.scroll-prompt-line { opacity: 0.4; }
 @media (prefers-reduced-motion: no-preference) {
-  .reveal-in          { animation: reveal-in 1100ms ease-out both; }
-  .scroll-prompt-line { animation: scroll-prompt 2.6s ease-in-out infinite; }
-  .envelope-flap      { animation: flap-open 1200ms cubic-bezier(.5,0,.2,1) 700ms both; }
-  .envelope-card      { animation: card-emerge 1100ms cubic-bezier(.4,0,.2,1) 1500ms both; }
-  .envelope-seal      { animation: seal-break 600ms cubic-bezier(.6,0,.4,1) 500ms both; }
-  .envelope-stage     { animation: stage-out 1300ms cubic-bezier(.4,0,.2,1) 1700ms both; }
+  .gift-stage.opened .reveal-in          { animation: reveal-in 1100ms ease-out both; }
+  .gift-stage.opened .scroll-prompt-line { animation: scroll-prompt 2.6s ease-in-out infinite; opacity: 1; }
+  .gift-stage.opened .envelope-flap      { animation: flap-open 1200ms cubic-bezier(.5,0,.2,1) 200ms both; }
+  .gift-stage.opened .envelope-card      { animation: card-emerge 1100ms cubic-bezier(.4,0,.2,1) 1000ms both; }
+  .gift-stage.opened .envelope-seal      { animation: seal-break 500ms cubic-bezier(.6,0,.4,1) 0ms both; }
+  .gift-stage.opened .envelope-stage     { animation: stage-out 1200ms cubic-bezier(.4,0,.2,1) 1300ms both; }
+  .gift-stage.opened .open-gift-btn      { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 350ms ease-out, transform 350ms ease-out; }
 }
+/* As soon as the user clicks open, let the cover behind catch any clicks
+   while the envelope is still fading out. */
+.gift-stage.opened .envelope-stage { pointer-events: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  .envelope-stage     { display: none; }
+  .gift-stage.opened .envelope-stage { display: none; }
+  .gift-stage.opened .reveal-in      { opacity: 1; }
 }
 .envelope-stage {
   position: fixed; inset: 0; z-index: 60;
   display: flex; align-items: center; justify-content: center;
   background: rgb(250 247 242);
   perspective: 1200px;
-  pointer-events: none;
+}
+.envelope-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
 }
 .envelope {
   position: relative;
@@ -137,45 +153,44 @@ export default function GiftPage() {
       className="relative flex min-h-screen flex-col bg-parchment text-ink-soft"
     >
       <style dangerouslySetInnerHTML={{ __html: pageStyles }} />
-      <EnvelopeOpener />
       <div className="paper-grain" aria-hidden />
       <CornerFleurons />
       <MusicToggle />
+      <GiftStage>
       <article className="relative z-[2] mx-auto w-full max-w-[640px] px-6 pb-24">
         {/* Cover — first viewport, the front of the gift card.
-            Reveal delays start ~1500ms so the cover fades in THROUGH the
-            envelope dissolve (which runs 1700–3000ms), not before it. */}
+            Reveal delays are measured from the moment GiftStage flips to
+            .opened (i.e. the click). Stage dissolves 1300–2500ms; cover
+            staggers in 1200–2900ms so the cover bleeds through the
+            dissolving envelope. */}
         <section className="relative flex min-h-[100svh] flex-col items-center justify-center text-center">
-          <Reveal delay={1500}>
+          <Reveal delay={1200}>
             <div className="text-[11px] uppercase tracking-[0.32em] text-gold-soft">
               with our warmest
             </div>
           </Reveal>
-          <Reveal delay={1750}>
+          <Reveal delay={1400}>
             <h1 className="mt-6 font-display text-6xl leading-[1.05] tracking-tight text-ink sm:text-7xl">
               Congratulations
             </h1>
           </Reveal>
-          <Reveal delay={2000}>
+          <Reveal delay={1600}>
             <p className="mt-6 font-display text-xl italic text-ink-mute sm:text-2xl">
               to Rohan &amp; Nishtha
             </p>
           </Reveal>
-          <Reveal delay={2250}>
+          <Reveal delay={1800}>
             <p className="mt-6 font-body text-[10px] uppercase tracking-[0.32em] text-gold-soft sm:text-xs">
               10 May 2026 · Surat
             </p>
           </Reveal>
 
-          {/* Scroll-to-open prompt at bottom of cover. Kept outside Reveal
-              because Reveal applies a transform, which would make it the
-              containing block for this absolute element instead of the
-              cover section. */}
-          <div
-            className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-ink-mute sm:bottom-12"
-            style={{ animationDelay: "2700ms" }}
-          >
-            <span className="font-body text-[10px] uppercase tracking-[0.32em] reveal-in" style={{ animationDelay: "2700ms" }}>
+          {/* Scroll-to-open prompt at bottom of cover. */}
+          <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-ink-mute sm:bottom-12">
+            <span
+              className="reveal-in font-body text-[10px] uppercase tracking-[0.32em]"
+              style={{ animationDelay: "2300ms" }}
+            >
               turn the page
             </span>
             <span
@@ -286,6 +301,7 @@ export default function GiftPage() {
           </section>
         </Reveal>
       </article>
+      </GiftStage>
     </main>
   );
 }
