@@ -6,7 +6,6 @@ import MusicToggle from "./MusicToggle";
 import CornerFleurons from "./CornerFleurons";
 import PhotoFrame from "./PhotoFrame";
 import EnvelopeOpener from "./EnvelopeOpener";
-import VideoFrame from "./VideoFrame";
 
 export const metadata: Metadata = {
   title: "Rohan & Nishtha — A wedding wish from Arjun & Kashika",
@@ -209,21 +208,6 @@ export default function GiftPage() {
               laughter, and the way you both lit up that floor —
               it&rsquo;s been hard to look away.
             </p>
-          </section>
-        </Reveal>
-
-        <Reveal>
-          <Ornament className="my-12" />
-        </Reveal>
-
-        {/* Wedding moment — bowing to the crowd */}
-        <Reveal>
-          <section>
-            <VideoFrame
-              src="/rohan-and-nishtha/wedding.mov"
-              tilt="right"
-              caption="the bow"
-            />
           </section>
         </Reveal>
 
