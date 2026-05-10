@@ -283,6 +283,23 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
+        {/* Note to the bride and groom */}
+        <Reveal>
+          <section>
+            <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
+              Nishtha, you looked stunning at every event. Quietly,
+              beautifully, the whole weekend. Rohan, you held your own
+              beside her, calm and present and completely yours. A Gujarati
+              boy and a Marwari girl finding each other this gracefully
+              feels like the universe getting something exactly right.
+            </p>
+          </section>
+        </Reveal>
+
+        <Reveal>
+          <Ornament className="my-12" />
+        </Reveal>
+
         {/* Visual interlude — the walk forward */}
         <Reveal>
           <section>
