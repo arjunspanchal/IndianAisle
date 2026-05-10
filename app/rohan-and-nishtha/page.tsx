@@ -246,7 +246,7 @@ export default function GiftPage() {
           </Reveal>
 
           {/* Scroll-to-open prompt at bottom of cover. */}
-          <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-ink-mute sm:bottom-12">
+          <div className="absolute bottom-6 left-1/2 flex max-w-[18rem] -translate-x-1/2 flex-col items-center gap-2 px-6 text-center text-ink-mute sm:bottom-10 sm:max-w-[20rem]">
             <span
               className="reveal-in font-body text-[10px] uppercase tracking-[0.32em]"
               style={{ animationDelay: "2300ms" }}
@@ -254,8 +254,14 @@ export default function GiftPage() {
               scroll below
             </span>
             <span
+              className="reveal-in font-body text-[10px] italic leading-relaxed opacity-70 sm:text-xs"
+              style={{ animationDelay: "2450ms" }}
+            >
+              and turn your volume up for a better experience
+            </span>
+            <span
               aria-hidden
-              className="scroll-prompt-line block h-7 w-px bg-gold-line"
+              className="scroll-prompt-line mt-1 block h-6 w-px bg-gold-line"
             />
           </div>
         </section>
