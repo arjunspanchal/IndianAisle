@@ -103,8 +103,7 @@ export default function GiftPage() {
           <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
             Shashank — thank you for opening your home and your family to us
             this weekend. Every detail, every meal, every hug has been a
-            masterclass in hosting. Kashika and I will be telling stories
-            about these two days for years to come.
+            masterclass in hosting.
           </p>
         </section>
 
