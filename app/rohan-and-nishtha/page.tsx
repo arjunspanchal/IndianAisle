@@ -43,12 +43,17 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   0% { opacity: 0; transform: scale(0.995); }
   100% { opacity: 1; transform: scale(1); }
 }
+@keyframes reveal-in {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 @keyframes scroll-prompt {
   0%, 100% { opacity: 0.25; transform: translateY(0); }
   50%      { opacity: 0.85; transform: translateY(4px); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .envelope-in { animation: envelope-in 800ms ease-out both; }
+  .envelope-in    { animation: envelope-in 800ms ease-out both; }
+  .reveal-in      { animation: reveal-in 1100ms ease-out both; }
   .scroll-prompt-line { animation: scroll-prompt 2.6s ease-in-out infinite; }
 }
 .paper-grain {
