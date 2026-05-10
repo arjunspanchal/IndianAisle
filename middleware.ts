@@ -15,7 +15,7 @@ export async function middleware(req: NextRequest) {
   const isLanding = path === "/";
   const isVendorPortal = path === "/vendor" || path.startsWith("/vendor/");
   const isAdminPortal = path === "/admin" || path.startsWith("/admin/");
-  const isGiftPage = path === "/rohan-and-nishtha";
+  const isGiftPage = path === "/rohan-and-nishtha" || path.startsWith("/rohan-and-nishtha/");
   const isPublic = isLogin || isLanding || isVendorPortal || isAdminPortal || isGiftPage;
 
   const res = NextResponse.next({ request: req });
@@ -69,5 +69,5 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Skip Next.js internals, static files, and common image extensions.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp3|mp4|mov|webm|ogg|m4a|wav|avif)$).*)"],
 };
