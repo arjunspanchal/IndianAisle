@@ -71,14 +71,20 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   0%   { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--rot, 0deg)); opacity: 0; }
   100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
 }
+.photo-reveal { view-timeline-name: --photo-reveal; view-timeline-axis: block; }
 .photo-reveal-tile {
   position: absolute;
-  background-repeat: no-repeat;
+  overflow: hidden;
   will-change: transform, opacity;
-  /* Default (no scroll-driven animation support): tiles already in place,
-     fully assembled. Image is visible regardless of JS / browser features. */
+  /* Default (no scroll-driven animation): tiles already in place. */
 }
-.photo-reveal { view-timeline-name: --photo-reveal; view-timeline-axis: block; }
+.photo-reveal-tile-img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  user-select: none;
+  pointer-events: none;
+}
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     .photo-reveal-tile {

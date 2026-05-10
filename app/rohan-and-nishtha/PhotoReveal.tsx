@@ -1,11 +1,16 @@
 // Photo split into a grid of tiles that reassembles as the parent enters
-// the viewport. Pure CSS via animation-timeline: view() — no IntersectionObserver,
-// no client component, no React state.
+// the viewport. Pure CSS via animation-timeline: view() — no
+// IntersectionObserver, no client component, no React state.
 //
-// Fallback for older browsers (no scroll-driven animation support): tiles
-// render in their final assembled positions. The hidden <img> below carries
-// alt text for screen readers and SEO; it shares the URL with the
-// background-image on each tile so the browser only fetches once.
+// Technique: each tile is a viewport (overflow:hidden) over a full-sized
+// img that sits at the SAME absolute position in every tile. Each tile
+// is then placed in its grid cell so its viewport shows only that slice.
+// Because every tile references the image at the same coordinates,
+// adjacent tile edges align perfectly with no visible seams.
+//
+// Fallback for older browsers (no scroll-driven animation support):
+// tiles render in their final assembled positions. Image is visible
+// regardless of JS / browser features.
 
 type Props = {
   src: string;
@@ -37,13 +42,10 @@ export default function PhotoReveal({
     return { r, c, offsetX, offsetY, rot };
   });
 
-  const bgPosX = (c: number) => (cols > 1 ? (c / (cols - 1)) * 100 : 0);
-  const bgPosY = (r: number) => (rows > 1 ? (r / (rows - 1)) * 100 : 0);
-
   return (
     <figure className="mx-auto">
       <div
-        className="photo-reveal relative w-full overflow-hidden"
+        className="photo-reveal relative w-full"
         style={{ aspectRatio: `${width} / ${height}` }}
       >
         {tiles.map((t) => (
@@ -54,21 +56,31 @@ export default function PhotoReveal({
               {
                 left: `${(t.c / cols) * 100}%`,
                 top: `${(t.r / rows) * 100}%`,
-                width: `calc(${100 / cols}% + 1px)`,
-                height: `calc(${100 / rows}% + 1px)`,
-                backgroundImage: `url(${src})`,
-                backgroundSize: `${cols * 100}% ${rows * 100}%`,
-                backgroundPosition: `${bgPosX(t.c)}% ${bgPosY(t.r)}%`,
+                width: `${100 / cols}%`,
+                height: `${100 / rows}%`,
                 ["--tx" as string]: `${t.offsetX}px`,
                 ["--ty" as string]: `${t.offsetY}px`,
                 ["--rot" as string]: `${t.rot}deg`,
               } as React.CSSProperties
             }
             aria-hidden
-          />
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt=""
+              className="photo-reveal-tile-img"
+              style={{
+                width: `${cols * 100}%`,
+                height: `${rows * 100}%`,
+                left: `-${t.c * 100}%`,
+                top: `-${t.r * 100}%`,
+              }}
+            />
+          </div>
         ))}
-        {/* Hidden image for screen readers + SEO. Same URL as tile bg
-            so the browser only fetches once. */}
+        {/* Visually hidden image carrying alt text for SEO + screen readers.
+            Browser caches the URL once across all tile imgs + this one. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt} width={width} height={height} className="sr-only" />
       </div>
