@@ -10,6 +10,7 @@ export default function MusicToggle() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [available, setAvailable] = useState<boolean | null>(null);
+  const autoStartedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,11 +26,47 @@ export default function MusicToggle() {
     };
   }, []);
 
+  // Browsers block silent autoplay-with-sound, but they allow play() inside
+  // any user gesture. Listen for the first scroll/click/touch/key and start
+  // the music then, once. The toggle still works as a manual override.
+  useEffect(() => {
+    if (available !== true) return;
+
+    const tryStart = async () => {
+      if (autoStartedRef.current) return;
+      const a = audioRef.current;
+      if (!a) return;
+      autoStartedRef.current = true;
+      try {
+        a.volume = 0.55;
+        await a.play();
+        setPlaying(true);
+      } catch {
+        // Some browsers may still refuse — leave the toggle for manual.
+        autoStartedRef.current = false;
+      }
+    };
+
+    const opts: AddEventListenerOptions = { once: true, passive: true };
+    window.addEventListener("scroll", tryStart, opts);
+    window.addEventListener("pointerdown", tryStart, opts);
+    window.addEventListener("touchstart", tryStart, opts);
+    window.addEventListener("keydown", tryStart, opts);
+
+    return () => {
+      window.removeEventListener("scroll", tryStart);
+      window.removeEventListener("pointerdown", tryStart);
+      window.removeEventListener("touchstart", tryStart);
+      window.removeEventListener("keydown", tryStart);
+    };
+  }, [available]);
+
   const toggle = async () => {
     const a = audioRef.current;
     if (!a) return;
     if (a.paused) {
       try {
+        a.volume = 0.55;
         await a.play();
         setPlaying(true);
       } catch {
@@ -45,7 +82,7 @@ export default function MusicToggle() {
 
   return (
     <>
-      <audio ref={audioRef} src={TRACK_SRC} loop preload="none" />
+      <audio ref={audioRef} src={TRACK_SRC} loop preload="auto" />
       <button
         type="button"
         onClick={toggle}
