@@ -200,7 +200,7 @@ export default function GiftPage() {
             </div>
           </Reveal>
           <Reveal delay={1400}>
-            <h1 className="mt-6 font-display text-6xl leading-[1.05] tracking-tight text-ink sm:text-7xl">
+            <h1 className="mt-6 font-display text-[clamp(2.25rem,9.5vw,4.75rem)] leading-[1.05] tracking-tight text-ink">
               Congratulations
             </h1>
           </Reveal>
