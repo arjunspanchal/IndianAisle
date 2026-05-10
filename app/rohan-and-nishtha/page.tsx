@@ -301,6 +301,25 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
+        {/* Second note to the couple — paired with their beach photo */}
+        <Reveal>
+          <section>
+            <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
+              There&rsquo;s something settled about the two of you that we
+              kept noticing all weekend. The way Nishtha laughs at something
+              Rohan hasn&rsquo;t quite said yet. The way he watches her
+              cross the room. It&rsquo;s not performance, it&rsquo;s
+              practice. The kind that comes from years of just liking each
+              other. May the slow Tuesday evenings and the unremarkable
+              Sundays ahead carry that exact quality forward.
+            </p>
+          </section>
+        </Reveal>
+
+        <Reveal>
+          <Ornament className="my-12" />
+        </Reveal>
+
         {/* The three of us — lead-in to the sangeet story + thank-you */}
         <Reveal>
           <section>
