@@ -283,17 +283,15 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
-        {/* Block 2 — The story */}
+        {/* Note to the bride and groom — paired with their portrait above */}
         <Reveal>
           <section>
             <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
-              What a weekend. The red and gold of last night&rsquo;s sangeet at
-              Avadh Utopia is still ringing in our ears, and now we get to
-              watch you take the seven steps. Shashank stole the floor on
-              every number, with the whole family behind him and Harshika
-              beat for beat. Between all the dancing, the laughter, and the
-              way you both lit up the room, it&rsquo;s been hard to look
-              away.
+              Nishtha, you looked stunning at every event. Quietly,
+              beautifully, the whole weekend. Rohan, you held your own
+              beside her, calm and present and completely yours. School
+              love becoming the forever kind is rare, and getting to watch
+              it land for you both is a quiet joy.
             </p>
           </section>
         </Reveal>
@@ -309,23 +307,6 @@ export default function GiftPage() {
               src="/rohan-and-nishtha/wedding.mov"
               caption="before the seven steps"
             />
-          </section>
-        </Reveal>
-
-        <Reveal>
-          <Ornament className="my-12" />
-        </Reveal>
-
-        {/* Note to the bride and groom */}
-        <Reveal>
-          <section>
-            <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
-              Nishtha, you looked stunning at every event. Quietly,
-              beautifully, the whole weekend. Rohan, you held your own
-              beside her, calm and present and completely yours. School
-              love becoming the forever kind is rare, and getting to watch
-              it land for you both is a quiet joy.
-            </p>
           </section>
         </Reveal>
 
@@ -350,7 +331,7 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
-        {/* The three of us — lead-in to the thank-you */}
+        {/* The three of us — lead-in to the sangeet story + thank-you */}
         <Reveal>
           <section>
             <PhotoReveal
@@ -360,6 +341,25 @@ export default function GiftPage() {
               height={1050}
               caption="Kashika, Shashank & Arjun"
             />
+          </section>
+        </Reveal>
+
+        <Reveal>
+          <Ornament className="my-12" />
+        </Reveal>
+
+        {/* Sangeet story — paired with the group photo, bridges into the thank-you */}
+        <Reveal>
+          <section>
+            <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
+              What a weekend. The red and gold of last night&rsquo;s sangeet at
+              Avadh Utopia is still ringing in our ears, and now we get to
+              watch you take the seven steps. Shashank stole the floor on
+              every number, with the whole family behind him and Harshika
+              beat for beat. Between all the dancing, the laughter, and the
+              way you both lit up the room, it&rsquo;s been hard to look
+              away.
+            </p>
           </section>
         </Reveal>
 
