@@ -255,9 +255,11 @@ export default function GiftPage() {
             <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
               What a weekend. The red and gold of last night&rsquo;s sangeet at
               Avadh Utopia is still ringing in our ears, and now we get to
-              watch you take the seven steps. Between the dancing, the
-              laughter, and the way you both lit up that floor —
-              it&rsquo;s been hard to look away.
+              watch you take the seven steps. Shashank stole the floor —
+              every number, with the whole family behind him and Harshika
+              beat for beat. Between all the dancing, the laughter, and the
+              way you both lit up the room — it&rsquo;s been hard to look
+              away.
             </p>
           </section>
         </Reveal>
@@ -303,9 +305,9 @@ export default function GiftPage() {
         <Reveal>
           <section>
             <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
-              Shashank — thank you for opening your home and your family to us
-              this weekend. Every detail, every meal, every hug has been a
-              masterclass in hosting.
+              Shashank and Harshika — thank you for opening your home and your
+              family to us this weekend. Every detail, every meal, every hug
+              has been a masterclass in hosting.
             </p>
           </section>
         </Reveal>
