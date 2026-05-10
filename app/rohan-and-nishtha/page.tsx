@@ -350,12 +350,10 @@ export default function GiftPage() {
           <section>
             <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
               What a weekend. The red and gold of the sangeet at Avadh
-              Utopia is still ringing in our ears, and watching Rohan and
-              Nishtha take the seven steps the morning after was its own
-              kind of quiet. Shashank, you stole the floor on every
-              number, with the whole family behind you and Harshika beat
-              for beat. Between the dancing and the laughter, it was
-              hard to look away.
+              Utopia is still ringing in our ears. Shashank, you stole
+              the floor on every number, with the whole family behind you
+              and Harshika beat for beat. Between the dancing and the
+              laughter, it was hard to look away.
             </p>
           </section>
         </Reveal>
