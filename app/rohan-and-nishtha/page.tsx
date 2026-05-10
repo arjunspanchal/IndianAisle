@@ -334,6 +334,20 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
+        {/* Note to Harshika — missed a photo + goodbye */}
+        <Reveal>
+          <section>
+            <p className="font-body text-base italic leading-relaxed text-ink-soft sm:text-lg">
+              Harshika — we missed catching a photo with you, and we slipped
+              out before we could say a proper goodbye. Until very soon.
+            </p>
+          </section>
+        </Reveal>
+
+        <Reveal>
+          <Ornament className="my-12" />
+        </Reveal>
+
         {/* Block 4 — The gift */}
         <section className="text-center">
           <Reveal>
