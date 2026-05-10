@@ -40,10 +40,15 @@ export default function PhotoReveal({
     const offsetX = Math.round(Math.sin(seed * 1.71) * 60);
     const offsetY = Math.round(Math.cos(seed * 2.31) * 60);
     const rot = Math.round(Math.sin(seed * 3.13) * 9 * 10) / 10;
-    const x1 = (c / cols) * 100;
-    const y1 = (r / rows) * 100;
-    const x2 = ((c + 1) / cols) * 100;
-    const y2 = ((r + 1) / rows) * 100;
+    // Tiny overlap (0.2% per edge) lets adjacent tiles cover each other's
+    // anti-aliased clip-path edges so the page background can't bleed
+    // through. Since every tile renders identical image pixels at
+    // identical coordinates, the overlap is visually invisible.
+    const O = 0.2;
+    const x1 = Math.max(0, (c / cols) * 100 - O);
+    const y1 = Math.max(0, (r / rows) * 100 - O);
+    const x2 = Math.min(100, ((c + 1) / cols) * 100 + O);
+    const y2 = Math.min(100, ((r + 1) / rows) * 100 + O);
     const clipPath = `polygon(${x1}% ${y1}%, ${x2}% ${y1}%, ${x2}% ${y2}%, ${x1}% ${y2}%)`;
     return { r, c, offsetX, offsetY, rot, clipPath };
   });
