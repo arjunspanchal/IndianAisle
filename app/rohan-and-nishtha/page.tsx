@@ -251,7 +251,7 @@ export default function GiftPage() {
               className="reveal-in font-body text-[10px] uppercase tracking-[0.32em]"
               style={{ animationDelay: "2300ms" }}
             >
-              turn the page
+              scroll below
             </span>
             <span
               aria-hidden
