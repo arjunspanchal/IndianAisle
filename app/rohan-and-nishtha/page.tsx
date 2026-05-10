@@ -4,7 +4,7 @@ import Ornament from "./Ornament";
 import GiftButton from "./GiftButton";
 import MusicToggle from "./MusicToggle";
 import CornerFleurons from "./CornerFleurons";
-import PhotoFrame from "./PhotoFrame";
+import PhotoReveal from "./PhotoReveal";
 import GiftStage from "./GiftStage";
 import VideoFrame from "./VideoFrame";
 
@@ -66,6 +66,27 @@ html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !impo
   0%   { opacity: 1; transform: scale(1);    visibility: visible; }
   60%  { opacity: 0.5; transform: scale(1.03); }
   100% { opacity: 0; transform: scale(1.06); visibility: hidden; }
+}
+@keyframes photo-shatter-assemble {
+  0%   { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--rot, 0deg)); opacity: 0; }
+  100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+}
+.photo-reveal-tile {
+  position: absolute;
+  background-repeat: no-repeat;
+  will-change: transform, opacity;
+  /* Default (no scroll-driven animation support): tiles already in place,
+     fully assembled. Image is visible regardless of JS / browser features. */
+}
+.photo-reveal { view-timeline-name: --photo-reveal; view-timeline-axis: block; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .photo-reveal-tile {
+      animation: photo-shatter-assemble linear both;
+      animation-timeline: --photo-reveal;
+      animation-range: entry 0% cover 35%;
+    }
+  }
 }
 /* Reveal elements stay invisible until the user clicks the open button
    (which adds .opened to the GiftStage wrapper). The envelope animations
@@ -233,13 +254,11 @@ export default function GiftPage() {
         {/* Inside of card — portrait spread */}
         <section className="pt-16 text-center sm:pt-24">
           <Reveal>
-            <PhotoFrame
+            <PhotoReveal
               src="/rohan-and-nishtha/portrait.jpg"
               alt="Rohan and Nishtha"
               width={720}
               height={941}
-              priority
-              tilt="right"
               caption="Rohan & Nishtha"
             />
           </Reveal>
@@ -273,7 +292,6 @@ export default function GiftPage() {
           <section>
             <VideoFrame
               src="/rohan-and-nishtha/wedding.mov"
-              tilt="none"
               caption="before the seven steps"
             />
           </section>
@@ -303,12 +321,11 @@ export default function GiftPage() {
         {/* Visual interlude — the walk forward */}
         <Reveal>
           <section>
-            <PhotoFrame
+            <PhotoReveal
               src="/rohan-and-nishtha/beach.jpg"
               alt="Rohan and Nishtha walking together on the beach"
               width={900}
               height={1202}
-              tilt="left"
               caption="10.05.2026"
             />
           </section>
@@ -321,12 +338,11 @@ export default function GiftPage() {
         {/* The three of us — lead-in to the thank-you */}
         <Reveal>
           <section>
-            <PhotoFrame
+            <PhotoReveal
               src="/rohan-and-nishtha/with-shashank.jpg"
               alt="Kashika, Arjun, and Shashank"
               width={1400}
               height={1050}
-              tilt="right"
               caption="Kashika, Shashank & Arjun"
             />
           </section>
