@@ -301,6 +301,24 @@ export default function GiftPage() {
           <Ornament className="my-12" />
         </Reveal>
 
+        {/* The three of us — lead-in to the thank-you */}
+        <Reveal>
+          <section>
+            <PhotoFrame
+              src="/rohan-and-nishtha/with-shashank.jpg"
+              alt="Kashika, Arjun, and Shashank"
+              width={1400}
+              height={1050}
+              tilt="right"
+              caption="Kashika, Arjun & Shashank"
+            />
+          </section>
+        </Reveal>
+
+        <Reveal>
+          <Ornament className="my-12" />
+        </Reveal>
+
         {/* Block 3 — Thank you */}
         <Reveal>
           <section>
