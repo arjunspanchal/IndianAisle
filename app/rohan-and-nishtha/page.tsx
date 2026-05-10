@@ -10,9 +10,34 @@ export const metadata: Metadata = {
   },
 };
 
+// Force this page to render in the light parchment theme regardless of the
+// surrounding app's dark-mode bootstrap or any leftover preference. These
+// custom-property values mirror the :root tokens in globals.css.
+const lightTokens: React.CSSProperties = {
+  ["--c-ink" as string]: "24 22 20",
+  ["--c-ink-soft" as string]: "58 50 44",
+  ["--c-ink-mute" as string]: "107 99 92",
+  ["--c-parchment" as string]: "250 247 242",
+  ["--c-parchment-deep" as string]: "241 235 224",
+  ["--c-parchment-line" as string]: "230 222 209",
+  ["--c-gold" as string]: "168 105 46",
+  ["--c-gold-soft" as string]: "196 142 88",
+  ["--c-gold-line" as string]: "222 196 158",
+  ["--c-rose" as string]: "200 117 110",
+  ["--c-rose-deep" as string]: "142 70 78",
+};
+
+// Override html/body bg + color so iOS rubber-band overscroll and any
+// inherited dark-mode styling can't leak through behind the page.
+const forceLightChrome = `html, body { background: rgb(250 247 242) !important; color: rgb(58 50 44) !important; }`;
+
 export default function GiftPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-parchment px-6 py-16 text-ink-soft">
+    <main
+      style={lightTokens}
+      className="flex min-h-screen items-center justify-center bg-parchment px-6 py-16 text-ink-soft"
+    >
+      <style dangerouslySetInnerHTML={{ __html: forceLightChrome }} />
       <article className="w-full max-w-[640px]">
         {/* Block 1 — Hero */}
         <section className="text-center">
