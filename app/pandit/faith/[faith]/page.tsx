@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import PanditCta from "@/components/PanditCta";
+import CeremonyTimeline from "@/components/CeremonyTimeline";
 import {
   FAITH_LABELS,
   FAITH_BLURBS,
@@ -91,31 +92,16 @@ export default function FaithPage({ params }: { params: { faith: string } }) {
         </p>
       </header>
 
-      <div className="space-y-8">
-        {byPhase.map(({ phase, items }) => (
-          <section key={phase}>
-            <h2 className="mb-3 text-xs font-medium uppercase tracking-[0.18em] text-gold">
-              {PHASE_LABELS[phase]}
-            </h2>
-            <div className="space-y-3">
-              {items.map((r) => (
-                <Link
-                  key={r.slug}
-                  href={`/pandit/${r.slug}`}
-                  className="group block rounded-xl border border-stone-200 bg-white p-4 transition hover:border-gold dark:border-stone-800 dark:bg-stone-900"
-                >
-                  <h3 className="font-serif text-lg text-ink group-hover:text-gold dark:text-parchment">
-                    {r.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-                    {r.summary}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+      <CeremonyTimeline
+        phases={byPhase.map(({ phase, items }) => ({
+          phaseLabel: PHASE_LABELS[phase],
+          items: items.map((r) => ({
+            slug: r.slug,
+            title: r.title,
+            summary: r.summary,
+          })),
+        }))}
+      />
 
       <div className="mt-8 flex items-center justify-between gap-4 rounded-xl border border-stone-200 bg-stone-50 px-5 py-4 dark:border-stone-800 dark:bg-stone-800/40 print:hidden">
         <div className="text-sm text-stone-600 dark:text-stone-300">
