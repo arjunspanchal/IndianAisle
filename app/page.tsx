@@ -194,6 +194,27 @@ export default async function HomePage() {
         />
       )}
 
+      <Link
+        href="/pandit"
+        className="group mt-6 flex items-center gap-4 rounded-2xl border border-gold-line bg-gold-soft/5 px-5 py-4 transition hover:border-gold hover:bg-gold-soft/10"
+      >
+        <span className="text-2xl" aria-hidden>
+          🪔
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-serif text-lg text-stone-900 dark:text-stone-50">
+            Ask Pandit ji
+          </div>
+          <div className="text-sm text-stone-500 dark:text-stone-400">
+            Understand the meaning of every wedding ritual — haldi, pheras,
+            vidaai and more.
+          </div>
+        </div>
+        <span className="shrink-0 text-sm text-gold opacity-0 transition group-hover:opacity-100">
+          Open →
+        </span>
+      </Link>
+
       {totalActive > 0 && (
         <section className="mt-10">
           <div className="mb-3 flex items-baseline justify-between">

@@ -475,6 +475,16 @@ export function ritualsInOrder(): RitualEntry[] {
   return [...RITUAL_KB].sort((a, b) => a.order - b.order);
 }
 
+/** Look up a single ritual by its slug. */
+export function getRitual(slug: string): RitualEntry | undefined {
+  return RITUAL_KB.find((r) => r.slug === slug);
+}
+
+/** All ritual slugs — for static generation and sitemaps. */
+export function allRitualSlugs(): string[] {
+  return RITUAL_KB.map((r) => r.slug);
+}
+
 /**
  * Render the full KB as a compact text block for grounding the model.
  * Kept terse so it fits comfortably in the system prompt (the corpus is small).

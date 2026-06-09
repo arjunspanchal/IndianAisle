@@ -1,3 +1,4 @@
+import Link from "next/link";
 import PanditChat from "@/components/PanditChat";
 import {
   ritualsInOrder,
@@ -53,20 +54,24 @@ export default function PanditPage() {
               </h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {items.map((r) => (
-                  <article
+                  <Link
                     key={r.slug}
-                    className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900"
+                    href={`/pandit/${r.slug}`}
+                    className="group block rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition hover:border-gold hover:shadow-md dark:border-stone-800 dark:bg-stone-900"
                   >
-                    <h3 className="font-serif text-lg text-ink dark:text-parchment">
+                    <h3 className="font-serif text-lg text-ink group-hover:text-gold dark:text-parchment">
                       {r.title}
                     </h3>
                     <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
                       {r.summary}
                     </p>
-                    <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
                       {r.meaning}
                     </p>
-                  </article>
+                    <span className="mt-3 inline-block text-xs font-medium text-gold">
+                      Read more →
+                    </span>
+                  </Link>
                 ))}
               </div>
             </section>
