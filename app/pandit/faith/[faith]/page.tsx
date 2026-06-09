@@ -5,6 +5,7 @@ import PanditCta from "@/components/PanditCta";
 import {
   FAITH_LABELS,
   FAITH_BLURBS,
+  FAITH_OFFICIANT,
   FAITH_ORDER,
   PHASE_LABELS,
   faithsWithEntries,
@@ -114,6 +115,18 @@ export default function FaithPage({ params }: { params: { faith: string } }) {
             </div>
           </section>
         ))}
+      </div>
+
+      <div className="mt-8 flex items-center justify-between gap-4 rounded-xl border border-stone-200 bg-stone-50 px-5 py-4 dark:border-stone-800 dark:bg-stone-800/40 print:hidden">
+        <div className="text-sm text-stone-600 dark:text-stone-300">
+          Looking for a {FAITH_OFFICIANT[faith]} for your wedding?
+        </div>
+        <Link
+          href="/vendors"
+          className="shrink-0 rounded-lg border border-gold-line px-3 py-1.5 text-sm text-gold transition hover:border-gold"
+        >
+          Browse vendors →
+        </Link>
       </div>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-6 dark:border-stone-800">

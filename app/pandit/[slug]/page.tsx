@@ -29,9 +29,16 @@ export function generateMetadata({
   const title = `${r.title} — Meaning & Significance | The Indian Aisle`;
   const description = `${r.summary} ${r.meaning}`.slice(0, 155);
   const url = `/pandit/${r.slug}`;
+  const keywords = [
+    r.title,
+    ...r.aliases,
+    `${FAITH_LABELS[ritualFaith(r)]} wedding`,
+    "Indian wedding ritual",
+  ];
   return {
     title,
     description,
+    keywords,
     alternates: { canonical: url },
     openGraph: {
       title: `${r.title} — Indian Wedding Ritual`,
