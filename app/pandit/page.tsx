@@ -50,6 +50,12 @@ export default function PanditPage() {
               {FAITH_LABELS[f]}
             </a>
           ))}
+          <Link
+            href="/pandit/glossary"
+            className="rounded-full border border-gold-line bg-gold-soft/10 px-3 py-1 text-xs text-gold transition hover:border-gold"
+          >
+            Glossary →
+          </Link>
         </nav>
       </header>
 
