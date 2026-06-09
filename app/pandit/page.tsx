@@ -51,6 +51,12 @@ export default function PanditPage() {
             </a>
           ))}
           <Link
+            href="/pandit/checklist"
+            className="rounded-full border border-gold-line bg-gold-soft/10 px-3 py-1 text-xs text-gold transition hover:border-gold"
+          >
+            Checklist →
+          </Link>
+          <Link
             href="/pandit/glossary"
             className="rounded-full border border-gold-line bg-gold-soft/10 px-3 py-1 text-xs text-gold transition hover:border-gold"
           >

@@ -898,6 +898,34 @@ export function faithsWithEntries(): Faith[] {
   return FAITH_ORDER.filter((f) => ritualsForFaith(f).length > 0);
 }
 
+/** A serializable item for the client-side checklist tool. */
+export interface ChecklistItem {
+  slug: string;
+  title: string;
+  summary: string;
+  phase: RitualPhase;
+  phaseLabel: string;
+}
+
+/** Faith → its rituals, as a plain serializable structure for client components. */
+export function checklistData(): {
+  faith: Faith;
+  label: string;
+  items: ChecklistItem[];
+}[] {
+  return faithsWithEntries().map((faith) => ({
+    faith,
+    label: FAITH_LABELS[faith],
+    items: ritualsForFaith(faith).map((r) => ({
+      slug: r.slug,
+      title: r.title,
+      summary: r.summary,
+      phase: r.phase,
+      phaseLabel: PHASE_LABELS[r.phase],
+    })),
+  }));
+}
+
 /**
  * Render the full KB as a compact text block for grounding the model.
  * Kept terse so it fits comfortably in the system prompt (the corpus is small).
