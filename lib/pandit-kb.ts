@@ -643,6 +643,95 @@ export const RITUAL_KB: RitualEntry[] = [
     reviewStatus: "pending_pandit_review",
   },
 
+  {
+    slug: "jeelakarra-bellam",
+    title: "Jeelakarra Bellam",
+    aliases: ["jeelakarra bellam", "jilakarra bellam", "cumin jaggery"],
+    phase: "wedding_day",
+    order: 89,
+    traditions: ["hindu_south"],
+    summary:
+      "A defining Telugu moment — the couple place a paste of cumin and jaggery on each other's heads.",
+    meaning:
+      "At the auspicious instant (muhurat), the Telugu bride and groom each place a paste of jeelakarra (cumin) and bellam (jaggery) on the other's head. The bitter-and-sweet mix symbolises a bond that holds firm through life's bitter and sweet times alike — inseparable, like the two ingredients.",
+    sequence: [
+      "A curtain (often) separates the couple until the muhurat.",
+      "At the chosen moment they place the cumin-jaggery paste on each other's heads as priests chant.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "antarpat",
+    title: "Antarpat & Mangalashtak",
+    aliases: ["antarpat", "antarpaat", "mangalashtak", "maharashtrian wedding"],
+    phase: "wedding_day",
+    order: 95,
+    traditions: ["hindu_marwari"],
+    summary:
+      "A Maharashtrian rite — a curtain between the couple drops as the Mangalashtak verses end and they garland each other.",
+    meaning:
+      "In a Maharashtrian wedding the antarpat (a decorative curtain) is held between the bride and groom while priests and guests recite the Mangalashtak — auspicious wedding verses. On the final 'shubh mangal saavadhan', the curtain is lowered and the couple garland each other, married at that instant.",
+    sequence: [
+      "The couple stand facing each other, separated by the antarpat.",
+      "Mangalashtak verses are chanted; on the final line the curtain drops and garlands are exchanged amid rice showers.",
+    ],
+    regionalNotes: [
+      "This entry describes Maharashtrian practice; community customs vary.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "ponkvu",
+    title: "Ponkhvu",
+    aliases: ["ponkvu", "ponkhvu", "ponkhana", "gujarati welcome"],
+    phase: "wedding_day",
+    order: 72,
+    traditions: ["hindu_gujarati"],
+    summary:
+      "The Gujarati welcome where the bride's mother greets and playfully 'grabs the nose' of the groom.",
+    meaning:
+      "When the groom arrives, the bride's mother performs an aarti and welcomes him. In a much-loved playful moment she pulls his nose — a humbling reminder that he has come to ask for her daughter's hand. The groom then tries to enter while the bride's sisters tease and bar the way.",
+    sequence: [
+      "The bride's mother does the groom's aarti and ceremonially tugs his nose.",
+      "Playful negotiations with the bride's sisters precede his entry to the mandap.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "madhuparka",
+    title: "Madhuparka",
+    aliases: ["madhuparka", "madhupark", "honey offering"],
+    phase: "wedding_day",
+    order: 74,
+    traditions: ["hindu_gujarati", "hindu_north", "hindu_south"],
+    summary:
+      "The groom is honoured as an esteemed guest with a drink of honey, yoghurt and ghee.",
+    meaning:
+      "In the Madhuparka, the bride's father receives the groom as a revered guest and offers him a ceremonial mixture — typically honey, yoghurt, and ghee — along with new garments. It expresses the high regard in which the groom and his family are held as the marriage begins.",
+    sequence: [
+      "The groom is seated and welcomed by the bride's father.",
+      "He is offered the madhuparka mixture and gifts of clothing.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "aeki-beki",
+    title: "Aeki Beki",
+    aliases: ["aeki beki", "ekibeki", "ring game", "kankan games"],
+    phase: "post_wedding",
+    order: 145,
+    traditions: ["hindu_gujarati", "hindu_north"],
+    summary:
+      "A playful post-wedding game where the newlyweds search a tray of milk for a ring.",
+    meaning:
+      "Aeki Beki is a light-hearted game played after the wedding: a ring (and coins) are dropped into a tray of milk coloured with vermilion and flowers, and the couple compete to find the ring. Tradition teases that whoever wins more rounds will 'rule the household' — a fun ice-breaker between the newlyweds and families.",
+    sequence: [
+      "A ring is hidden in a tray of opaque coloured milk.",
+      "The couple race to retrieve it over several rounds amid much cheering.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+
   // ───────────────────────── Sikh (Anand Karaj) ─────────────────────────
   {
     slug: "chunni-chadana",
