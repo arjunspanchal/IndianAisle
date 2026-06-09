@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import PanditChecklist from "@/components/PanditChecklist";
+import PanditCta from "@/components/PanditCta";
 import { checklistData } from "@/lib/pandit-kb";
 
 export const dynamic = "force-static";
@@ -44,6 +45,8 @@ export default function ChecklistPage() {
           Ask Pandit ji about any ritual
         </Link>
       </div>
+
+      <PanditCta />
     </main>
   );
 }
