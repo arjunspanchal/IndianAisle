@@ -194,26 +194,37 @@ export default async function HomePage() {
         />
       )}
 
-      <Link
-        href="/pandit"
-        className="group mt-6 flex items-center gap-4 rounded-2xl border border-gold-line bg-gold-soft/5 px-5 py-4 transition hover:border-gold hover:bg-gold-soft/10"
-      >
-        <span className="text-2xl" aria-hidden>
-          🪔
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="font-serif text-lg text-stone-900 dark:text-stone-50">
-            Ask Pandit ji
-          </div>
-          <div className="text-sm text-stone-500 dark:text-stone-400">
-            Understand the meaning of every wedding ritual — haldi, pheras,
-            vidaai and more.
+      <div className="mt-6 rounded-2xl border border-gold-line bg-gold-soft/5 px-5 py-4">
+        <div className="flex items-center gap-4">
+          <span className="text-2xl" aria-hidden>
+            🪔
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="font-serif text-lg text-stone-900 dark:text-stone-50">
+              Digital Pandit
+            </div>
+            <div className="text-sm text-stone-500 dark:text-stone-400">
+              Understand every wedding ritual across faiths — and plan your
+              ceremony.
+            </div>
           </div>
         </div>
-        <span className="shrink-0 text-sm text-gold opacity-0 transition group-hover:opacity-100">
-          Open →
-        </span>
-      </Link>
+        <div className="mt-3 flex flex-wrap gap-2 pl-12">
+          {[
+            { href: "/pandit", label: "Ritual guide" },
+            { href: "/pandit/checklist", label: "Ceremony checklist" },
+            { href: "/pandit/glossary", label: "Glossary" },
+          ].map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="rounded-full border border-gold-line bg-white/60 px-3 py-1 text-xs text-gold transition hover:border-gold dark:bg-stone-900/40"
+            >
+              {l.label} →
+            </Link>
+          ))}
+        </div>
+      </div>
 
       {totalActive > 0 && (
         <section className="mt-10">
