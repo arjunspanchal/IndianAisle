@@ -38,6 +38,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
       <body className="min-h-screen bg-parchment text-ink-soft">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "The Indian Aisle",
+                  url: "https://www.indianaisle.com",
+                  description:
+                    "Plan an Indian wedding — budgets, vendors, and the meaning of every ritual.",
+                },
+                {
+                  "@type": "WebSite",
+                  name: "The Indian Aisle",
+                  url: "https://www.indianaisle.com",
+                },
+              ],
+            }),
+          }}
+        />
         <div className="flex min-h-screen flex-col lg:flex-row">
           <AppNav user={user} />
           <div className="flex-1">{children}</div>
