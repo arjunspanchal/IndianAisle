@@ -9,6 +9,7 @@ export async function middleware(req: NextRequest) {
   // - "/login" (couple OTP)
   // - "/vendor/*" (vendor portal — pages handle their own auth gates)
   // - "/admin/*" (admin layout calls requireAdmin())
+  // - "/pandit/*" + "/api/pandit" (public ritual guide — discovery/SEO surface)
   // Everything else (the couple-side calculator/properties/etc.) still gets
   // a hard redirect to /login when there's no session.
   const isLogin = path === "/login" || path.startsWith("/login/");
@@ -16,7 +17,12 @@ export async function middleware(req: NextRequest) {
   const isVendorPortal = path === "/vendor" || path.startsWith("/vendor/");
   const isAdminPortal = path === "/admin" || path.startsWith("/admin/");
   const isGiftPage = path === "/rohan-and-nishtha" || path.startsWith("/rohan-and-nishtha/");
-  const isPublic = isLogin || isLanding || isVendorPortal || isAdminPortal || isGiftPage;
+  const isPandit =
+    path === "/pandit" ||
+    path.startsWith("/pandit/") ||
+    path === "/api/pandit";
+  const isPublic =
+    isLogin || isLanding || isVendorPortal || isAdminPortal || isGiftPage || isPandit;
 
   const res = NextResponse.next({ request: req });
 

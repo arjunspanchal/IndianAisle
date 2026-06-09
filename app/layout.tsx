@@ -5,6 +5,7 @@ import ChatWidget from "@/components/ChatWidget";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.indianaisle.com"),
   title: "The Indian Aisle",
   description: "Plan and tweak a wedding budget with live totals.",
 };
