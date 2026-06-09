@@ -470,6 +470,179 @@ export const RITUAL_KB: RitualEntry[] = [
     reviewStatus: "pending_pandit_review",
   },
 
+  // ───────────── Hindu — regional / community-specific ─────────────
+  {
+    slug: "gaye-holud",
+    title: "Gaye Holud",
+    aliases: ["gaye holud", "gae holud", "bengali haldi", "turmeric"],
+    phase: "pre_wedding",
+    order: 32,
+    traditions: ["hindu_bengali"],
+    summary:
+      "The Bengali turmeric ceremony — haldi from the groom's home is carried to the bride and applied to her.",
+    meaning:
+      "Gaye Holud ('turmeric on the body') is the Bengali haldi. Turmeric paste used on the groom is traditionally carried to the bride's home and applied to her, symbolically linking the two households and blessing the couple with an auspicious glow.",
+    sequence: [
+      "Turmeric is first applied to the groom at his home.",
+      "That turmeric, with gifts and sweets, is taken in procession to the bride.",
+      "The bride is bathed in turmeric by married women of the family amid ululation (ulu dhwani).",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "subho-drishti",
+    title: "Subho Drishti",
+    aliases: ["subho drishti", "shubho drishti", "first look"],
+    phase: "wedding_day",
+    order: 82,
+    traditions: ["hindu_bengali"],
+    summary:
+      "The auspicious first look between the Bengali bride and groom.",
+    meaning:
+      "In Subho Drishti the bride, carried on a low stool (pidi) and hiding her face with betel leaves, is brought before the groom. She lowers the leaves and the couple lock eyes for the first time as bride and groom — an auspicious, much-celebrated moment greeted with conch shells and ululation.",
+    sequence: [
+      "The bride is carried around the groom on a pidi, face covered with betel leaves.",
+      "She removes the leaves and the couple share their first look.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "saat-paak",
+    title: "Saat Paak & Mala Badal",
+    aliases: ["saat paak", "saat pak", "mala badal", "garland exchange"],
+    phase: "wedding_day",
+    order: 84,
+    traditions: ["hindu_bengali"],
+    summary:
+      "The bride circles the groom seven times, then the couple exchange garlands.",
+    meaning:
+      "In Saat Paak, the bride — seated on the pidi and carried by her brothers — is taken around the groom seven times, binding them together. This is followed by Mala Badal, the exchange of flower garlands three times, signifying mutual acceptance.",
+    sequence: [
+      "The bride is carried around the groom seven times on the pidi.",
+      "The couple exchange garlands three times (Mala Badal).",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "sindoor-daan",
+    title: "Sindoor Daan",
+    aliases: ["sindoor daan", "sindur daan", "bengali sindoor"],
+    phase: "wedding_day",
+    order: 122,
+    traditions: ["hindu_bengali"],
+    summary:
+      "The Bengali groom applies sindoor to the bride's hair parting, completing the marriage.",
+    meaning:
+      "Sindoor Daan is the climactic Bengali rite: the groom applies vermilion to the bride's parting, often as she is shielded by a new sari (ghomta). It marks her as a married woman and, for many families, completes the wedding.",
+    sequence: [
+      "The groom applies sindoor to the bride's hair parting.",
+      "The bride is then covered with a new sari (lajja bastra).",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "kashi-yatra",
+    title: "Kashi Yatra",
+    aliases: ["kashi yatra", "kasi yatra", "mock pilgrimage"],
+    phase: "wedding_day",
+    order: 86,
+    traditions: ["hindu_south"],
+    summary:
+      "A playful South Indian rite where the groom 'sets off' to renounce the world and is coaxed back to marry.",
+    meaning:
+      "In Kashi Yatra the groom mock-pretends to give up worldly life and leave for Kashi (Varanasi) as an ascetic. The bride's father intercepts him and persuades him that married householder life (grihastha) is the nobler path — a charming, light-hearted moment before the wedding proper.",
+    sequence: [
+      "The groom 'departs' with an umbrella, slippers, and a staff.",
+      "The bride's father stops him and invites him to marry his daughter; the groom returns.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "oonjal",
+    title: "Oonjal",
+    aliases: ["oonjal", "unjal", "swing ceremony"],
+    phase: "wedding_day",
+    order: 88,
+    traditions: ["hindu_south"],
+    summary:
+      "The couple is seated on a decorated swing as women sing and ward off the evil eye.",
+    meaning:
+      "In the Oonjal, the bride and groom sit on a gently swaying swing while married women sing songs, feed them milk and fruit, and circle lamps and coloured rice to protect them from the evil eye. The swing's motion is said to represent the steady ups and downs of life the couple will face together.",
+    sequence: [
+      "The couple sit on the swing; women sing traditional songs.",
+      "Lamps and coloured rice balls are circled around them and cast away to ward off ill fortune.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "mangalya-dharanam",
+    title: "Mangalya Dharanam",
+    aliases: ["mangalya dharanam", "thaali", "thali", "mangalsutra", "mangalyam"],
+    phase: "wedding_day",
+    order: 124,
+    traditions: ["hindu_south"],
+    summary:
+      "The South Indian tying of the thaali (sacred marriage thread/pendant) around the bride's neck.",
+    meaning:
+      "Mangalya Dharanam is the defining moment of a South Indian wedding: to the sound of auspicious music (getti melam), the groom ties the thaali / mangalyam around the bride's neck with three knots, while the gathering showers blessings. It is the equivalent of the mangalsutra and seals the marriage.",
+    sequence: [
+      "Auspicious 'getti melam' music is played to drown out any inauspicious sound.",
+      "The groom ties the thaali with three knots; elders shower akshata (rice).",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "talambralu",
+    title: "Talambralu",
+    aliases: ["talambralu", "talabralu", "rice ceremony"],
+    phase: "wedding_day",
+    order: 126,
+    traditions: ["hindu_south"],
+    summary:
+      "A joyful Telugu ritual where the couple shower each other with turmeric-coated rice.",
+    meaning:
+      "In Talambralu, the newly married Telugu couple pour handfuls of pearls of turmeric-and-saffron rice over each other's heads. It is a playful celebration of happiness, prosperity, and fertility — and often turns into a delightful friendly contest.",
+    sequence: [
+      "The couple are given heaps of turmeric rice (sometimes mixed with pearls and coins).",
+      "They shower it over each other amid laughter and cheering.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "chooda-kalire",
+    title: "Chooda & Kalire",
+    aliases: ["chooda", "chura", "choodha", "kalire", "kaleere", "bridal bangles"],
+    phase: "pre_wedding",
+    order: 45,
+    traditions: ["hindu_punjabi"],
+    summary:
+      "The bride's maternal uncle gifts her red-and-white bangles; friends tie golden kalire to them.",
+    meaning:
+      "In Punjabi weddings the bride's mama (maternal uncle) and his wife present the chooda — a set of red and ivory bangles — which the bride wears for the wedding and after. Friends and sisters then tie kalire (dome-shaped golden ornaments) to the bangles; a tradition holds that whoever a falling kalira touches will marry next.",
+    sequence: [
+      "The maternal uncle puts the chooda bangles on the bride, who traditionally doesn't look at them yet.",
+      "Unmarried friends tie kalire to the chooda and the bride shakes them over their heads.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "joota-chupai",
+    title: "Joota Chupai",
+    aliases: ["joota chupai", "juta chupai", "jutti chupai", "hiding shoes", "joote churai"],
+    phase: "wedding_day",
+    order: 115,
+    traditions: ["hindu_north", "hindu_punjabi"],
+    summary:
+      "The bride's sisters steal the groom's shoes and ransom them back — a beloved bit of wedding fun.",
+    meaning:
+      "When the groom removes his shoes to enter the mandap, the bride's sisters and cousins (saaliyan) hide them. After the rites they negotiate a playful ransom (neg) to return them — a light-hearted contest that bonds the two families and is one of the most-loved moments of a North Indian wedding.",
+    sequence: [
+      "The groom takes off his shoes for the mandap; the bride's side hides them.",
+      "After the ceremony, the sisters bargain a cash ransom to return the shoes.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+
   // ───────────────────────── Sikh (Anand Karaj) ─────────────────────────
   {
     slug: "chunni-chadana",
