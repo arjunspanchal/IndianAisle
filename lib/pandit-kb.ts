@@ -734,6 +734,23 @@ export const RITUAL_KB: RitualEntry[] = [
 
   // ───────────────────────── Sikh (Anand Karaj) ─────────────────────────
   {
+    slug: "kurmai",
+    title: "Kurmai (Sikh engagement)",
+    aliases: ["kurmai", "kudmai", "sikh engagement", "shagun", "thaka"],
+    faith: "sikh",
+    phase: "pre_wedding",
+    order: 205,
+    summary:
+      "The Sikh engagement, often held in a Gurdwara, formalising the match between the families.",
+    meaning:
+      "The Kurmai (or Thaka) is the Sikh betrothal. Frequently held in the presence of the Guru Granth Sahib with an Ardas, the groom is given gifts and a kara or kirpan, and the families exchange sweets and dried fruit — publicly committing to the union.",
+    sequence: [
+      "Families gather, often at a Gurdwara, and an Ardas is offered.",
+      "The groom receives gifts (often a kara, kirpan, or ring) and sweets; the families exchange shagun.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
     slug: "chunni-chadana",
     title: "Chunni Chadana",
     aliases: ["chunni chadana", "chunni chadayi", "chunni ceremony"],
@@ -1053,6 +1070,45 @@ export const RITUAL_KB: RitualEntry[] = [
     practicalNotes: [
       "A printed program explaining each ritual helps guests unfamiliar with the other tradition feel included.",
       "Some religious bodies have rules about officiating interfaith marriages — confirm with each officiant early.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "interfaith-two-ceremonies",
+    title: "Two Ceremonies, One Wedding",
+    aliases: ["two ceremonies", "separate ceremonies", "two-day interfaith wedding"],
+    faith: "interfaith",
+    phase: "wedding_day",
+    order: 615,
+    summary:
+      "Holding each tradition's full ceremony — often on separate days — so neither is compromised.",
+    meaning:
+      "Many interfaith couples choose to hold each faith's ceremony in full, frequently on different days or sessions. This lets each set of rites be performed properly and lets both families experience their own traditions completely, rather than shortening either to fit.",
+    sequence: [
+      "Decide the order and spacing (e.g. one faith's ceremony on day one, the other on day two).",
+      "Let each officiant run their full ceremony with their community's customs intact.",
+      "Bridge the two with shared meals and celebrations so the families mingle throughout.",
+    ],
+    practicalNotes: [
+      "Two ceremonies can mean two outfits, two venues or setups, and a longer overall timeline — plan budget and logistics accordingly.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "interfaith-unity-rituals",
+    title: "Blended Unity Rituals",
+    aliases: ["unity ritual", "blended ceremony", "combined rituals"],
+    faith: "interfaith",
+    phase: "wedding_day",
+    order: 625,
+    summary:
+      "Shared symbolic moments that honour both traditions within a single ceremony.",
+    meaning:
+      "When couples prefer one combined ceremony, a shared symbolic act can represent the joining of two heritages — for example pairing elements both families hold dear, a joint lamp or candle lighting, or readings and blessings from each tradition. The aim is genuine representation of both, chosen together with the families and officiants.",
+    sequence: [
+      "Choose symbols meaningful to both sides and agree them with both officiants.",
+      "Weave each tradition's blessing or gesture into one flowing ceremony.",
+      "Explain each element in the program so all guests can follow along.",
     ],
     reviewStatus: "pending_pandit_review",
   },
