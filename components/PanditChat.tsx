@@ -4,12 +4,62 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 
-const SUGGESTIONS = [
-  "What is the meaning of the seven pheras?",
-  "Explain the haldi ceremony",
-  "What happens during kanyadaan?",
-  "Why is the sacred fire so important?",
+/**
+ * Grounding intake — a short question list Pandit ji walks you through before
+ * explaining anything, so its answers are tailored to your wedding. Each step
+ * is a single question with quick-pick options; the answers are composed into
+ * the first message sent to the model.
+ */
+type IntakeStep = {
+  key: "tradition" | "role" | "focus";
+  question: string;
+  options: string[];
+};
+
+const INTAKE: IntakeStep[] = [
+  {
+    key: "tradition",
+    question: "Which tradition is your wedding?",
+    options: [
+      "North Indian Hindu",
+      "Gujarati Hindu",
+      "Punjabi Hindu",
+      "Marwari Hindu",
+      "South Indian Hindu",
+      "Bengali Hindu",
+      "Not sure / other",
+    ],
+  },
+  {
+    key: "role",
+    question: "And who are you in this wedding?",
+    options: ["The couple", "Family", "Wedding planner", "Just curious"],
+  },
+  {
+    key: "focus",
+    question: "Where would you like to begin?",
+    options: [
+      "A full ceremony overview",
+      "Pre-wedding rituals",
+      "Wedding-day rituals",
+      "Post-wedding rituals",
+      "A specific ritual",
+    ],
+  },
 ];
+
+function composeGroundingMessage(answers: Record<string, string>): string {
+  const tradition = answers.tradition ?? "Not sure / other";
+  const role = answers.role ?? "Just curious";
+  const focus = answers.focus ?? "A full ceremony overview";
+  return (
+    `Here's a bit about my wedding so you can tailor things:\n` +
+    `• Tradition: ${tradition}\n` +
+    `• My role: ${role}\n` +
+    `• I'd like to start with: ${focus}\n\n` +
+    `Please ground your explanations in this. Give me a warm, concise starting point and ask me anything you need to know.`
+  );
+}
 
 export default function PanditChat({
   initialPrompt,
@@ -17,6 +67,9 @@ export default function PanditChat({
   initialPrompt?: string;
 }) {
   const [input, setInput] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [stepIndex, setStepIndex] = useState(0);
+  const [intakeDone, setIntakeDone] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const { messages, sendMessage, status, error } = useChat({
@@ -25,11 +78,12 @@ export default function PanditChat({
 
   const isStreaming = status === "submitted" || status === "streaming";
 
-  // Fire an initial prompt once (e.g. when arriving from a ritual card).
+  // If a caller passes an explicit prompt (e.g. from a ritual card), skip intake.
   const firedRef = useRef(false);
   useEffect(() => {
     if (initialPrompt && !firedRef.current) {
       firedRef.current = true;
+      setIntakeDone(true);
       sendMessage({ text: initialPrompt });
     }
   }, [initialPrompt, sendMessage]);
@@ -38,14 +92,33 @@ export default function PanditChat({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, stepIndex]);
 
   const submit = (text: string) => {
     const t = text.trim();
     if (!t || isStreaming) return;
+    setIntakeDone(true);
     sendMessage({ text: t });
     setInput("");
   };
+
+  const pickOption = (value: string) => {
+    const step = INTAKE[stepIndex];
+    const nextAnswers = { ...answers, [step.key]: value };
+    setAnswers(nextAnswers);
+    if (stepIndex < INTAKE.length - 1) {
+      setStepIndex((i) => i + 1);
+    } else {
+      // Last answer — fire the grounding message.
+      setIntakeDone(true);
+      sendMessage({ text: composeGroundingMessage(nextAnswers) });
+    }
+  };
+
+  const skipIntake = () => setIntakeDone(true);
+
+  const showIntake = !intakeDone && messages.length === 0;
+  const currentStep = INTAKE[stepIndex];
 
   return (
     <div className="flex h-[34rem] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900">
@@ -62,26 +135,41 @@ export default function PanditChat({
       </header>
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-        {messages.length === 0 && (
-          <div className="space-y-3">
+        {showIntake && (
+          <div className="space-y-4">
             <div className="rounded-lg bg-stone-50 px-3 py-2 text-sm text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-              Namaste 🙏 I can explain the meaning and sequence of Hindu wedding
-              ceremonies. Which tradition is your wedding — North Indian,
-              Gujarati, Punjabi, Marwari, or South Indian? Or just ask a question
-              below.
+              Namaste 🙏 A few quick questions so I can tailor things to your
+              wedding — then ask me anything.
             </div>
-            <div className="flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => submit(s)}
-                  className="rounded-full border border-stone-300 px-3 py-1 text-xs text-stone-600 transition hover:border-gold hover:text-ink dark:border-stone-700 dark:text-stone-300"
-                >
-                  {s}
-                </button>
-              ))}
+
+            <div>
+              <div className="mb-1 text-xs uppercase tracking-wide text-stone-400">
+                Question {stepIndex + 1} of {INTAKE.length}
+              </div>
+              <div className="mb-2 font-serif text-base text-ink dark:text-parchment">
+                {currentStep.question}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {currentStep.options.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => pickOption(opt)}
+                    className="rounded-full border border-stone-300 px-3 py-1.5 text-xs text-stone-700 transition hover:border-gold hover:bg-gold/10 hover:text-ink dark:border-stone-700 dark:text-stone-200"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={skipIntake}
+              className="text-xs text-stone-400 underline-offset-2 hover:text-stone-600 hover:underline dark:hover:text-stone-300"
+            >
+              Skip — I'll just ask a question
+            </button>
           </div>
         )}
 
