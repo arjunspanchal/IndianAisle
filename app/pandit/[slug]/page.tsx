@@ -79,7 +79,7 @@ function RitualJsonLd({ slug }: { slug: string }) {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Digital Pandit", item: `${SITE}/pandit` },
-          { "@type": "ListItem", position: 2, name: faithLabel, item: `${SITE}/pandit#${ritualFaith(r)}` },
+          { "@type": "ListItem", position: 2, name: faithLabel, item: `${SITE}/pandit/faith/${ritualFaith(r)}` },
           { "@type": "ListItem", position: 3, name: r.title, item: url },
         ],
       },

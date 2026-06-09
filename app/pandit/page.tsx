@@ -72,9 +72,17 @@ export default function PanditPage() {
             return (
               <section key={faith} id={faith} className="scroll-mt-6">
                 <div className="mb-4 border-b border-stone-200 pb-2 dark:border-stone-800">
-                  <h2 className="font-serif text-3xl text-ink dark:text-parchment">
-                    {FAITH_LABELS[faith]}
-                  </h2>
+                  <Link
+                    href={`/pandit/faith/${faith}`}
+                    className="group inline-flex items-baseline gap-2"
+                  >
+                    <h2 className="font-serif text-3xl text-ink group-hover:text-gold dark:text-parchment">
+                      {FAITH_LABELS[faith]}
+                    </h2>
+                    <span className="text-xs text-gold opacity-0 transition group-hover:opacity-100">
+                      View all →
+                    </span>
+                  </Link>
                   <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
                     {FAITH_BLURBS[faith]}
                   </p>
