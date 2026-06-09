@@ -39,7 +39,10 @@ export default function PanditPage() {
         </p>
         <p className="mx-auto mt-3 max-w-2xl rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
           A helpful guide currently under review by religious authorities — a
-          companion to, not a replacement for, your officiant.
+          companion to, not a replacement for, your officiant.{" "}
+          <Link href="/pandit/about" className="font-medium underline underline-offset-2">
+            How this works
+          </Link>
         </p>
 
         <RitualSearch items={search} />

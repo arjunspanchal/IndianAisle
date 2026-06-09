@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/pandit`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/pandit/glossary`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/pandit/checklist`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/pandit/about`, changeFrequency: "monthly", priority: 0.5 },
     ...faithPages,
     ...ritualPages,
   ];
