@@ -11,23 +11,36 @@ import { useEffect, useRef, useState } from "react";
  * the first message sent to the model.
  */
 type IntakeStep = {
-  key: "tradition" | "role" | "focus";
+  key: "faith" | "tradition" | "role" | "focus";
   question: string;
   options: string[];
 };
 
 const INTAKE: IntakeStep[] = [
   {
-    key: "tradition",
-    question: "Which tradition is your wedding?",
+    key: "faith",
+    question: "Which faith is your wedding?",
     options: [
-      "North Indian Hindu",
-      "Gujarati Hindu",
-      "Punjabi Hindu",
-      "Marwari Hindu",
-      "South Indian Hindu",
-      "Bengali Hindu",
+      "Hindu",
+      "Sikh",
+      "Muslim",
+      "Christian",
+      "Jain",
+      "Interfaith",
       "Not sure / other",
+    ],
+  },
+  {
+    key: "tradition",
+    question: "Any particular community or region? (optional)",
+    options: [
+      "North Indian",
+      "Gujarati",
+      "Punjabi",
+      "Marwari",
+      "South Indian",
+      "Bengali",
+      "Skip this",
     ],
   },
   {
@@ -49,15 +62,21 @@ const INTAKE: IntakeStep[] = [
 ];
 
 function composeGroundingMessage(answers: Record<string, string>): string {
-  const tradition = answers.tradition ?? "Not sure / other";
+  const faith = answers.faith ?? "Not sure / other";
+  const tradition = answers.tradition;
   const role = answers.role ?? "Just curious";
   const focus = answers.focus ?? "A full ceremony overview";
+  const communityLine =
+    tradition && tradition !== "Skip this"
+      ? `• Community / region: ${tradition}\n`
+      : "";
   return (
     `Here's a bit about my wedding so you can tailor things:\n` +
-    `• Tradition: ${tradition}\n` +
+    `• Faith: ${faith}\n` +
+    communityLine +
     `• My role: ${role}\n` +
     `• I'd like to start with: ${focus}\n\n` +
-    `Please ground your explanations in this. Give me a warm, concise starting point and ask me anything you need to know.`
+    `Please ground your explanations in this faith. Give me a warm, concise starting point and ask me anything you need to know.`
   );
 }
 

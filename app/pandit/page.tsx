@@ -1,29 +1,25 @@
 import Link from "next/link";
 import PanditChat from "@/components/PanditChat";
 import {
-  ritualsInOrder,
   PHASE_LABELS,
+  FAITH_LABELS,
+  FAITH_BLURBS,
+  faithsWithEntries,
+  ritualsForFaith,
   type RitualPhase,
 } from "@/lib/pandit-kb";
 
 export const metadata = {
-  title: "Digital Pandit — The Indian Aisle",
+  title: "Digital Pandit — Indian Wedding Rituals Explained | The Indian Aisle",
   description:
-    "Understand the meaning and sequence of every Hindu wedding ritual, explained simply.",
+    "Understand the meaning and sequence of every Indian wedding ritual — Hindu, Sikh, Muslim, Christian, Jain and interfaith — explained simply.",
+  alternates: { canonical: "/pandit" },
 };
 
-const PHASE_ORDER: RitualPhase[] = [
-  "pre_wedding",
-  "wedding_day",
-  "post_wedding",
-];
+const PHASE_ORDER: RitualPhase[] = ["pre_wedding", "wedding_day", "post_wedding"];
 
 export default function PanditPage() {
-  const rituals = ritualsInOrder();
-  const byPhase = PHASE_ORDER.map((phase) => ({
-    phase,
-    items: rituals.filter((r) => r.phase === phase),
-  }));
+  const faiths = faithsWithEntries();
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
@@ -35,47 +31,83 @@ export default function PanditPage() {
           Digital Pandit
         </h1>
         <p className="mx-auto mt-2 max-w-2xl text-stone-600 dark:text-stone-400">
-          The meaning behind every ritual, explained simply. Browse the
+          The meaning behind every wedding ritual, explained simply. Browse the
           ceremonies below, or ask Pandit ji anything about your wedding rites.
         </p>
         <p className="mx-auto mt-3 max-w-2xl rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-          This is a helpful guide currently under pandit review — a companion to,
-          not a replacement for, your family pandit.
+          A helpful guide currently under review by religious authorities — a
+          companion to, not a replacement for, your officiant.
         </p>
+
+        {/* Faith jump-nav */}
+        <nav className="mt-5 flex flex-wrap justify-center gap-2">
+          {faiths.map((f) => (
+            <a
+              key={f}
+              href={`#${f}`}
+              className="rounded-full border border-stone-300 px-3 py-1 text-xs text-stone-600 transition hover:border-gold hover:text-ink dark:border-stone-700 dark:text-stone-300"
+            >
+              {FAITH_LABELS[f]}
+            </a>
+          ))}
+        </nav>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
-        {/* Ritual browser */}
-        <div className="space-y-8">
-          {byPhase.map(({ phase, items }) => (
-            <section key={phase}>
-              <h2 className="mb-3 font-serif text-2xl text-ink dark:text-parchment">
-                {PHASE_LABELS[phase]}
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {items.map((r) => (
-                  <Link
-                    key={r.slug}
-                    href={`/pandit/${r.slug}`}
-                    className="group block rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition hover:border-gold hover:shadow-md dark:border-stone-800 dark:bg-stone-900"
-                  >
-                    <h3 className="font-serif text-lg text-ink group-hover:text-gold dark:text-parchment">
-                      {r.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-                      {r.summary}
-                    </p>
-                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-                      {r.meaning}
-                    </p>
-                    <span className="mt-3 inline-block text-xs font-medium text-gold">
-                      Read more →
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ))}
+        {/* Ritual browser — grouped by faith, then phase */}
+        <div className="space-y-12">
+          {faiths.map((faith) => {
+            const rituals = ritualsForFaith(faith);
+            const byPhase = PHASE_ORDER.map((phase) => ({
+              phase,
+              items: rituals.filter((r) => r.phase === phase),
+            })).filter((g) => g.items.length > 0);
+
+            return (
+              <section key={faith} id={faith} className="scroll-mt-6">
+                <div className="mb-4 border-b border-stone-200 pb-2 dark:border-stone-800">
+                  <h2 className="font-serif text-3xl text-ink dark:text-parchment">
+                    {FAITH_LABELS[faith]}
+                  </h2>
+                  <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+                    {FAITH_BLURBS[faith]}
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {byPhase.map(({ phase, items }) => (
+                    <div key={phase}>
+                      <h3 className="mb-3 text-xs font-medium uppercase tracking-[0.18em] text-gold">
+                        {PHASE_LABELS[phase]}
+                      </h3>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {items.map((r) => (
+                          <Link
+                            key={r.slug}
+                            href={`/pandit/${r.slug}`}
+                            className="group block rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition hover:border-gold hover:shadow-md dark:border-stone-800 dark:bg-stone-900"
+                          >
+                            <h4 className="font-serif text-lg text-ink group-hover:text-gold dark:text-parchment">
+                              {r.title}
+                            </h4>
+                            <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+                              {r.summary}
+                            </p>
+                            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                              {r.meaning}
+                            </p>
+                            <span className="mt-3 inline-block text-xs font-medium text-gold">
+                              Read more →
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
 
         {/* Chat — sticky on desktop */}

@@ -4,9 +4,12 @@ import type { Metadata } from "next";
 import {
   getRitual,
   allRitualSlugs,
-  ritualsInOrder,
+  ritualsForFaith,
+  ritualFaith,
   PHASE_LABELS,
   TRADITION_LABELS,
+  FAITH_LABELS,
+  FAITH_OFFICIANT,
 } from "@/lib/pandit-kb";
 
 export const dynamic = "force-static";
@@ -50,7 +53,7 @@ function RitualJsonLd({ slug }: { slug: string }) {
     articleBody: `${r.meaning}\n\n${r.sequence.join("\n")}`,
     about: {
       "@type": "Thing",
-      name: `${r.title} (Hindu wedding ritual)`,
+      name: `${r.title} (${FAITH_LABELS[ritualFaith(r)]} wedding ritual)`,
     },
     inLanguage: "en",
   };
@@ -71,7 +74,8 @@ export default function RitualPage({
   const r = getRitual(params.slug);
   if (!r) notFound();
 
-  const ordered = ritualsInOrder();
+  const faith = ritualFaith(r);
+  const ordered = ritualsForFaith(faith);
   const idx = ordered.findIndex((x) => x.slug === r.slug);
   const prev = idx > 0 ? ordered[idx - 1] : null;
   const next = idx < ordered.length - 1 ? ordered[idx + 1] : null;
@@ -89,7 +93,7 @@ export default function RitualPage({
 
       <header className="mb-8">
         <div className="mb-2 text-xs uppercase tracking-[0.18em] text-gold">
-          {PHASE_LABELS[r.phase]}
+          {FAITH_LABELS[faith]} · {PHASE_LABELS[r.phase]}
         </div>
         <h1 className="font-serif text-4xl text-ink dark:text-parchment">
           {r.title}
@@ -161,12 +165,15 @@ export default function RitualPage({
         )}
 
         <section>
-          <div className="text-sm text-stone-500 dark:text-stone-400">
-            Applies to: {r.traditions.map((t) => TRADITION_LABELS[t]).join(", ")}
-          </div>
+          {r.traditions && r.traditions.length > 0 && (
+            <div className="text-sm text-stone-500 dark:text-stone-400">
+              Applies to:{" "}
+              {r.traditions.map((t) => TRADITION_LABELS[t]).join(", ")}
+            </div>
+          )}
           <div className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-            This explanation is under pandit review — a companion to, not a
-            replacement for, your family pandit.
+            This explanation is under review by a religious authority — a
+            companion to, not a replacement for, your {FAITH_OFFICIANT[faith]}.
           </div>
         </section>
       </article>
