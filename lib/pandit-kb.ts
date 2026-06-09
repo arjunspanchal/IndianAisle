@@ -30,6 +30,20 @@ export type RitualTradition =
   | "hindu_south"
   | "hindu_bengali";
 
+/**
+ * Faith / religious tradition the ceremony belongs to. Drives top-level
+ * grouping on the guide and the right "officiant" language ("pandit",
+ * "granthi", "qazi", "priest"). Existing Hindu entries omit this and default
+ * to "hindu" via {@link ritualFaith}.
+ */
+export type Faith =
+  | "hindu"
+  | "sikh"
+  | "muslim"
+  | "christian"
+  | "jain"
+  | "interfaith";
+
 export type RitualPhase = "pre_wedding" | "wedding_day" | "post_wedding";
 
 export type ReviewStatus = "reviewed" | "pending_pandit_review";
@@ -41,14 +55,16 @@ export interface RitualEntry {
   title: string;
   /** Other common names / spellings, for matching user questions. */
   aliases: string[];
+  /** Faith this ceremony belongs to. Omitted ⇒ "hindu" (see {@link ritualFaith}). */
+  faith?: Faith;
   phase: RitualPhase;
   /**
    * Rough ordering within the whole wedding sequence (lower = earlier).
    * Used only for display ordering; actual order varies by family.
    */
   order: number;
-  /** Traditions this entry is broadly applicable to. */
-  traditions: RitualTradition[];
+  /** Hindu sub-traditions this entry applies to. Omitted for non-Hindu faiths. */
+  traditions?: RitualTradition[];
   /** One-line plain summary. */
   summary: string;
   /** The cultural / spiritual significance — the "why". */
@@ -453,6 +469,349 @@ export const RITUAL_KB: RitualEntry[] = [
     ],
     reviewStatus: "pending_pandit_review",
   },
+
+  // ───────────────────────── Sikh (Anand Karaj) ─────────────────────────
+  {
+    slug: "chunni-chadana",
+    title: "Chunni Chadana",
+    aliases: ["chunni chadana", "chunni chadayi", "chunni ceremony"],
+    faith: "sikh",
+    phase: "pre_wedding",
+    order: 210,
+    summary:
+      "The groom's family welcomes the bride into their family with gifts and a chunni (veil).",
+    meaning:
+      "The groom's mother and female relatives visit the bride, drape a red chunni over her head, and present her with jewellery, sweets, and outfits — formally accepting her as a daughter of their family.",
+    sequence: [
+      "The groom's family arrives at the bride's home with gifts and sweets.",
+      "The groom's mother drapes a chunni over the bride and applies a tilak or feeds her something sweet.",
+      "Jewellery and outfits are presented; blessings are exchanged.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "maiyan-sikh",
+    title: "Maiyan / Vatna",
+    aliases: ["maiyan", "vatna", "sikh haldi", "turmeric"],
+    faith: "sikh",
+    phase: "pre_wedding",
+    order: 215,
+    summary:
+      "A turmeric paste (vatna) is applied to the bride and groom at their own homes before the wedding.",
+    meaning:
+      "Like the haldi in Hindu weddings, the vatna is applied for an auspicious glow and to bless the couple. From this point the bride and groom traditionally stay home until the wedding day.",
+    sequence: [
+      "A paste of turmeric, flour, and mustard oil is applied by relatives.",
+      "Often accompanied by the singing of traditional boliyan and ghorian.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "milni-sikh",
+    title: "Milni (Sikh)",
+    aliases: ["sikh milni", "milni"],
+    faith: "sikh",
+    phase: "wedding_day",
+    order: 220,
+    summary:
+      "The two families formally meet at the Gurdwara before the Anand Karaj, beginning with Ardas.",
+    meaning:
+      "The Milni ('meeting') unites the two families. It opens with an Ardas (prayer), then counterpart elders from each side meet, embrace, and exchange garlands and gifts — the families joining before the marriage itself.",
+    sequence: [
+      "Families gather at the Gurdwara in the morning, often over tea and breakfast.",
+      "An Ardas is offered, then matching relatives are introduced and garland one another.",
+      "Everyone then enters the main hall for the Anand Karaj.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "anand-karaj",
+    title: "Anand Karaj (Laavan)",
+    aliases: ["anand karaj", "laavan", "lavan", "phere", "sikh wedding", "four rounds"],
+    faith: "sikh",
+    phase: "wedding_day",
+    order: 230,
+    summary:
+      "The Sikh marriage ceremony — the couple takes four rounds around the Guru Granth Sahib as the Laavan hymns are sung.",
+    meaning:
+      "Anand Karaj means 'blissful union'. The marriage centres on the Guru Granth Sahib, the Sikh holy scripture and eternal Guru. The four Laavan (composed by Guru Ram Das) are read and sung in turn; with each, the couple circles the Guru Granth Sahib, the bride following the groom holding a palla (scarf). The four rounds describe the soul's journey toward union with the Divine, with marriage as a path of mutual love and spiritual growth.",
+    sequence: [
+      "The couple and families sit before the Guru Granth Sahib; an Ardas and the groom's palla are given to the bride.",
+      "Each of the four Laavan is first read, then sung by the ragis while the couple slowly circles the Guru Granth Sahib.",
+      "After the fourth Laav the couple is married; the ceremony closes with Anand Sahib, Ardas, a Hukamnama (random reading), and Kara Parshad.",
+    ],
+    regionalNotes: [
+      "There is no sacred fire and no walking around a flame — the circling is around the Guru Granth Sahib only.",
+      "Performed in the morning, as the Anand Karaj is traditionally completed before noon.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "doli-sikh",
+    title: "Doli (Sikh farewell)",
+    aliases: ["doli", "sikh vidaai", "farewell"],
+    faith: "sikh",
+    phase: "post_wedding",
+    order: 240,
+    summary:
+      "The bride's emotional departure to the groom's home after the Anand Karaj.",
+    meaning:
+      "As in other traditions, the Doli marks the bride leaving her parental home. She traditionally throws phulian (puffed rice) over her shoulder, a gesture of gratitude and prosperity for the home she leaves behind.",
+    sequence: [
+      "The bride bids farewell to her family.",
+      "She tosses phulian back toward her parents' home and departs with the groom.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+
+  // ───────────────────────── Muslim (Nikah) ─────────────────────────
+  {
+    slug: "mangni",
+    title: "Mangni",
+    aliases: ["mangni", "engagement", "mehfil"],
+    faith: "muslim",
+    phase: "pre_wedding",
+    order: 310,
+    summary:
+      "The formal engagement where the couple exchanges rings and the families agree to the union.",
+    meaning:
+      "The Mangni is the public commitment between the two families. Rings are often exchanged and gifts presented, marking the couple as betrothed ahead of the Nikah.",
+    sequence: [
+      "Both families gather; rings are exchanged and the bride receives gifts and sweets.",
+      "A date for the Nikah is often settled at this gathering.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "mehndi-muslim",
+    title: "Mehndi (Muslim)",
+    aliases: ["mehndi", "mehadi", "henna night"],
+    faith: "muslim",
+    phase: "pre_wedding",
+    order: 315,
+    summary:
+      "A festive henna celebration, traditionally held separately by the bride's and groom's families.",
+    meaning:
+      "Henna is applied to the bride amid music, sweets, and celebration as a symbol of joy, beauty, and blessings for the marriage.",
+    sequence: [
+      "The bride's hands and feet are decorated with intricate henna.",
+      "Female relatives sing and dance; the groom's side often sends mehndi and gifts.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "nikah",
+    title: "Nikah",
+    aliases: ["nikah", "nikkah", "marriage contract", "ijab qubool"],
+    faith: "muslim",
+    phase: "wedding_day",
+    order: 320,
+    summary:
+      "The Islamic marriage contract — the couple consents before witnesses and the Nikahnama is signed.",
+    meaning:
+      "The Nikah is a sacred contract of mutual consent. Officiated by a qazi or imam, it centres on the proposal and acceptance (Ijab-o-Qubool), the agreed Mahr (a gift/sum the groom gives the bride as her right), and the signing of the Nikahnama before witnesses. Consent freely given by both parties is essential.",
+    sequence: [
+      "The qazi/imam explains the terms and the Mahr is agreed.",
+      "The proposal and acceptance (Ijab-o-Qubool) are made — traditionally affirmed three times.",
+      "The Nikahnama is signed by the couple and witnesses; prayers and blessings (often including a Khutbah) follow.",
+    ],
+    regionalNotes: [
+      "Practices and the degree of separation between men's and women's gatherings vary by community and family.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "rukhsati",
+    title: "Rukhsati",
+    aliases: ["rukhsati", "rukhsat", "vidaai", "farewell"],
+    faith: "muslim",
+    phase: "post_wedding",
+    order: 330,
+    summary:
+      "The bride's farewell as she departs with the groom after the Nikah.",
+    meaning:
+      "The Rukhsati is the emotional moment the bride leaves her family's home to begin life with her husband. Elders offer prayers for the couple's happiness and protection.",
+    sequence: [
+      "After the Nikah, the bride bids farewell to her family.",
+      "A Quran is often held over her head as she departs, as a blessing.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "walima",
+    title: "Walima",
+    aliases: ["walima", "valima", "reception"],
+    faith: "muslim",
+    phase: "post_wedding",
+    order: 335,
+    summary:
+      "The reception feast hosted by the groom's family to celebrate the marriage publicly.",
+    meaning:
+      "The Walima is the feast given by the groom's family after the marriage is consummated, to announce and celebrate the union with the wider community. It is a Sunnah (recommended practice) and an occasion of generosity and joy.",
+    sequence: [
+      "The groom's family hosts a meal for relatives, friends, and the community.",
+      "The newly married couple is introduced and blessed by guests.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+
+  // ───────────────────────── Christian (Indian) ─────────────────────────
+  {
+    slug: "christian-engagement",
+    title: "Engagement / Roce",
+    aliases: ["engagement", "roce", "ros", "betrothal"],
+    faith: "christian",
+    phase: "pre_wedding",
+    order: 410,
+    summary:
+      "The betrothal, and (in Goan/Mangalorean Catholic families) the Roce anointing the night before.",
+    meaning:
+      "The engagement formalises the couple's intent to marry, often with a blessing and ring exchange. In Goan and Mangalorean Catholic tradition, the Roce ceremony anoints the bride and groom with coconut milk the day before the wedding — a symbol of purification and the last ritual of their single life.",
+    sequence: [
+      "At the engagement, rings are exchanged and the families and priest bless the couple.",
+      "At the Roce, family members apply coconut milk to the bride and groom amid singing.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "christian-wedding-ceremony",
+    title: "The Wedding Ceremony",
+    aliases: ["wedding mass", "church wedding", "vows", "ring exchange", "nuptials"],
+    faith: "christian",
+    phase: "wedding_day",
+    order: 420,
+    summary:
+      "The church service where the couple exchange vows and rings before God and the congregation.",
+    meaning:
+      "The heart of a Christian wedding is the exchange of vows — solemn promises of love and faithfulness 'till death do us part' — and the giving of rings as an unending symbol of that covenant. For Catholics this takes place within a Nuptial Mass; the priest or pastor officiates and the congregation witnesses.",
+    sequence: [
+      "The bride is walked down the aisle, often by her father.",
+      "Scripture readings, a homily, and the declaration of consent.",
+      "The couple exchange vows and rings; the priest/pastor pronounces them married and offers the nuptial blessing.",
+      "Signing of the marriage register.",
+    ],
+    regionalNotes: [
+      "Catholic ceremonies are typically a full Nuptial Mass; Protestant services centre on the vows and blessing without the Mass.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "christian-reception",
+    title: "Reception & Toast",
+    aliases: ["reception", "toast", "wedding breakfast", "cake cutting"],
+    faith: "christian",
+    phase: "post_wedding",
+    order: 430,
+    summary:
+      "The celebration after the ceremony — cake, toasts, the first dance, and feasting.",
+    meaning:
+      "The reception welcomes the couple as newlyweds into the community's celebration. Customs include the cutting of the wedding cake, speeches and toasts to the couple, and the couple's first dance.",
+    sequence: [
+      "Guests are welcomed; the couple is introduced.",
+      "Toasts and speeches, cake cutting, first dance, and dinner.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+
+  // ───────────────────────── Jain ─────────────────────────
+  {
+    slug: "jain-sagai",
+    title: "Sagai (Jain)",
+    aliases: ["sagai", "jain engagement", "lagna lekhan"],
+    faith: "jain",
+    phase: "pre_wedding",
+    order: 510,
+    summary:
+      "The Jain engagement and fixing of the auspicious wedding date (Lagna Lekhan).",
+    meaning:
+      "The Sagai formalises the betrothal; the Lagna Lekhan records the chosen muhurat for the wedding. Jain ceremonies open with the Navkar Mantra, invoking reverence to the enlightened beings before any auspicious undertaking.",
+    sequence: [
+      "Families exchange gifts and sweets; the groom may receive a tilak.",
+      "The wedding date and details are formally recorded.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "jain-vivah-pheras",
+    title: "Vivah & Pheras (Jain)",
+    aliases: ["jain wedding", "jain pheras", "granthi bandhan", "phera"],
+    faith: "jain",
+    phase: "wedding_day",
+    order: 520,
+    summary:
+      "The Jain marriage rites — the couple's garments are knotted and they take vows around the sacred fire.",
+    meaning:
+      "The Jain vivah shares much of its structure with other Indian weddings but is framed by Jain values of non-violence (ahimsa) and restraint, and opens with the Navkar Mantra. The Granthi Bandhan ties the couple's garments together, and the pheras (circuits, accompanied by vows) around the sacred fire bind them as partners committed to a righteous shared life.",
+    sequence: [
+      "The ceremony begins with the Navkar Mantra and worship.",
+      "Kanyavaran / Hastamelap — the giving and joining of hands.",
+      "Granthi Bandhan ties the couple's garments; they take the pheras with vows around the sacred fire.",
+      "Blessings from elders and the wider family conclude the rites.",
+    ],
+    regionalNotes: [
+      "Details vary between Digambar and Shvetambar traditions and by region; many customs overlap with local Hindu practice.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "jain-vidai",
+    title: "Vidai (Jain)",
+    aliases: ["jain vidai", "vidaai", "farewell"],
+    faith: "jain",
+    phase: "post_wedding",
+    order: 530,
+    summary:
+      "The bride's farewell to her family after the Jain wedding rites.",
+    meaning:
+      "As in other traditions, the Vidai marks the bride's departure for her new home, accompanied by the family's prayers and good wishes for the couple's life together.",
+    sequence: [
+      "The bride bids an emotional farewell to her family.",
+      "She departs with the groom amid blessings.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+
+  // ───────────────────────── Interfaith (guidance) ─────────────────────────
+  {
+    slug: "interfaith-overview",
+    title: "Planning an Interfaith Wedding",
+    aliases: ["interfaith", "interfaith wedding", "mixed faith", "two ceremonies"],
+    faith: "interfaith",
+    phase: "pre_wedding",
+    order: 610,
+    summary:
+      "How couples from two traditions can honour both faiths respectfully in their wedding.",
+    meaning:
+      "Interfaith weddings celebrate two heritages at once. The guiding principle is respect — giving each tradition genuine space rather than diluting either. Couples commonly choose between two distinct ceremonies (often on separate days) or a single blended ceremony with elements from both, and they involve officiants and elders from each side early so everyone feels honoured.",
+    sequence: [
+      "Talk with both families and officiants early about what each tradition considers essential.",
+      "Decide on the format: two separate ceremonies, or one thoughtfully blended ceremony.",
+      "Sequence and label each ritual clearly so guests from both sides can follow along.",
+    ],
+    practicalNotes: [
+      "A printed program explaining each ritual helps guests unfamiliar with the other tradition feel included.",
+      "Some religious bodies have rules about officiating interfaith marriages — confirm with each officiant early.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
+  {
+    slug: "interfaith-officiants",
+    title: "Working with Two Officiants",
+    aliases: ["two officiants", "co-officiating", "interfaith officiant"],
+    faith: "interfaith",
+    phase: "wedding_day",
+    order: 620,
+    summary:
+      "Coordinating officiants from each faith so both ceremonies flow with dignity.",
+    meaning:
+      "When each tradition has its own officiant — say a pandit and a priest, or a granthi and a qazi — a little coordination lets each lead their portion fully while the whole day feels like one celebration rather than two stitched together.",
+    sequence: [
+      "Brief both officiants on the full running order and timings in advance.",
+      "Give each officiant uninterrupted space to lead their rites in full.",
+      "Use a shared compere or program to bridge between the two portions for guests.",
+    ],
+    reviewStatus: "pending_pandit_review",
+  },
 ];
 
 export const TRADITION_LABELS: Record<RitualTradition, string> = {
@@ -463,6 +822,50 @@ export const TRADITION_LABELS: Record<RitualTradition, string> = {
   hindu_south: "South Indian Hindu",
   hindu_bengali: "Bengali Hindu",
 };
+
+export const FAITH_LABELS: Record<Faith, string> = {
+  hindu: "Hindu",
+  sikh: "Sikh",
+  muslim: "Muslim",
+  christian: "Christian",
+  jain: "Jain",
+  interfaith: "Interfaith",
+};
+
+/** Short description shown under each faith heading. */
+export const FAITH_BLURBS: Record<Faith, string> = {
+  hindu: "Mehendi, haldi, the sacred fire and the seven pheras.",
+  sikh: "The Anand Karaj and the four Laavan around the Guru Granth Sahib.",
+  muslim: "The Nikah contract, Mehndi, Walima and more.",
+  christian: "Church vows, ring exchange and the nuptial blessing.",
+  jain: "Jain vivah rites framed by ahimsa and the Navkar Mantra.",
+  interfaith: "Honouring two traditions in one celebration.",
+};
+
+/** Who reviews / officiates this faith's rites — used for honest, faith-neutral copy. */
+export const FAITH_OFFICIANT: Record<Faith, string> = {
+  hindu: "pandit",
+  sikh: "granthi",
+  muslim: "qazi or imam",
+  christian: "priest or pastor",
+  jain: "Jain scholar",
+  interfaith: "officiant",
+};
+
+/** Display order of faiths on the guide. */
+export const FAITH_ORDER: Faith[] = [
+  "hindu",
+  "sikh",
+  "muslim",
+  "christian",
+  "jain",
+  "interfaith",
+];
+
+/** The faith of an entry, defaulting Hindu when unspecified. */
+export function ritualFaith(r: RitualEntry): Faith {
+  return r.faith ?? "hindu";
+}
 
 export const PHASE_LABELS: Record<RitualPhase, string> = {
   pre_wedding: "Pre-wedding",
@@ -485,6 +888,16 @@ export function allRitualSlugs(): string[] {
   return RITUAL_KB.map((r) => r.slug);
 }
 
+/** Rituals for a given faith, in canonical order. */
+export function ritualsForFaith(faith: Faith): RitualEntry[] {
+  return ritualsInOrder().filter((r) => ritualFaith(r) === faith);
+}
+
+/** Faiths that actually have at least one entry, in display order. */
+export function faithsWithEntries(): Faith[] {
+  return FAITH_ORDER.filter((f) => ritualsForFaith(f).length > 0);
+}
+
 /**
  * Render the full KB as a compact text block for grounding the model.
  * Kept terse so it fits comfortably in the system prompt (the corpus is small).
@@ -498,10 +911,13 @@ export function renderKbForPrompt(): string {
   lines.push("");
   for (const r of ritualsInOrder()) {
     lines.push(`## ${r.title} (slug: ${r.slug})`);
+    lines.push(`- faith: ${FAITH_LABELS[ritualFaith(r)]}`);
     lines.push(`- phase: ${PHASE_LABELS[r.phase]}`);
-    lines.push(
-      `- traditions: ${r.traditions.map((t) => TRADITION_LABELS[t]).join(", ")}`,
-    );
+    if (r.traditions?.length) {
+      lines.push(
+        `- traditions: ${r.traditions.map((t) => TRADITION_LABELS[t]).join(", ")}`,
+      );
+    }
     lines.push(`- review status: ${r.reviewStatus}`);
     lines.push(`- summary: ${r.summary}`);
     lines.push(`- meaning: ${r.meaning}`);

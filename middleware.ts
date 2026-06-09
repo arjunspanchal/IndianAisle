@@ -21,8 +21,16 @@ export async function middleware(req: NextRequest) {
     path === "/pandit" ||
     path.startsWith("/pandit/") ||
     path === "/api/pandit";
+  // SEO crawl files must be reachable without an auth redirect.
+  const isSeoFile = path === "/sitemap.xml" || path === "/robots.txt";
   const isPublic =
-    isLogin || isLanding || isVendorPortal || isAdminPortal || isGiftPage || isPandit;
+    isLogin ||
+    isLanding ||
+    isVendorPortal ||
+    isAdminPortal ||
+    isGiftPage ||
+    isPandit ||
+    isSeoFile;
 
   const res = NextResponse.next({ request: req });
 
