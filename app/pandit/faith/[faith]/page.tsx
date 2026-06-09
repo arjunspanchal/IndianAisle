@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import PanditCta from "@/components/PanditCta";
 import {
   FAITH_LABELS,
   FAITH_BLURBS,
@@ -126,6 +127,8 @@ export default function FaithPage({ params }: { params: { faith: string } }) {
           Ask Pandit ji a question
         </Link>
       </div>
+
+      <PanditCta />
     </main>
   );
 }

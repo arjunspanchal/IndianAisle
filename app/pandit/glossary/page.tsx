@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import PanditCta from "@/components/PanditCta";
 import { glossaryAlphabetical } from "@/lib/pandit-glossary";
 
 export const dynamic = "force-static";
@@ -91,6 +92,8 @@ export default function GlossaryPage() {
           Ask Pandit ji a question
         </Link>
       </div>
+
+      <PanditCta />
     </main>
   );
 }
