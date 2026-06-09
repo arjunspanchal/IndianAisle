@@ -14,6 +14,7 @@ const ITEMS: Item[] = [
   { href: "/weddings", label: "Manage weddings", icon: "ring" },
   { href: "/properties", label: "Properties", icon: "building" },
   { href: "/vendors", label: "Vendors", icon: "handshake" },
+  { href: "/pandit", label: "Pandit", icon: "sparkle" },
   { href: "/profile", label: "Manage profile", icon: "user" },
 ];
 
