@@ -41,27 +41,64 @@ export function generateMetadata({
   };
 }
 
+const SITE = "https://www.indianaisle.com";
+
 function RitualJsonLd({ slug }: { slug: string }) {
   const r = getRitual(slug);
   if (!r) return null;
-  // Article structured data so search engines can surface the ritual explainer.
-  const jsonLd = {
+  const faithLabel = FAITH_LABELS[ritualFaith(r)];
+  const url = `${SITE}/pandit/${r.slug}`;
+
+  // FAQ entries built from the vetted content — eligible for FAQ rich results.
+  const faq: { q: string; a: string }[] = [
+    { q: `What is the meaning of ${r.title}?`, a: r.meaning },
+    { q: `What happens during ${r.title}?`, a: r.sequence.join(" ") },
+  ];
+  if (r.regionalNotes?.length) {
+    faq.push({
+      q: `Does ${r.title} vary by community?`,
+      a: r.regionalNotes.join(" "),
+    });
+  }
+
+  // A @graph bundles Article + Breadcrumb + FAQ so crawlers see all three.
+  const graph = {
     "@context": "https://schema.org",
-    "@type": "Article",
-    headline: `${r.title} — Indian Wedding Ritual`,
-    description: r.summary,
-    articleBody: `${r.meaning}\n\n${r.sequence.join("\n")}`,
-    about: {
-      "@type": "Thing",
-      name: `${r.title} (${FAITH_LABELS[ritualFaith(r)]} wedding ritual)`,
-    },
-    inLanguage: "en",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": `${url}#article`,
+        headline: `${r.title} — ${faithLabel} Wedding Ritual`,
+        description: r.summary,
+        articleBody: `${r.meaning}\n\n${r.sequence.join("\n")}`,
+        about: { "@type": "Thing", name: `${r.title} (${faithLabel} wedding ritual)` },
+        mainEntityOfPage: url,
+        inLanguage: "en",
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Digital Pandit", item: `${SITE}/pandit` },
+          { "@type": "ListItem", position: 2, name: faithLabel, item: `${SITE}/pandit#${ritualFaith(r)}` },
+          { "@type": "ListItem", position: 3, name: r.title, item: url },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      },
+    ],
   };
+
   return (
     <script
       type="application/ld+json"
       // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
     />
   );
 }
@@ -79,6 +116,8 @@ export default function RitualPage({
   const idx = ordered.findIndex((x) => x.slug === r.slug);
   const prev = idx > 0 ? ordered[idx - 1] : null;
   const next = idx < ordered.length - 1 ? ordered[idx + 1] : null;
+  // Up to 4 other rituals from the same faith for internal linking.
+  const related = ordered.filter((x) => x.slug !== r.slug).slice(0, 4);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -177,6 +216,30 @@ export default function RitualPage({
           </div>
         </section>
       </article>
+
+      {related.length > 0 && (
+        <section className="mt-10 border-t border-stone-200 pt-6 dark:border-stone-800">
+          <h2 className="mb-3 font-serif text-xl text-ink dark:text-parchment">
+            More {FAITH_LABELS[faith]} rituals
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {related.map((rel) => (
+              <Link
+                key={rel.slug}
+                href={`/pandit/${rel.slug}`}
+                className="group rounded-lg border border-stone-200 bg-white px-4 py-3 transition hover:border-gold dark:border-stone-800 dark:bg-stone-900"
+              >
+                <div className="font-medium text-ink group-hover:text-gold dark:text-parchment">
+                  {rel.title}
+                </div>
+                <div className="mt-0.5 line-clamp-2 text-sm text-stone-500 dark:text-stone-400">
+                  {rel.summary}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="mt-10 flex items-center justify-between border-t border-stone-200 pt-6 text-sm dark:border-stone-800">
         {prev ? (

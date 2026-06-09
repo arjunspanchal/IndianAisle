@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
+import MarkdownLite from "@/components/MarkdownLite";
 
 /**
  * Grounding intake — a short question list Pandit ji walks you through before
@@ -203,13 +204,19 @@ export default function PanditChat({
               className={`flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${
+                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
                   isUser
-                    ? "bg-ink text-parchment"
+                    ? "whitespace-pre-wrap bg-ink text-parchment"
                     : "bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-100"
                 }`}
               >
-                {text || (isStreaming ? "…" : "")}
+                {isUser ? (
+                  text || (isStreaming ? "…" : "")
+                ) : text ? (
+                  <MarkdownLite text={text} />
+                ) : (
+                  isStreaming ? "…" : ""
+                )}
               </div>
             </div>
           );
