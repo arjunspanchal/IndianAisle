@@ -1169,6 +1169,25 @@ export interface ChecklistItem {
   phaseLabel: string;
 }
 
+/** A flat, serializable search index for the client search box. */
+export interface SearchItem {
+  slug: string;
+  title: string;
+  summary: string;
+  faithLabel: string;
+  aliases: string[];
+}
+
+export function searchIndex(): SearchItem[] {
+  return ritualsInOrder().map((r) => ({
+    slug: r.slug,
+    title: r.title,
+    summary: r.summary,
+    faithLabel: FAITH_LABELS[ritualFaith(r)],
+    aliases: r.aliases,
+  }));
+}
+
 /** Faith → its rituals, as a plain serializable structure for client components. */
 export function checklistData(): {
   faith: Faith;

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import PanditChat from "@/components/PanditChat";
+import RitualSearch from "@/components/RitualSearch";
 import {
   PHASE_LABELS,
   FAITH_LABELS,
   FAITH_BLURBS,
   faithsWithEntries,
   ritualsForFaith,
+  searchIndex,
   type RitualPhase,
 } from "@/lib/pandit-kb";
 
@@ -20,6 +22,7 @@ const PHASE_ORDER: RitualPhase[] = ["pre_wedding", "wedding_day", "post_wedding"
 
 export default function PanditPage() {
   const faiths = faithsWithEntries();
+  const search = searchIndex();
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
@@ -38,6 +41,8 @@ export default function PanditPage() {
           A helpful guide currently under review by religious authorities — a
           companion to, not a replacement for, your officiant.
         </p>
+
+        <RitualSearch items={search} />
 
         {/* Faith jump-nav */}
         <nav className="mt-5 flex flex-wrap justify-center gap-2">
