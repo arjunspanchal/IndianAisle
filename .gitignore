@@ -8,3 +8,7 @@ out
 next-env.d.ts
 .vercel
 .claude
+
+# Local wedding data exports (user data, never commit)
+*.xlsx
+.~lock.*

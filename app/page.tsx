@@ -316,6 +316,13 @@ function UpNextHero({ w }: { w: WeddingDashboardItem & { days: number | null } }
               <Icon name="ticket" size={12} />
               Guest list
             </Link>
+            <Link
+              href={`/weddings/${w.id}/rituals`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 px-3.5 py-1.5 text-sm text-stone-700 transition hover:border-stone-500 dark:border-stone-700 dark:text-stone-200 dark:hover:border-stone-500"
+            >
+              <Icon name="sparkle" size={12} />
+              Rituals
+            </Link>
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end text-right">
