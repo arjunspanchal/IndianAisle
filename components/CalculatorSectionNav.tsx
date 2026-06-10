@@ -21,7 +21,7 @@ export default function CalculatorSectionNav({
   items,
   formatTotal,
   offsetTop = 96,
-  className="",
+  className = "",
 }: Props) {
   // Initialise from the first section so SSR and the first client render agree.
   const [activeId, setActiveId] = useState<string>(items[0]?.id ?? "");
@@ -60,32 +60,34 @@ export default function CalculatorSectionNav({
   };
 
   return (
-    <nav aria-label="Calculator sections" className={className}>
-      <div className="px-5 pb-3 pt-6">
-        <p className="text-[10px] uppercase tracking-[0.22em] text-ink-mute">Sections</p>
+    <nav aria-label="Calculator sections" className={`px-3 py-6 ${className}`}>
+      <div className="flex items-baseline justify-between px-3 pb-2">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          Sections
+        </p>
+        <kbd className="hidden rounded border border-zinc-200 px-1 py-0.5 text-[9px] font-medium text-zinc-400 dark:border-zinc-700 dark:text-zinc-500 lg:inline-block" title="Command palette">
+          ⌘K
+        </kbd>
       </div>
-      <ul>
+      <ul className="space-y-0.5">
         {items.map((it) => {
           const isActive = it.id === activeId;
           return (
-            <li
-              key={it.id}
-              className="border-t border-parchment-line first:border-t-0 last:border-b last:border-b-parchment-line"
-            >
+            <li key={it.id}>
               <a
                 href={`#section-${it.id}`}
                 onClick={(e) => onClick(e, it.id)}
                 aria-current={isActive ? "true" : undefined}
                 className={
-                  "flex items-baseline gap-3 border-l-2 px-4 py-3 transition-colors " +
+                  "flex items-baseline gap-3 rounded-lg px-3 py-2 transition " +
                   (isActive
-                    ? "border-l-gold bg-ink text-parchment"
-                    : "border-l-transparent text-ink-soft hover:bg-parchment-deep")
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100")
                 }
               >
                 <span
-                  className={`w-6 shrink-0 font-display text-xs italic tabular ${
-                    isActive ? "text-parchment/70" : "text-gold-soft"
+                  className={`w-5 shrink-0 text-[11px] tabular font-medium ${
+                    isActive ? "text-white/60 dark:text-zinc-900/60" : "text-zinc-400 dark:text-zinc-500"
                   }`}
                 >
                   {String(it.n).padStart(2, "0")}
@@ -94,7 +96,7 @@ export default function CalculatorSectionNav({
                 {typeof it.total === "number" && (
                   <span
                     className={`shrink-0 text-[11px] tabular ${
-                      isActive ? "text-parchment/80" : "text-ink-mute"
+                      isActive ? "text-white/75 dark:text-zinc-900/75" : "text-zinc-400 dark:text-zinc-500"
                     }`}
                   >
                     {formatTotal ? formatTotal(it.total) : it.total.toString()}

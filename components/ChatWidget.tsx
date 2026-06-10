@@ -78,6 +78,8 @@ export default function ChatWidget() {
 
   if (pathname === "/login" || pathname.startsWith("/login/")) return null;
   if (pathname === "/rohan-and-nishtha") return null;
+  // The wedding budget page (/weddings/[id]) has its own scoped CalculatorChat.
+  if (/^\/weddings\/[^/]+$/.test(pathname)) return null;
 
   return (
     <>

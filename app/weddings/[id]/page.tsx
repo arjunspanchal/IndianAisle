@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Calculator, { type VenueOption } from "@/components/Calculator";
+import CalculatorChat from "@/components/CalculatorChat";
 import ShareWedding from "@/components/ShareWedding";
 import { getWeddingBudget } from "@/lib/wedding-repo";
 import { listPropertiesForWedding } from "@/lib/properties-repo";
@@ -115,6 +116,7 @@ export default async function WeddingPage({ params }: { params: { id: string } }
         userIsPro={userIsPro}
         plannerHeader={plannerHeader}
       />
+      <CalculatorChat weddingId={params.id} />
     </div>
   );
 }
