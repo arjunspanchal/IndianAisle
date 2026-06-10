@@ -1,0 +1,5 @@
+# Never upload local user-data exports or lock files to Vercel deploys.
+*.xlsx
+.~lock.*
+# Local env (Vercel uses dashboard-configured env vars, not this file).
+.env.local
