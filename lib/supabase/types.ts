@@ -344,6 +344,39 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      wedding_rituals: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          ritual_slug: string | null;
+          title: string;
+          phase: string;
+          done: boolean;
+          sort_order: number;
+          is_custom: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          wedding_id: string;
+          ritual_slug?: string | null;
+          title: string;
+          phase: string;
+          done?: boolean;
+          sort_order?: number;
+          is_custom?: boolean;
+        };
+        Update: Partial<{
+          ritual_slug: string | null;
+          title: string;
+          phase: string;
+          done: boolean;
+          sort_order: number;
+          is_custom: boolean;
+          updated_at: string;
+        }>;
+        Relationships: [];
+      };
       wedding_properties: {
         Row: {
           id: string;
