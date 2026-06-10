@@ -2,58 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 /* --- Theme tokens (RGB triplets so Tailwind alpha utilities still work) --- */
+/* "Modern boutique app" palette — off-white canvas, neutral text, one gold accent. */
 :root {
-  --c-ink: 24 22 20;
-  --c-ink-soft: 58 50 44;
-  --c-ink-mute: 107 99 92;
-  --c-parchment: 250 247 242;
-  --c-parchment-deep: 241 235 224;
-  --c-parchment-line: 230 222 209;
-  --c-gold: 168 105 46;          /* deeper, more saturated terracotta-gold */
-  --c-gold-soft: 196 142 88;
-  --c-gold-line: 222 196 158;
-  --c-rose: 200 117 110;
-  --c-rose-deep: 142 70 78;
-  --c-sage: 117 138 108;
+  --c-ink: 24 24 27;                 /* zinc-900 — primary text */
+  --c-ink-soft: 39 39 42;            /* zinc-800 */
+  --c-ink-mute: 113 113 122;         /* zinc-500 — muted text */
+  --c-parchment: 250 250 249;        /* zinc-50 — page canvas */
+  --c-parchment-deep: 244 244 245;   /* zinc-100 — subtle surfaces */
+  --c-parchment-line: 228 228 231;   /* zinc-200 — borders */
+  --c-gold: 180 109 41;              /* warm amber accent (used sparingly) */
+  --c-gold-soft: 217 119 6;          /* amber-600 */
+  --c-gold-line: 253 230 138;        /* amber-200 */
+  --c-rose: 244 63 94;
+  --c-rose-deep: 225 29 72;
+  --c-sage: 16 185 129;
 
   /* Generic surface aliases used by chrome */
   --c-bg: var(--c-parchment);
-  --c-surface: 255 255 255;          /* cards, nav */
-  --c-surface-soft: 250 247 240;     /* subtle surfaces */
-  --c-line: 231 229 228;             /* stone-200 */
-  --c-line-strong: 214 211 209;      /* stone-300 */
+  --c-surface: 255 255 255;          /* card bg */
+  --c-surface-soft: 250 250 249;     /* subtle surfaces */
+  --c-line: 228 228 231;             /* zinc-200 */
+  --c-line-strong: 212 212 216;      /* zinc-300 */
   --c-text: var(--c-ink);
   --c-text-soft: var(--c-ink-soft);
-  --c-text-mute: 87 83 78;           /* stone-600 */
-  --c-text-faint: 120 113 108;       /* stone-500 */
+  --c-text-mute: 113 113 122;        /* zinc-500 */
+  --c-text-faint: 161 161 170;       /* zinc-400 */
 }
 
 .dark {
-  --c-ink: 244 238 228;              /* now light, since "ink" = primary text */
-  --c-ink-soft: 220 211 197;
-  --c-ink-mute: 168 158 144;
-  --c-parchment: 18 16 13;           /* page bg */
-  --c-parchment-deep: 28 24 20;
-  --c-parchment-line: 44 38 30;
-  --c-gold: 226 169 102;             /* slightly brighter for dark contrast */
-  --c-gold-soft: 235 195 142;
-  --c-gold-line: 124 95 54;
-  --c-rose: 220 138 132;
-  --c-rose-deep: 174 102 105;
-  --c-sage: 152 172 138;
+  --c-ink: 244 244 245;              /* zinc-100 — primary text on dark */
+  --c-ink-soft: 212 212 216;         /* zinc-300 */
+  --c-ink-mute: 161 161 170;         /* zinc-400 */
+  --c-parchment: 9 9 11;             /* zinc-950 — page canvas */
+  --c-parchment-deep: 24 24 27;      /* zinc-900 */
+  --c-parchment-line: 39 39 42;      /* zinc-800 — borders */
+  --c-gold: 245 158 11;              /* amber-500 */
+  --c-gold-soft: 251 191 36;         /* amber-400 */
+  --c-gold-line: 120 53 15;          /* amber-900 */
+  --c-rose: 244 63 94;
+  --c-rose-deep: 251 113 133;
+  --c-sage: 16 185 129;
 
   --c-bg: var(--c-parchment);
-  --c-surface: 31 25 19;             /* card */
-  --c-surface-soft: 38 30 22;
-  --c-line: 56 46 36;
-  --c-line-strong: 80 65 50;
+  --c-surface: 24 24 27;             /* zinc-900 — card bg */
+  --c-surface-soft: 39 39 42;        /* zinc-800 */
+  --c-line: 39 39 42;                /* zinc-800 */
+  --c-line-strong: 63 63 70;         /* zinc-700 */
   --c-text: var(--c-ink);
   --c-text-soft: var(--c-ink-soft);
-  --c-text-mute: 168 156 141;
-  --c-text-faint: 132 122 109;
+  --c-text-mute: 161 161 170;
+  --c-text-faint: 113 113 122;
 }
 
 html, body { background: rgb(var(--c-bg)); color: rgb(var(--c-text-soft)); }
@@ -64,10 +65,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 h1, h2, h3, h4 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Inter", system-ui, sans-serif;
   color: rgb(var(--c-text));
-  font-feature-settings: "ss01";
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  font-weight: 600;
 }
 
 input[type="number"]::-webkit-outer-spin-button,
@@ -81,41 +82,46 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 0.85; }
 .dark input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.9); }
 
-.font-display { font-family: "Fraunces", Georgia, serif; }
+/* `.font-display` is kept as a hook for legacy callsites — now just tight Inter. */
+.font-display { font-family: "Inter", system-ui, sans-serif; letter-spacing: -0.02em; }
 .font-body { font-family: "Inter", system-ui, sans-serif; }
 .tabular { font-variant-numeric: tabular-nums; }
 
-/* Wedding-programme divider: hairline · ornament · hairline */
+/* Soft card surface used by the calculator sections. */
+.card-soft {
+  background: rgb(var(--c-surface));
+  border: 1px solid rgb(var(--c-line));
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06);
+}
+.dark .card-soft {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 0 rgb(0 0 0 / 0.4);
+}
+
+/* Legacy ornament-divider hook — used to draw a gold line through the page.
+   Now reduced to a faint hairline so old callsites degrade quietly. */
 .divider-ornament {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgb(var(--c-gold-soft));
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 0.875rem;
-  letter-spacing: 0.5em;
-  user-select: none;
+  display: block;
+  height: 1px;
+  margin: 1.25rem 0;
+  background: rgb(var(--c-line));
+  color: transparent;
 }
 .divider-ornament::before,
-.divider-ornament::after {
-  content: "";
-  flex: 1;
-  border-top: 1px solid rgb(var(--c-gold-line));
-  margin: 0 1.25rem;
-}
+.divider-ornament::after { content: none; }
 
 /* --- Legacy utilities still used by /properties and /login --- */
 .num-input {
-  @apply w-32 rounded-md border border-stone-300 bg-white px-2 py-1 text-right tabular-nums text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100;
+  @apply w-32 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-right tabular-nums text-sm focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:ring-zinc-700;
 }
 .text-input {
-  @apply w-full rounded-md border border-stone-300 bg-white px-2 py-1 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100;
+  @apply w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:ring-zinc-700;
 }
 .btn {
-  @apply inline-flex items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-medium transition;
+  @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition;
 }
-.btn-primary { @apply btn bg-ink text-parchment shadow-sm hover:opacity-90; }
-.btn-ghost { @apply btn border border-stone-300 bg-white text-ink hover:border-stone-400 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:border-stone-500 dark:hover:bg-stone-800; }
+.btn-primary { @apply btn bg-zinc-900 text-white shadow-sm hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white; }
+.btn-ghost { @apply btn border border-zinc-300 bg-white text-zinc-900 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800; }
 
 /* --- react-day-picker theme overrides (used by components/ui/DateField.tsx) --- */
 .rdp-themed {
@@ -124,7 +130,7 @@ input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 0.85; }
   --rdp-accent-background-color: rgb(var(--c-ink));
   --rdp-background-color: transparent;
   --rdp-today-color: rgb(var(--c-gold));
-  --rdp-day_button-border-radius: 0.125rem;
+  --rdp-day_button-border-radius: 0.5rem;
   --rdp-selected-border: 0;
   --rdp-day_button-height: 2.25rem;
   --rdp-day_button-width: 2.25rem;
@@ -132,54 +138,103 @@ input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 0.85; }
   --rdp-range_end-background: rgb(var(--c-ink));
 }
 .rdp-themed .rdp-nav-btn {
-  @apply inline-flex h-7 w-7 items-center justify-center rounded-sm text-ink-mute transition hover:bg-parchment-deep hover:text-ink disabled:opacity-30;
+  @apply inline-flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100;
 }
 .rdp-themed .rdp-day .rdp-today:not(.rdp-selected) > button {
   @apply font-semibold;
 }
 .rdp-themed .rdp-selected > button {
-  @apply bg-ink text-parchment hover:bg-ink hover:text-parchment;
+  @apply bg-zinc-900 text-white hover:bg-zinc-900 hover:text-white dark:bg-zinc-100 dark:text-zinc-900;
 }
 
 /* --- Print stylesheet — invoked by the PDF button (window.print()). --- */
 @media print {
-  @page { margin: 14mm; size: A4 portrait; }
-  html, body { background: #fff !important; color: #000 !important; }
+  @page {
+    margin: 18mm 14mm;
+    size: A4 portrait;
+    @bottom-center {
+      content: counter(page) " / " counter(pages);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 9pt;
+      color: #71717a;
+    }
+  }
+  @page :first {
+    @bottom-center { content: ""; }
+  }
+
+  html, body {
+    background: #fff !important;
+    color: #18181b !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 
   .print\:hidden { display: none !important; }
-
-  /* Strip editable affordances cleanly without nuking semantics. */
-  input, select, textarea {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    color: #000 !important;
-    box-shadow: none !important;
-    outline: none !important;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: textfield;
-  }
-  input::placeholder, textarea::placeholder { color: transparent !important; }
 
   /* Sticky chrome unsticks for print. */
   .sticky { position: static !important; }
 
-  /* Dividers translate to print as a single hairline. */
-  .divider-ornament {
-    color: #999 !important;
-    page-break-inside: avoid;
-  }
-  .divider-ornament::before,
-  .divider-ornament::after { border-top-color: #ccc !important; }
-
-  /* Section bottom borders + table hairlines stay subtle. */
-  .border-parchment-line, .border-gold-line, .border-gold-soft {
-    border-color: #ccc !important;
+  /* Strip card surfaces — printed sheet should be plain white. */
+  .card-soft {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
   }
 
+  /* Inputs / selects / textareas render as inline text. */
+  input, select, textarea {
+    border: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    color: inherit !important;
+    font: inherit !important;
+    box-shadow: none !important;
+    outline: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: textfield !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    line-height: inherit !important;
+    display: inline !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+  input::placeholder, textarea::placeholder { color: transparent !important; }
+  select::-ms-expand { display: none !important; }
+
+  /* Tables: keep hairlines visible, right-align numeric cells. */
+  table { width: 100% !important; border-collapse: collapse !important; }
+  thead tr th {
+    color: #71717a !important;
+    border-bottom: 1px solid #ccc !important;
+  }
+  tbody tr { break-inside: avoid; }
+  tbody td { padding-top: 4px !important; padding-bottom: 4px !important; }
+
+  /* Section structure */
   section { break-inside: avoid; }
 
-  /* Hide remove buttons inside tables. */
-  [aria-label="Remove"] { display: none !important; }
+  /* Hide chrome / pickers / remove buttons. */
+  [aria-label="Remove"], button[type="button"] { display: none !important; }
+
+  /* Theme borders simplified for print. */
+  .border-parchment-line, .border-gold-line, .border-gold-soft, .border-zinc-200, .border-zinc-300 {
+    border-color: #ccc !important;
+  }
+  .border-t-2 { border-top-width: 2px !important; border-top-color: #888 !important; }
+
+  /* Strip tinted page surfaces. */
+  .bg-parchment, .bg-parchment-deep, .bg-parchment\/95, .bg-parchment\/60,
+  .bg-zinc-50, .bg-zinc-100 {
+    background: transparent !important;
+  }
 }

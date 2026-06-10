@@ -579,8 +579,279 @@ async function runPopulateBudget(input: unknown): Promise<string> {
   });
 }
 
+function isSectionKey(s: unknown): s is SectionKey {
+  return typeof s === "string" && (SECTION_KEYS as string[]).includes(s);
+}
+
+function findItemSection(
+  budget: Budget,
+  lineId: string,
+): { section: SectionKey; index: number } | null {
+  for (const section of SECTION_KEYS) {
+    const idx = budget[section].findIndex(
+      (it) => it.airtableId === lineId || it.id === lineId,
+    );
+    if (idx >= 0) return { section, index: idx };
+  }
+  return null;
+}
+
+async function runAddLine(input: unknown): Promise<string> {
+  const args = (input ?? {}) as Record<string, unknown>;
+  const weddingId = asString(args.wedding_id);
+  if (!weddingId) throw new Error("wedding_id is required");
+  if (!isSectionKey(args.section))
+    throw new Error(
+      `section must be one of: ${SECTION_KEYS.join(", ")}`,
+    );
+  const label = asString(args.label);
+  if (!label) throw new Error("label is required");
+  const amount = asNumber(args.amount);
+  if (amount === null) throw new Error("amount must be a number");
+
+  const current = await getWeddingBudget(weddingId);
+  if (!current) throw new Error("Wedding not found or not accessible");
+
+  const item: LineItem = {
+    id: rid(`${args.section}-new`),
+    label,
+    amount,
+    source: args.source === "Estimate" ? "Estimate" : "Confirmed",
+    note: asString(args.note) ?? undefined,
+  };
+  const next: Budget = { ...current };
+  for (const s of SECTION_KEYS) next[s] = [...current[s]];
+  next[args.section] = [...next[args.section], item];
+
+  await saveWeddingBudget(weddingId, next);
+  return JSON.stringify({
+    ok: true,
+    section: args.section,
+    label: item.label,
+    amount: item.amount,
+  });
+}
+
+async function runUpdateLine(input: unknown): Promise<string> {
+  const args = (input ?? {}) as Record<string, unknown>;
+  const weddingId = asString(args.wedding_id);
+  if (!weddingId) throw new Error("wedding_id is required");
+  const lineId = asString(args.line_id);
+  if (!lineId) throw new Error("line_id is required");
+
+  const current = await getWeddingBudget(weddingId);
+  if (!current) throw new Error("Wedding not found or not accessible");
+  const where = findItemSection(current, lineId);
+  if (!where) throw new Error(`line_id "${lineId}" not found`);
+
+  const next: Budget = { ...current };
+  for (const s of SECTION_KEYS) next[s] = [...current[s]];
+
+  const existing = next[where.section][where.index];
+  const updated: LineItem = {
+    ...existing,
+    label: asString(args.label) ?? existing.label,
+    amount: asNumber(args.amount) ?? existing.amount,
+    source:
+      args.source === "Estimate" || args.source === "Confirmed"
+        ? args.source
+        : existing.source,
+    note:
+      args.note === undefined
+        ? existing.note
+        : (asString(args.note) ?? undefined),
+  };
+  next[where.section][where.index] = updated;
+
+  await saveWeddingBudget(weddingId, next);
+  return JSON.stringify({
+    ok: true,
+    section: where.section,
+    line_id: lineId,
+    label: updated.label,
+    amount: updated.amount,
+  });
+}
+
+async function runDeleteLine(input: unknown): Promise<string> {
+  const args = (input ?? {}) as Record<string, unknown>;
+  const weddingId = asString(args.wedding_id);
+  if (!weddingId) throw new Error("wedding_id is required");
+  const lineId = asString(args.line_id);
+  if (!lineId) throw new Error("line_id is required");
+
+  const current = await getWeddingBudget(weddingId);
+  if (!current) throw new Error("Wedding not found or not accessible");
+  const where = findItemSection(current, lineId);
+  if (!where) throw new Error(`line_id "${lineId}" not found`);
+
+  const removed = current[where.section][where.index];
+  const next: Budget = { ...current };
+  for (const s of SECTION_KEYS) next[s] = [...current[s]];
+  next[where.section] = next[where.section].filter((_, i) => i !== where.index);
+
+  await saveWeddingBudget(weddingId, next);
+  return JSON.stringify({
+    ok: true,
+    section: where.section,
+    deleted_label: removed.label,
+    deleted_amount: removed.amount,
+  });
+}
+
+async function runUpdateMeta(input: unknown): Promise<string> {
+  const args = (input ?? {}) as Record<string, unknown>;
+  const weddingId = asString(args.wedding_id);
+  if (!weddingId) throw new Error("wedding_id is required");
+
+  const current = await getWeddingBudget(weddingId);
+  if (!current) throw new Error("Wedding not found or not accessible");
+
+  const next: Budget = { ...current, meta: { ...current.meta } };
+  const bn = asString(args.bride_name);
+  const gn = asString(args.groom_name);
+  const venue = asString(args.venue);
+  const sd = asString(args.start_date);
+  const ed = asString(args.end_date);
+  const guests = asInt(args.guests);
+  const events = asInt(args.events);
+  if (bn) next.meta.brideName = bn;
+  if (gn) next.meta.groomName = gn;
+  if (venue) next.meta.venue = venue;
+  if (sd && /^\d{4}-\d{2}-\d{2}$/.test(sd)) next.meta.startDate = sd;
+  if (ed && /^\d{4}-\d{2}-\d{2}$/.test(ed)) next.meta.endDate = ed;
+  if (guests !== null) next.meta.guests = guests;
+  if (events !== null) next.meta.events = events;
+
+  await saveWeddingBudget(weddingId, next);
+  return JSON.stringify({ ok: true, meta: next.meta });
+}
+
+function renderBudgetSnapshot(budget: Budget, weddingId: string): string {
+  const lines: string[] = [];
+  lines.push("# Current wedding budget (live data)");
+  lines.push("");
+  lines.push(`wedding_id: ${weddingId}`);
+  lines.push("");
+  lines.push("## Meta");
+  lines.push(`- Bride: ${budget.meta.brideName || "—"}`);
+  lines.push(`- Groom: ${budget.meta.groomName || "—"}`);
+  lines.push(`- Venue: ${budget.meta.venue || "—"}`);
+  lines.push(`- Dates: ${budget.meta.startDate || "?"} → ${budget.meta.endDate || "?"}`);
+  lines.push(`- Guests: ${budget.meta.guests} · Events: ${budget.meta.events}`);
+  lines.push("");
+  lines.push("## Rooms");
+  lines.push(`- Nights: ${budget.rooms.nights} · GST: ${budget.rooms.gstPct}%`);
+  for (const c of budget.rooms.categories) {
+    lines.push(`  - ${c.label} — ${c.count} × Rs ${c.ratePerNight}/night (id ${c.airtableId ?? c.id})`);
+  }
+  lines.push("");
+  lines.push("## Meals");
+  for (const m of budget.meals) {
+    lines.push(`- ${m.label}: ${m.pax} pax × Rs ${m.ratePerHead} × ${m.sittings} sittings + ${m.taxPct}% (id ${m.airtableId ?? m.id})`);
+  }
+  for (const section of SECTION_KEYS) {
+    const items = budget[section];
+    if (items.length === 0) continue;
+    lines.push("");
+    lines.push(`## ${section}`);
+    for (const it of items) {
+      const id = it.airtableId ?? it.id;
+      const src = it.source ?? "Confirmed";
+      lines.push(`- [${id}] ${it.label} — Rs ${it.amount} (${src})`);
+    }
+  }
+  lines.push("");
+  lines.push(`Contingency: ${budget.contingencyPct}%`);
+  return lines.join("\n");
+}
+
+const EDIT_TOOLS: Anthropic.Tool[] = [
+  {
+    name: "add_line",
+    description:
+      "Append a new line item to a section of the current wedding's budget. Use this for 'add X to decor / catering / etc.' requests. The wedding_id is the one in your system prompt.",
+    input_schema: {
+      type: "object",
+      properties: {
+        wedding_id: { type: "string" },
+        section: {
+          type: "string",
+          enum: SECTION_KEYS as unknown as string[],
+        },
+        label: { type: "string" },
+        amount: { type: "number", description: "INR amount." },
+        source: {
+          type: "string",
+          enum: ["Confirmed", "Estimate"],
+          description: "Default 'Confirmed' if omitted.",
+        },
+        note: { type: "string" },
+      },
+      required: ["wedding_id", "section", "label", "amount"],
+    },
+  },
+  {
+    name: "update_line",
+    description:
+      "Update an existing line item by id. Look up the line_id in the budget snapshot in the system prompt (the value in square brackets, e.g. `[abc-123]`). Only set the fields you want to change.",
+    input_schema: {
+      type: "object",
+      properties: {
+        wedding_id: { type: "string" },
+        line_id: { type: "string", description: "The id shown in square brackets in the snapshot." },
+        label: { type: "string" },
+        amount: { type: "number" },
+        source: { type: "string", enum: ["Confirmed", "Estimate"] },
+        note: { type: "string" },
+      },
+      required: ["wedding_id", "line_id"],
+    },
+  },
+  {
+    name: "delete_line",
+    description:
+      "Delete a line item by id. Confirm with the user before deleting unless they were unambiguous (e.g. 'remove the dhol musicians').",
+    input_schema: {
+      type: "object",
+      properties: {
+        wedding_id: { type: "string" },
+        line_id: { type: "string" },
+      },
+      required: ["wedding_id", "line_id"],
+    },
+  },
+  {
+    name: "update_meta",
+    description:
+      "Update high-level wedding fields (bride/groom name, venue, start/end date, guests count, events count). Only set the fields you're changing.",
+    input_schema: {
+      type: "object",
+      properties: {
+        wedding_id: { type: "string" },
+        bride_name: { type: "string" },
+        groom_name: { type: "string" },
+        venue: { type: "string" },
+        start_date: { type: "string", description: "ISO yyyy-mm-dd" },
+        end_date: { type: "string", description: "ISO yyyy-mm-dd" },
+        guests: { type: "integer" },
+        events: { type: "integer" },
+      },
+      required: ["wedding_id"],
+    },
+  },
+];
+
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const body = (await req.json()) as {
+    messages: UIMessage[];
+    weddingId?: string;
+  };
+  const { messages, weddingId: rawWeddingId } = body;
+  const weddingId =
+    typeof rawWeddingId === "string" && rawWeddingId.trim()
+      ? rawWeddingId.trim()
+      : null;
   const conversation: Anthropic.MessageParam[] = toAnthropicMessages(messages);
 
   const sb = createSupabaseServerClient();
@@ -591,6 +862,26 @@ export async function POST(req: Request) {
 
   const facts = signedIn ? await listFactsForCurrentUser() : [];
   const memorySection = renderMemorySection(facts, signedIn);
+
+  let weddingBudget: Budget | null = null;
+  if (weddingId && signedIn) {
+    try {
+      weddingBudget = await getWeddingBudget(weddingId);
+    } catch {
+      weddingBudget = null;
+    }
+  }
+  const budgetSnapshot = weddingBudget
+    ? renderBudgetSnapshot(weddingBudget, weddingId!)
+    : null;
+
+  const calcSystemAddendum = budgetSnapshot
+    ? `\n\n# In-calculator mode\n\nThe user is currently viewing the wedding budget below. They can ask you to add, update, or delete line items, or change top-level meta fields (guest count, dates, etc.) using the add_line / update_line / delete_line / update_meta tools. ALWAYS pass wedding_id="${weddingId}" to these tools. Reference items by the id shown in square brackets in the snapshot.\n\nGuidelines:\n- When the user says "add Rs 30k for X to decor", call add_line directly — no confirmation needed for adds.\n- When the user says "delete the dhol line", confirm briefly ("Delete 'Dhol + baraat musicians — Rs 20,000'?") before calling delete_line, UNLESS the request is unambiguous.\n- For updates ("change AV to 1.8L"), call update_line directly.\n- After any edit, briefly confirm what changed (e.g. "Added Rs 30,000 to decor for outdoor lounge").\n- Do NOT use create_wedding or populate_budget in this mode — the wedding already exists and you're editing it in place.\n\n${budgetSnapshot}`
+    : "";
+
+  const activeTools: Anthropic.Tool[] = budgetSnapshot
+    ? [...TOOLS, ...EDIT_TOOLS]
+    : TOOLS;
 
   const uiStream = createUIMessageStream({
     execute: async ({ writer }) => {
@@ -607,9 +898,9 @@ export async function POST(req: Request) {
               text: STATIC_SYSTEM_PROMPT,
               cache_control: { type: "ephemeral" },
             },
-            { type: "text", text: memorySection },
+            { type: "text", text: memorySection + calcSystemAddendum },
           ],
-          tools: TOOLS,
+          tools: activeTools,
           messages: conversation,
         });
 
@@ -662,6 +953,21 @@ export async function POST(req: Request) {
               writer.write({
                 type: "data-wedding-created",
                 data: { id: parsed.wedding_id, url: parsed.url },
+                transient: true,
+              });
+            } else if (
+              block.name === "add_line" ||
+              block.name === "update_line" ||
+              block.name === "delete_line" ||
+              block.name === "update_meta"
+            ) {
+              if (block.name === "add_line") result = await runAddLine(block.input);
+              else if (block.name === "update_line") result = await runUpdateLine(block.input);
+              else if (block.name === "delete_line") result = await runDeleteLine(block.input);
+              else result = await runUpdateMeta(block.input);
+              writer.write({
+                type: "data-budget-updated",
+                data: { weddingId: weddingId ?? "" },
                 transient: true,
               });
             } else {
