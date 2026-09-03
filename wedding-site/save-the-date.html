@@ -139,7 +139,7 @@
     width: 100%;
     color: var(--accent);
   }
-  .sprig-pair > .sprig-slot { width: clamp(28px, 8vw, 44px); height: clamp(96px, 24vw, 140px); opacity: .45; }
+  .sprig-pair > .sprig-slot { width: clamp(30px, 8vw, 46px); height: clamp(100px, 25vw, 150px); opacity: .8; }
   .sprig-pair > .sprig-slot.flip { transform: scaleX(-1); }
 
   /* ---- Ridgelines ---------------------------------------------------- */
@@ -446,13 +446,25 @@
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <!-- Deodar cedar — Himachal's state tree. Drooping needle pairs off a
-       leaning stem; needle length grows toward the base so it reads
-       conical rather than like a generic leaf sprig. -->
+  <!-- Deodar cedar — Himachal's state tree. A filled silhouette of
+       stacked drooping fronds (bare needle line-art read as "fishbone"
+       — Kashika, 4 Sep 2026). -->
   <symbol id="deodar" viewBox="0 0 120 400">
-    <g stroke="currentColor" stroke-linecap="round" fill="none">
-      <path d="M58 396 C58 300 58 180 62 14" stroke-width="2.6"/>
-      <path stroke-width="1.5" d="M58 42 L49 52 M58 42 L68 52 M59 57 L48 67 M59 57 L69 67 M59 72 L47 82 M59 72 L70 82 M59 87 L46 98 M59 87 L72 98 M59 102 L45 113 M59 102 L73 113 M59 117 L45 128 M59 117 L74 128 M59 132 L44 143 M59 132 L75 143 M59 147 L43 159 M59 147 L76 159 M60 162 L42 174 M60 162 L77 174 M60 177 L41 189 M60 177 L78 189 M60 192 L40 204 M60 192 L79 204 M60 207 L40 220 M60 207 L81 220 M60 222 L39 235 M60 222 L82 235 M60 237 L38 250 M60 237 L83 250 M61 252 L37 265 M61 252 L84 265 M61 267 L36 281 M61 267 L85 281 M61 282 L35 296 M61 282 L86 296 M61 297 L35 311 M61 297 L87 311 M61 312 L34 326 M61 312 L88 326 M61 327 L33 342 M61 327 L90 342 M61 342 L32 357 M61 342 L91 357 M62 357 L31 372 M62 357 L92 372 M62 372 L31 388 M62 372 L93 388"/>
+    <g>
+      <!-- spire -->
+      <path fill="currentColor" fill-opacity="0.9"
+            d="M60 10 C54 24 54 36 60 50 C66 36 66 24 60 10 Z"/>
+      <path fill="currentColor" fill-opacity="0.88" d="M60 42 C53 49 48 62 44 82 C48 76 54 68 60 65 C66 68 72 76 76 82 C72 62 67 49 60 42 Z"/>
+      <path fill="currentColor" fill-opacity="0.72" d="M60 76 C50 84 44 97 39 118 C45 112 52 104 60 100 C68 104 75 112 81 118 C76 97 70 84 60 76 Z"/>
+      <path fill="currentColor" fill-opacity="0.88" d="M60 111 C48 119 39 133 34 155 C41 148 50 140 60 136 C70 140 79 148 86 155 C81 133 72 119 60 111 Z"/>
+      <path fill="currentColor" fill-opacity="0.72" d="M60 147 C46 156 35 170 29 193 C37 186 48 177 60 174 C72 177 83 186 91 193 C85 170 74 156 60 147 Z"/>
+      <path fill="currentColor" fill-opacity="0.88" d="M60 185 C44 193 31 208 23 232 C34 225 46 216 60 212 C74 216 86 225 97 232 C89 208 76 193 60 185 Z"/>
+      <path fill="currentColor" fill-opacity="0.72" d="M60 223 C41 232 27 248 18 272 C30 265 44 255 60 252 C76 255 90 265 102 272 C93 248 79 232 60 223 Z"/>
+      <path fill="currentColor" fill-opacity="0.88" d="M60 263 C39 272 23 288 13 313 C26 306 42 296 60 292 C78 296 94 306 107 313 C97 288 81 272 60 263 Z"/>
+      <path fill="currentColor" fill-opacity="0.72" d="M60 304 C37 313 19 330 8 356 C23 349 40 338 60 334 C80 338 97 349 112 356 C101 330 83 313 60 304 Z"/>
+      <!-- trunk -->
+      <path stroke="currentColor" stroke-width="3.4" stroke-linecap="round" fill="none"
+            d="M60 340 L60 396"/>
     </g>
   </symbol>
 
