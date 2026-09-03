@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- A private family page on a commercial domain: keep it out of search
+     results. Guests reach it by link. Remove to allow indexing. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Kashika &amp; Arjun</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Save the date — 17 &amp; 18 January 2027, Storii by ITC Hotels, Naina Tikkar, Himachal Pradesh.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&family=Mulish:wght@400;500;600;700&family=Sacramento&display=swap">
+
+<style>
+  /* ===================================================================
+     Kashika & Arjun — Save the Date
+     Sirmaur, Himachal Pradesh · 17 & 18 January 2027
+
+     House style: cream + dusk indigo, editorial. Structure and type
+     mirror the printed suite's assets/wedding-system.css.
+
+     Three deliberate departures from the locked suite, all on request:
+       1. The suite's olive became dusk indigo (#333F63) here. The
+          printed pieces are still olive until they are re-rendered.
+       2. The botanicals are Himachal-specific — deodar cedar, the state
+          tree — rather than the generic olive sprig.
+       3. The arch is treated as a window onto the ranges at dusk, which
+          is what a sundowner wedding in Sirmaur actually looks like.
+
+     Phase one announces names, date and place only. The two-day
+     programme is parked in phase-2-celebrations.snippet.html.
+
+     Single visual world by design (a letterpress invitation does not
+     invert), so every colour is painted explicitly and the page holds
+     on any host ground.
+     =================================================================== */
+
+  :root {
+    color-scheme: light;
+
+    --cream:          #FAF4DC;
+    --accent:         #333F63;  /* dusk indigo — arch, ink, script     */
+    --accent-deep:    #262F4B;  /* names, hover                        */
+    --ridge-near:     #1E2540;  /* nearest range, inside the arch      */
+    --ink-soft:       #5E6070;  /* body on cream (blue-biased grey)    */
+    --hairline:       #ABADB5;  /* rules and borders, faint cool cast  */
+    --on-accent:      #F1EEDF;  /* light text on indigo                */
+    --on-accent-dim:  #B9BFD1;  /* secondary text on indigo            */
+
+    --f-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --f-script:  'Pinyon Script', 'Snell Roundhand', cursive;
+    --f-body:    'Mulish', 'Helvetica Neue', Arial, sans-serif;
+    --f-sign:    'Sacramento', 'Snell Roundhand', cursive;
+
+    --measure: 34rem;
+    --gap-l:  4rem;
+    --gap-xl: 6.5rem;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--accent);
+    font-family: var(--f-body);
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---- Shared primitives ------------------------------------------- */
+
+  .wrap {
+    width: 100%;
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  .script {
+    font-family: var(--f-script);
+    font-weight: 400;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .rule {
+    width: 2.25rem;
+    height: 1px;
+    border: 0;
+    background: var(--hairline);
+    margin: 0;
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  /* ---- Deodar cedar sprigs ------------------------------------------ */
+
+  .sprig { display: block; width: 100%; height: 100%; overflow: visible; }
+
+  .sprig-pair {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.75rem, 4vw, 1.75rem);
+    width: 100%;
+    color: var(--accent);
+  }
+  .sprig-pair > .sprig-slot { width: clamp(28px, 8vw, 44px); height: clamp(96px, 24vw, 140px); opacity: .45; }
+  .sprig-pair > .sprig-slot.flip { transform: scaleX(-1); }
+
+  /* ---- Ridgelines ---------------------------------------------------- */
+
+  .ridges { display: block; width: 100%; height: 100%; }
+
+  /* Quiet echo of the hills, used as a divider on cream. */
+  .ridge-rule {
+    width: clamp(11rem, 46vw, 15rem);
+    height: clamp(1.75rem, 6vw, 2.5rem);
+    color: var(--accent);
+    opacity: .45;
+  }
+
+  /* ---- Monogram ----------------------------------------------------- */
+
+  .monogram {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: 1.5rem;
+    letter-spacing: .12em;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    line-height: 1;
+  }
+  .monogram .amp {
+    font-style: italic;
+    font-size: 1.125rem;
+    color: var(--hairline);
+  }
+
+  /* ---- Hero --------------------------------------------------------- */
+
+  .hero { padding-block: clamp(3.5rem, 12vw, 6.5rem) var(--gap-xl); }
+  .hero .stack { gap: 2rem; }
+
+  .save-the-date { font-size: clamp(2rem, 8vw, 3rem); margin: 0; }
+
+  .names {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: clamp(3.25rem, 15vw, 6rem);
+    line-height: 1.02;
+    letter-spacing: .01em;
+    color: var(--accent-deep);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .names .amp {
+    display: block;
+    font-style: italic;
+    font-weight: 400;
+    font-size: .42em;
+    color: var(--hairline);
+    margin-block: .12em;
+  }
+
+  .date-line {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: clamp(1.25rem, 4.5vw, 1.625rem);
+    letter-spacing: .06em;
+    color: var(--accent);
+    margin: 0;
+  }
+  .date-days {
+    font-family: var(--f-body);
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    text-indent: .22em;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .place-line {
+    font-family: var(--f-body);
+    font-size: .875rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 22rem;
+  }
+
+  /* ---- The arch — a window onto the hills at dusk -------------------- */
+
+  .countdown-section { padding-inline: 1.5rem; }
+
+  .arch {
+    position: relative;
+    overflow: hidden;
+    max-width: 36rem;
+    margin-inline: auto;
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+    padding: clamp(4rem, 13vw, 6rem) clamp(1.5rem, 7vw, 3rem) clamp(7.5rem, 26vw, 11rem);
+  }
+
+  .arch-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: .875rem;
+  }
+  .arch-inner .script { color: var(--on-accent); font-size: clamp(1.75rem, 6.5vw, 2.375rem); }
+  .arch-inner .rule { background: var(--on-accent-dim); opacity: .55; }
+
+  /* The sun that has just gone down behind the ranges. */
+  .arch-glow {
+    position: absolute;
+    z-index: 0;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 150%;
+    height: clamp(9rem, 32vw, 14rem);
+    background: radial-gradient(ellipse at 50% 100%,
+                rgba(241, 238, 223, .34) 0%,
+                rgba(241, 238, 223, .12) 42%,
+                rgba(241, 238, 223, 0) 72%);
+    pointer-events: none;
+  }
+
+  .arch-scene {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: clamp(6.5rem, 23vw, 9.5rem);
+    color: var(--ridge-near);
+    pointer-events: none;
+  }
+
+  .arch-note {
+    font-family: var(--f-body);
+    font-size: .688rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .26em;
+    text-indent: .26em;
+    color: var(--on-accent-dim);
+    margin: 0;
+  }
+
+  .clock {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: clamp(1rem, 6vw, 2.5rem);
+    margin-top: clamp(1.5rem, 5vw, 2.25rem);
+  }
+  .unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    width: clamp(4rem, 16vw, 5.5rem);
+  }
+  .unit .n {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: clamp(2.75rem, 12vw, 4rem);
+    line-height: .95;
+    letter-spacing: .01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--on-accent);
+  }
+  .unit .l {
+    font-family: var(--f-body);
+    font-weight: 700;
+    font-size: .625rem;
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    text-indent: .22em;
+    color: var(--on-accent-dim);
+  }
+
+  /* The moment itself, and the days after — the clock steps aside. */
+  .clock.done { flex-direction: column; gap: .5rem; }
+  .clock.done .msg {
+    font-family: var(--f-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(1.75rem, 7vw, 2.5rem);
+    line-height: 1.2;
+    color: var(--on-accent);
+  }
+
+  /* ---- Details ------------------------------------------------------ */
+
+  .details { padding-block: var(--gap-xl); }
+  .details .stack { gap: 2rem; }
+
+  .section-head { display: flex; flex-direction: column; align-items: center; gap: .75rem; }
+  .section-head .script { font-size: clamp(1.625rem, 6vw, 2.125rem); }
+
+  .infobox {
+    border: 1px solid var(--hairline);
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    width: 100%;
+  }
+  .infobox h3 {
+    font-family: var(--f-body);
+    font-weight: 700;
+    font-size: .688rem;
+    text-transform: uppercase;
+    letter-spacing: .26em;
+    text-indent: .26em;
+    color: var(--accent);
+    margin: 0 0 .375rem;
+  }
+  .infobox .venue {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: clamp(1.25rem, 4.5vw, 1.5rem);
+    line-height: 1.25;
+    color: var(--accent-deep);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .infobox p {
+    font-family: var(--f-body);
+    font-size: .875rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; width: 100%; }
+
+  .btn {
+    flex: 1 1 12rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    font-family: var(--f-body);
+    font-weight: 700;
+    font-size: .688rem;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    text-indent: .18em;
+    text-decoration: none;
+    padding: .9375rem 1.25rem;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: transparent;
+    transition: background-color .25s ease, color .25s ease;
+  }
+  .btn:hover { background: var(--accent); color: var(--on-accent); }
+  .btn.solid { background: var(--accent); color: var(--on-accent); }
+  .btn.solid:hover { background: var(--accent-deep); color: var(--on-accent); }
+  .btn:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 3px; }
+
+  /* ---- Closing ------------------------------------------------------ */
+
+  .closing {
+    padding-block: var(--gap-l) var(--gap-xl);
+    border-top: 1px solid var(--hairline);
+  }
+  .closing .stack { gap: 1.25rem; }
+  .closing .to-follow {
+    font-family: var(--f-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.125rem, 4vw, 1.375rem);
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .signature {
+    font-family: var(--f-sign);
+    font-size: clamp(2.5rem, 9vw, 3.5rem);
+    line-height: 1;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  /* ---- Load sequence ------------------------------------------------ */
+
+  .reveal { opacity: 0; transform: translateY(12px); animation: rise .9s cubic-bezier(.22, .61, .36, 1) forwards; }
+  .reveal.d1 { animation-delay: .1s; }
+  .reveal.d2 { animation-delay: .25s; }
+  .reveal.d3 { animation-delay: .4s; }
+  .reveal.d4 { animation-delay: .55s; }
+
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { animation: none; opacity: 1; transform: none; }
+    .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <!-- Deodar cedar — Himachal's state tree. Drooping needle pairs off a
+       leaning stem; needle length grows toward the base so it reads
+       conical rather than like a generic leaf sprig. -->
+  <symbol id="deodar" viewBox="0 0 120 400">
+    <g stroke="currentColor" stroke-linecap="round" fill="none">
+      <path d="M58 396 C58 300 58 180 62 14" stroke-width="2.6"/>
+      <path stroke-width="1.5" d="M58 42 L49 52 M58 42 L68 52 M59 57 L48 67 M59 57 L69 67 M59 72 L47 82 M59 72 L70 82 M59 87 L46 98 M59 87 L72 98 M59 102 L45 113 M59 102 L73 113 M59 117 L45 128 M59 117 L74 128 M59 132 L44 143 M59 132 L75 143 M59 147 L43 159 M59 147 L76 159 M60 162 L42 174 M60 162 L77 174 M60 177 L41 189 M60 177 L78 189 M60 192 L40 204 M60 192 L79 204 M60 207 L40 220 M60 207 L81 220 M60 222 L39 235 M60 222 L82 235 M60 237 L38 250 M60 237 L83 250 M61 252 L37 265 M61 252 L84 265 M61 267 L36 281 M61 267 L85 281 M61 282 L35 296 M61 282 L86 296 M61 297 L35 311 M61 297 L87 311 M61 312 L34 326 M61 312 L88 326 M61 327 L33 342 M61 327 L90 342 M61 342 L32 357 M61 342 L91 357 M62 357 L31 372 M62 357 L92 372 M62 372 L31 388 M62 372 L93 388"/>
+    </g>
+  </symbol>
+
+  <!-- Three receding ranges, painted in currentColor at stepped opacity,
+       so one shape works as haze on cream and as silhouettes on indigo —
+       the container just sets `color`. -->
+  <symbol id="ridges" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice">
+    <path fill="currentColor" fill-opacity=".26"
+          d="M0 190 L90 120 L150 155 L230 80 L310 140 L390 95 L470 150 L560 105 L650 160 L740 110 L830 165 L920 120 L1010 170 L1100 130 L1200 175 L1200 300 L0 300 Z"/>
+    <path fill="currentColor" fill-opacity=".55"
+          d="M0 225 L110 170 L200 205 L300 150 L410 200 L520 160 L620 210 L730 165 L840 215 L950 175 L1060 220 L1160 185 L1200 205 L1200 300 L0 300 Z"/>
+    <path fill="currentColor" fill-opacity="1"
+          d="M0 262 L120 232 L240 255 L360 225 L480 252 L600 222 L720 250 L840 228 L960 255 L1080 235 L1200 258 L1200 300 L0 300 Z"/>
+  </symbol>
+
+  <!-- Divider weight: a single drawn ridgeline, no fill. The filled
+       #ridges symbol collapses to a solid band at divider size. -->
+  <symbol id="ridge-line" viewBox="0 0 400 60" preserveAspectRatio="xMidYMid meet">
+    <path fill="none" stroke="currentColor" stroke-width="1.6"
+          stroke-linejoin="round" stroke-linecap="round"
+          d="M2 48 L38 30 L60 40 L96 16 L126 38 L160 22 L196 44 L232 20 L262 40 L300 24 L332 42 L364 28 L398 46"/>
+  </symbol>
+</svg>
+
+<main>
+
+  <!-- ================= HERO ================= -->
+  <header class="hero">
+    <div class="wrap stack">
+
+      <div class="monogram reveal d1" aria-label="K and A">
+        <span>K</span><span class="amp">&amp;</span><span>A</span>
+      </div>
+
+      <p class="script save-the-date reveal d1">Save the Date</p>
+
+      <hr class="rule reveal d1">
+
+      <h1 class="names reveal d2">
+        Kashika
+        <span class="amp">&amp;</span>
+        Arjun
+      </h1>
+
+      <div class="stack reveal d3" style="gap:.625rem">
+        <p class="date-line">17 &amp; 18 January 2027</p>
+        <p class="date-days">Sunday &amp; Monday</p>
+      </div>
+
+      <div class="sprig-pair reveal d4" aria-hidden="true">
+        <div class="sprig-slot"><svg class="sprig"><use href="#deodar"></use></svg></div>
+        <div class="sprig-slot flip"><svg class="sprig"><use href="#deodar"></use></svg></div>
+      </div>
+
+      <p class="place-line reveal d4">
+        Storii by ITC Hotels, Akanni — Naina Tikkar<br>
+        Sirmaur, Himachal Pradesh
+      </p>
+
+    </div>
+  </header>
+
+  <!-- ============ COUNTDOWN — a window onto the hills at dusk ============ -->
+  <section class="countdown-section" aria-labelledby="countdown-heading">
+    <div class="arch">
+
+      <div class="arch-inner">
+        <p class="script" id="countdown-heading">Counting down</p>
+        <hr class="rule">
+        <p class="arch-note">To the seventeenth of January</p>
+
+        <div class="clock" id="clock" role="timer" aria-live="off">
+          <div class="unit"><span class="n" id="cd-d">—</span><span class="l">Days</span></div>
+          <div class="unit"><span class="n" id="cd-h">—</span><span class="l">Hours</span></div>
+          <div class="unit"><span class="n" id="cd-m">—</span><span class="l">Minutes</span></div>
+        </div>
+      </div>
+
+      <div class="arch-glow" aria-hidden="true"></div>
+      <div class="arch-scene" aria-hidden="true">
+        <svg class="ridges"><use href="#ridges"></use></svg>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= DETAILS ================= -->
+  <section class="details" aria-labelledby="venue-heading">
+    <div class="wrap stack">
+
+      <div class="section-head">
+        <p class="script" id="venue-heading">The Venue</p>
+        <hr class="rule">
+      </div>
+
+      <div class="infobox">
+        <h3>Where</h3>
+        <p class="venue">Storii by ITC Hotels, Akanni — Naina Tikkar</p>
+        <p>Vill. Thalpa, Pachad, District Sirmaur<br>Himachal Pradesh 173229</p>
+      </div>
+
+      <div class="infobox">
+        <h3>Getting there</h3>
+        <p>Approx. 1 hr 30 min by road from<br>Chandigarh International Airport · ~85 km</p>
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="https://maps.app.goo.gl/LK4ynLhTdEbhPj436" target="_blank" rel="noopener noreferrer">View on map</a>
+        <a class="btn solid" id="cal-link" href="#" target="_blank" rel="noopener noreferrer">Add to calendar</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= CLOSING ================= -->
+  <footer class="closing">
+    <div class="wrap stack">
+      <p class="to-follow">Invitation to follow</p>
+      <div class="ridge-rule" aria-hidden="true">
+        <svg class="ridges"><use href="#ridge-line"></use></svg>
+      </div>
+      <p class="signature">Kashika + Arjun</p>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+  (function () {
+    "use strict";
+
+    /* ---- Countdown to the first day of celebrations -----------------
+       17 January 2027, local time. Month is 0-indexed. Ticks every
+       second so the minute rolls over cleanly, but only days/hours/
+       minutes are shown — a ticking seconds digit reads busy against
+       the calm of the rest of the page.
+       ---------------------------------------------------------------- */
+    var WEDDING = new Date(2027, 0, 17, 0, 0, 0, 0);
+    var DAY_TWO_END = new Date(2027, 0, 19, 0, 0, 0, 0);
+
+    var clock = document.getElementById("clock");
+    var dEl = document.getElementById("cd-d");
+    var hEl = document.getElementById("cd-h");
+    var mEl = document.getElementById("cd-m");
+
+    function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+    function showMessage(text) {
+      clock.classList.add("done");
+      clock.innerHTML = "";
+      var span = document.createElement("span");
+      span.className = "msg";
+      span.textContent = text;
+      clock.appendChild(span);
+    }
+
+    function tick() {
+      if (!clock || !dEl || !hEl || !mEl) return true;
+
+      var now = new Date();
+      var diff = WEDDING - now;
+
+      if (diff <= 0) {
+        showMessage(now < DAY_TWO_END ? "Today" : "Married");
+        return true; // stop ticking
+      }
+
+      var totalMinutes = Math.floor(diff / 60000);
+      dEl.textContent = String(Math.floor(totalMinutes / 1440));
+      hEl.textContent = pad(Math.floor((totalMinutes % 1440) / 60));
+      mEl.textContent = pad(totalMinutes % 60);
+      return false;
+    }
+
+    if (clock && !tick()) {
+      var timer = setInterval(function () {
+        if (tick()) clearInterval(timer);
+      }, 1000);
+    }
+
+    /* ---- Add-to-calendar (all-day, 17–18 Jan; end date exclusive) ---- */
+    (function buildCalendarLink() {
+      var el = document.getElementById("cal-link");
+      if (!el) return;
+      var params = [
+        "action=TEMPLATE",
+        "text=" + encodeURIComponent("Kashika & Arjun — Wedding"),
+        "dates=20270117/20270119",
+        "location=" + encodeURIComponent(
+          "Storii by ITC Hotels, Akanni — Naina Tikkar, Vill. Thalpa, Pachad, District Sirmaur, Himachal Pradesh 173229"
+        ),
+        "details=" + encodeURIComponent(
+          "Two days of celebration in the Himachal hills.\n\n" +
+          "Approx. 1 hr 30 min by road from Chandigarh International Airport (~85 km).\n" +
+          "Invitation to follow."
+        )
+      ];
+      el.href = "https://calendar.google.com/calendar/render?" + params.join("&");
+    })();
+  })();
+</script>
+</body>
+</html>

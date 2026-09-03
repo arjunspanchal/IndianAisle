@@ -10,27 +10,31 @@ export async function middleware(req: NextRequest) {
   // - "/vendor/*" (vendor portal — pages handle their own auth gates)
   // - "/admin/*" (admin layout calls requireAdmin())
   // - "/pandit/*" + "/api/pandit" (public ritual guide — discovery/SEO surface)
+  // - "/save-the-date" (Kashika & Arjun's static save-the-date in public/)
   // Everything else (the couple-side calculator/properties/etc.) still gets
   // a hard redirect to /login when there's no session.
   const isLogin = path === "/login" || path.startsWith("/login/");
   const isLanding = path === "/";
   const isVendorPortal = path === "/vendor" || path.startsWith("/vendor/");
   const isAdminPortal = path === "/admin" || path.startsWith("/admin/");
-  const isGiftPage = path === "/rohan-and-nishtha" || path.startsWith("/rohan-and-nishtha/");
   const isPandit =
     path === "/pandit" ||
     path.startsWith("/pandit/") ||
     path === "/api/pandit";
   // SEO crawl files must be reachable without an auth redirect.
   const isSeoFile = path === "/sitemap.xml" || path === "/robots.txt";
+  // Static save-the-date page (public/save-the-date.html). The matcher below
+  // does not exempt .html, so without this guests get bounced to /login.
+  const isSaveTheDate =
+    path === "/save-the-date" || path === "/save-the-date.html";
   const isPublic =
     isLogin ||
     isLanding ||
     isVendorPortal ||
     isAdminPortal ||
-    isGiftPage ||
     isPandit ||
-    isSeoFile;
+    isSeoFile ||
+    isSaveTheDate;
 
   const res = NextResponse.next({ request: req });
 
@@ -83,5 +87,5 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Skip Next.js internals, static files, and common image extensions.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp3|mp4|mov|webm|ogg|m4a|wav|avif)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

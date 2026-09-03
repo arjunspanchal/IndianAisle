@@ -1,0 +1,132 @@
+<!-- ===================================================================
+     PHASE TWO — "The Celebrations" programme block.
+     Lifted out of save-the-date.html on request: a save-the-date only
+     announces names, date and place; the two-day programme belongs on
+     the full invitation site later.
+
+     To restore: paste the CSS into the <style> block and the markup
+     back between the hero and the details section.
+     =================================================================== -->
+
+<!-- ============ CSS ============ -->
+<style>
+  /* ---- The arch — programme ----------------------------------------- */
+
+  .arch-section { padding-inline: 1.5rem; }
+
+  .arch {
+    max-width: 36rem;
+    margin-inline: auto;
+    background: var(--olive);
+    color: var(--on-olive);
+    border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+    padding: clamp(4rem, 13vw, 6rem) clamp(1.5rem, 7vw, 4rem) clamp(3rem, 9vw, 4.5rem);
+  }
+  .arch .eyebrow { color: var(--on-olive-dim); }
+  .arch .rule { background: var(--on-olive-dim); opacity: .55; }
+  .arch .script { color: var(--on-olive); }
+
+  .arch-head { display: flex; flex-direction: column; align-items: center; gap: .875rem; text-align: center; }
+  .arch-head .script { font-size: clamp(1.75rem, 6.5vw, 2.375rem); }
+
+  .days {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.25rem, 7vw, 3rem);
+    margin-top: clamp(2.5rem, 8vw, 3.25rem);
+  }
+
+  .day-label {
+    display: flex;
+    align-items: baseline;
+    gap: .75rem;
+    padding-bottom: .625rem;
+    border-bottom: 1px solid rgba(207, 211, 190, .45);
+  }
+  .day-label .n {
+    font-family: var(--f-body);
+    font-weight: 700;
+    font-size: .688rem;
+    text-transform: uppercase;
+    letter-spacing: .26em;
+    color: var(--on-olive-dim);
+    white-space: nowrap;
+  }
+  .day-label .d {
+    font-family: var(--f-body);
+    font-weight: 400;
+    font-size: .75rem;
+    letter-spacing: .04em;
+    color: var(--on-olive-dim);
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.125rem; padding-top: 1.25rem; }
+  .events li { display: flex; flex-direction: column; gap: .1875rem; }
+  .events .name {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: clamp(1.5rem, 5.5vw, 1.875rem);
+    line-height: 1.15;
+    color: var(--on-olive);
+  }
+  .events .note {
+    font-family: var(--f-body);
+    font-style: italic;
+    font-size: .8125rem;
+    color: var(--on-olive-dim);
+  }
+
+</style>
+
+<!-- ============ MARKUP ============ -->
+  <!-- ================= THE ARCH — PROGRAMME ================= -->
+  <section class="arch-section" aria-labelledby="celebrations-heading">
+    <div class="arch">
+
+      <div class="arch-head">
+        <p class="eyebrow">Two days in the hills</p>
+        <p class="script" id="celebrations-heading">The Celebrations</p>
+        <hr class="rule">
+      </div>
+
+      <div class="days">
+
+        <div>
+          <div class="day-label">
+            <span class="n">Day One</span>
+            <span class="d">Sunday, 17 January</span>
+          </div>
+          <ul class="events">
+            <li>
+              <span class="name">Mehendi &amp; Sangeet</span>
+              <span class="note">the celebration begins</span>
+            </li>
+            <li>
+              <span class="name">After-Party</span>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="day-label">
+            <span class="n">Day Two</span>
+            <span class="d">Monday, 18 January</span>
+          </div>
+          <ul class="events">
+            <li>
+              <span class="name">Haldi</span>
+              <span class="note">by day</span>
+            </li>
+            <li>
+              <span class="name">Sundowner Wedding</span>
+              <span class="note">as the sun sets</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
