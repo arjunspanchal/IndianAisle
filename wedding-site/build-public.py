@@ -37,6 +37,12 @@ doc = f"""<!doctype html>
 <!-- A private family page on a commercial domain: keep it out of search
      results. Guests reach it by link. Remove to allow indexing. -->
 <meta name="robots" content="noindex, nofollow">
+<!-- Link-preview card (WhatsApp / iMessage / Telegram). -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kashika &amp; Arjun — Save the Date">
+<meta property="og:description" content="17 &amp; 18 January 2027 · Storii by ITC Hotels, Naina Tikkar, Himachal Pradesh">
+<meta property="og:url" content="https://kasavethedate.vercel.app">
+<meta name="twitter:card" content="summary">
 {head_part.strip()}
 </head>
 <body>

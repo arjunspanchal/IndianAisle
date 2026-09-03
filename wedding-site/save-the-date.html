@@ -10,12 +10,13 @@
      Kashika & Arjun — Save the Date
      Sirmaur, Himachal Pradesh · 17 & 18 January 2027
 
-     House style: cream + dusk indigo, editorial. Structure and type
+     House style: blush + jade + gold, editorial (palette v3). Structure and type
      mirror the printed suite's assets/wedding-system.css.
 
      Three deliberate departures from the locked suite, all on request:
-       1. The suite's olive became dusk indigo (#333F63) here. The
-          printed pieces are still olive until they are re-rendered.
+       1. The suite's olive gave way to palette v3 (blush + jade +
+          gold) after two revisions — history in the token block below.
+          The printed pieces are still olive until re-rendered.
        2. The botanicals are Himachal-specific — deodar cedar, the state
           tree — rather than the generic olive sprig.
        3. The arch is treated as a window onto the ranges at dusk, which
@@ -32,14 +33,29 @@
   :root {
     color-scheme: light;
 
-    --cream:          #FAF4DC;
-    --accent:         #333F63;  /* dusk indigo — arch, ink, script     */
-    --accent-deep:    #262F4B;  /* names, hover                        */
-    --ridge-near:     #1E2540;  /* nearest range, inside the arch      */
-    --ink-soft:       #5E6070;  /* body on cream (blue-biased grey)    */
-    --hairline:       #ABADB5;  /* rules and borders, faint cool cast  */
-    --on-accent:      #F1EEDF;  /* light text on indigo                */
-    --on-accent-dim:  #B9BFD1;  /* secondary text on indigo            */
+    /* PALETTE v3 — blush + jade + gold, from Kashika's Anand Karaj
+       program inspiration (4 Sep 2026).
+       Hexes are the couple's own samples from the card: ivory #EBE0D0,
+       pink frame #E0C1BC, green #56967E, brown line #837D65, text
+       #865817.
+       PALETTE v2 (dusk indigo) kept below for one-edit reversal:
+         --cream #FAF4DC · --accent #333F63 · --accent-deep #262F4B ·
+         --ridge-near #1E2540 · --ink-soft #5E6070 · --hairline #ABADB5 ·
+         --on-accent #F1EEDF · --on-accent-dim #B9BFD1 · --gold: (use
+         --accent) — v2 had no gold role; script/names sat in accent.
+       PALETTE v1 (print-suite olive) lives in the skill's
+       wedding-system.css. */
+    /* v3 hexes sampled by the couple from the reference card itself. */
+    --cream:          #EBE0D0;  /* inner ivory field — where text sits */
+    --frame:          #E0C1BC;  /* outer pink page frame               */
+    --gold:           #865817;  /* ALL text — the card is single-ink   */
+    --accent:         #56967E;  /* jade green — arch, buttons          */
+    --accent-deep:    #47816B;  /* hover jade                          */
+    --ridge-near:     #3D6E5B;  /* nearest range, inside the arch      */
+    --ink-soft:       #865817;  /* body text = same ink, per the card  */
+    --hairline:       #837D65;  /* thin brown border lines             */
+    --on-accent:      #FFFDF6;  /* near-white text on jade             */
+    --on-accent-dim:  #D9EAE0;  /* secondary text on jade              */
 
     --f-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     --f-script:  'Pinyon Script', 'Snell Roundhand', cursive;
@@ -66,6 +82,22 @@
 
   /* ---- Shared primitives ------------------------------------------- */
 
+  /* The reference card's frame: a pink band around the whole page with
+     a thin brown line inset — fixed so it frames every scroll position. */
+  .page-frame {
+    position: fixed;
+    inset: 0;
+    border: clamp(8px, 1.6vw, 14px) solid var(--frame);
+    pointer-events: none;
+    z-index: 50;
+  }
+  .page-frame::after {
+    content: "";
+    position: absolute;
+    inset: clamp(4px, 0.9vw, 8px);
+    border: 1px solid var(--hairline);
+  }
+
   .wrap {
     width: 100%;
     max-width: var(--measure);
@@ -77,7 +109,7 @@
     font-family: var(--f-script);
     font-weight: 400;
     line-height: 1;
-    color: var(--accent);
+    color: var(--gold);
   }
 
   .rule {
@@ -129,7 +161,7 @@
     font-weight: 500;
     font-size: 1.5rem;
     letter-spacing: .12em;
-    color: var(--accent);
+    color: var(--gold);
     display: flex;
     align-items: center;
     gap: .5rem;
@@ -154,7 +186,7 @@
     font-size: clamp(3.25rem, 15vw, 6rem);
     line-height: 1.02;
     letter-spacing: .01em;
-    color: var(--accent-deep);
+    color: var(--gold);
     margin: 0;
     text-wrap: balance;
   }
@@ -172,7 +204,7 @@
     font-weight: 500;
     font-size: clamp(1.25rem, 4.5vw, 1.625rem);
     letter-spacing: .06em;
-    color: var(--accent);
+    color: var(--gold);
     margin: 0;
   }
   .date-days {
@@ -232,9 +264,9 @@
     width: 150%;
     height: clamp(9rem, 32vw, 14rem);
     background: radial-gradient(ellipse at 50% 100%,
-                rgba(241, 238, 223, .34) 0%,
-                rgba(241, 238, 223, .12) 42%,
-                rgba(241, 238, 223, 0) 72%);
+                rgba(235, 224, 208, .34) 0%,
+                rgba(235, 224, 208, .12) 42%,
+                rgba(235, 224, 208, 0) 72%);
     pointer-events: none;
   }
 
@@ -328,7 +360,7 @@
     text-transform: uppercase;
     letter-spacing: .26em;
     text-indent: .26em;
-    color: var(--accent);
+    color: var(--gold);
     margin: 0 0 .375rem;
   }
   .infobox .venue {
@@ -336,7 +368,7 @@
     font-weight: 500;
     font-size: clamp(1.25rem, 4.5vw, 1.5rem);
     line-height: 1.25;
-    color: var(--accent-deep);
+    color: var(--gold);
     margin: 0;
     text-wrap: balance;
   }
@@ -365,7 +397,7 @@
     text-decoration: none;
     padding: .9375rem 1.25rem;
     border: 1px solid var(--accent);
-    color: var(--accent);
+    color: var(--gold);
     background: transparent;
     transition: background-color .25s ease, color .25s ease;
   }
@@ -393,7 +425,7 @@
     font-family: var(--f-sign);
     font-size: clamp(2.5rem, 9vw, 3.5rem);
     line-height: 1;
-    color: var(--accent);
+    color: var(--gold);
     margin: 0;
   }
 
@@ -444,6 +476,8 @@
           d="M2 48 L38 30 L60 40 L96 16 L126 38 L160 22 L196 44 L232 20 L262 40 L300 24 L332 42 L364 28 L398 46"/>
   </symbol>
 </svg>
+
+<div class="page-frame" aria-hidden="true"></div>
 
 <main>
 
