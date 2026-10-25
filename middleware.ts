@@ -27,6 +27,9 @@ export async function middleware(req: NextRequest) {
   // does not exempt .html, so without this guests get bounced to /login.
   const isSaveTheDate =
     path === "/save-the-date" || path === "/save-the-date.html";
+  // Supabase keep-alive cron (Vercel hits it unauthenticated; the route
+  // enforces CRON_SECRET itself when configured).
+  const isKeepalive = path === "/api/cron/keepalive";
   const isPublic =
     isLogin ||
     isLanding ||
@@ -34,7 +37,8 @@ export async function middleware(req: NextRequest) {
     isAdminPortal ||
     isPandit ||
     isSeoFile ||
-    isSaveTheDate;
+    isSaveTheDate ||
+    isKeepalive;
 
   const res = NextResponse.next({ request: req });
 
