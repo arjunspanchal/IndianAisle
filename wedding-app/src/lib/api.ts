@@ -47,6 +47,9 @@ const MESSAGES: Record<string, string> = {
   ka_too_many: "That's the limit for now. Remove some, or try again tomorrow.",
   ka_bad_file: 'Only photos (JPEG or PNG) and PDFs can be added.',
   ka_not_uploaded: "The upload didn't finish. Check your signal and try again.",
+  ka_closed: 'This poll has closed.',
+  ka_bad_input: "That didn't look right. Please check it and try again.",
+  ka_empty: 'Please write something first.',
   ka_server: 'The wedding server had a hiccup. Please try again.',
   ka_network: "Can't reach the wedding right now. Check your signal and try again.",
 };
@@ -153,7 +156,59 @@ export type WeddingEvent = {
   guest_colours?: string[];
   bride_colour?: string;
   groom_colour?: string;
+  /** The menu for a meal, a dish per line; a line ending in ":" is a heading. Empty until the hosts add one. */
+  menu?: string;
 };
+
+// ───── rides and arrivals ─────
+export type Ride = { vehicle: string; pickup: string; driver: string; driver_phone: string; note: string };
+export type Leg = 'arrive' | 'depart';
+/** A guest's own ride each way (null until the hosts list one), who shares it, and their "I've arrived" taps. */
+export type MyRide = {
+  arrive: Ride | null;
+  arrive_with: string[];
+  depart: Ride | null;
+  depart_with: string[];
+  landed_at: string | null;
+  reached_at: string | null;
+};
+export type RideRow = Ride & { name: string };
+/** Hosts only: everyone in the app with ride and arrival times, plus the ride lists as entered. */
+export type RidesBoard = {
+  people: { name: string; landed_at: string | null; reached_at: string | null; arrive: Ride | null; depart: Ride | null }[];
+  rides: (RideRow & { leg: Leg })[];
+};
+
+// ───── wishes ─────
+export type Wish = { id: string; body: string; created_at: string; by?: string };
+/** `mine` is always the guest's own. `count` and `all` are for hosts; `all` stays null until the wishes are opened. */
+export type Wishes = { open_at: string | null; opened: boolean; mine: Wish[]; count: number | null; all: Wish[] | null };
+
+// ───── polls ─────
+export type Poll = {
+  id: string;
+  question: string;
+  created_at: string;
+  closed: boolean;
+  options: { text: string; votes: number }[];
+  total: number;
+  my_choice: number | null;
+};
+
+// ───── photo challenges ─────
+export type Challenge = {
+  id: string;
+  title: string;
+  /** How many guests' photos are showing for it. */
+  entries: number;
+  /** This guest's own entry. `developing` means it is a camera photo that appears tomorrow morning. */
+  mine: { photo_id: string; path: string; developing: boolean } | null;
+  /** Up to four recent entry photo paths, for a preview strip. */
+  peek: string[];
+};
+export type Challenges = { challenges: Challenge[]; done: number; board: { name: string; done: number; me: boolean }[] };
+export type ChallengePhoto = { id: string; path: string; taken_at: string; width: number; height: number; by: string; mine: boolean };
+export type MyPhoto = { id: string; path: string; taken_at: string; width: number; height: number };
 
 export type Outfit = {
   in_outfits: boolean;
@@ -335,6 +390,35 @@ export const api = {
   deleteUpdate: (id: string) => call<null>('ka_delete_update', { p_id: id }),
   pinUpdate: (id: string, pinned: boolean) => call<null>('ka_pin_update', { p_id: id, p_pinned: pinned }),
   setDress: (eventId: string, dress: string) => call<null>('ka_event_set_dress', { p_event_id: eventId, p_dress: dress }),
+  setMenu: (eventId: string, menu: string) => call<null>('ka_event_set_menu', { p_event_id: eventId, p_menu: menu }),
+
+  rideMine: () => call<MyRide>('ka_ride_mine'),
+  /** "I've arrived in Chandigarh" (landed) or "I've reached the resort" (reached). Returns the refreshed MyRide. */
+  arrive: (stage: 'landed' | 'reached', undo = false) => call<MyRide>('ka_arrive', { p_stage: stage, p_undo: undo }),
+  ridesBoard: () => call<RidesBoard>('ka_rides_board'),
+  /** Hosts: replace the whole list for one direction. */
+  ridesSet: (leg: Leg, rows: RideRow[]) => call<{ saved: number }>('ka_rides_set', { p_rows: rows, p_leg: leg }),
+
+  wishes: () => call<Wishes>('ka_wishes_get'),
+  wishSave: (body: string, id?: string | null) => call<{ id: string }>('ka_wish_save', { p_body: body, p_id: id ?? null }),
+  wishDelete: (id: string) => call<null>('ka_wish_delete', { p_id: id }),
+  wishesOpenNow: () => call<null>('ka_wishes_open_now'),
+
+  polls: () => call<Poll[]>('ka_polls_list'),
+  pollCreate: (question: string, options: string[]) => call<{ id: string }>('ka_poll_create', { p_question: question, p_options: options }),
+  pollVote: (pollId: string, choice: number) => call<null>('ka_poll_vote', { p_poll_id: pollId, p_choice: choice }),
+  pollClose: (pollId: string, closed = true) => call<null>('ka_poll_close', { p_poll_id: pollId, p_closed: closed }),
+  pollDelete: (pollId: string) => call<null>('ka_poll_delete', { p_poll_id: pollId }),
+
+  challenges: () => call<Challenges>('ka_challenges_list'),
+  challengePhotos: (challengeId: string) => call<ChallengePhoto[]>('ka_challenge_photos', { p_challenge_id: challengeId }),
+  /** This guest's own developed album photos, newest first. */
+  myPhotos: () => call<MyPhoto[]>('ka_my_photos'),
+  challengeEnter: (challengeId: string, photoId: string) => call<null>('ka_challenge_enter', { p_challenge_id: challengeId, p_photo_id: photoId }),
+  challengeLeave: (challengeId: string) => call<null>('ka_challenge_leave', { p_challenge_id: challengeId }),
+  challengeSave: (title: string, id?: string | null) => call<{ id: string }>('ka_challenge_save', { p_title: title, p_id: id ?? null }),
+  challengeDelete: (id: string) => call<null>('ka_challenge_delete', { p_id: id }),
+
   setOutfit: (eventId: string, o: Outfit) =>
     call<null>('ka_event_set_outfit', {
       p_event_id: eventId,
