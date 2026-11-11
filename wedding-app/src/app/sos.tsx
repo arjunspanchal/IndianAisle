@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, TextIn
 
 import { Body, Button, Card, Eyebrow, Title } from '@/components/ui';
 import { api, errorMessage, type SosState } from '@/lib/api';
+import { t } from '@/lib/i18n';
 import { useLoad } from '@/lib/live';
 import { colors, fonts, radius, space } from '@/lib/theme';
 
@@ -40,43 +41,42 @@ export default function Sos() {
               <Feather name="check" size={34} color={colors.white} />
             </View>
             <Title size={32} style={{ textAlign: 'center' }}>
-              Help is on the way
+              {t('Help is on the way')}
             </Title>
             <Body muted style={{ textAlign: 'center' }}>
-              The wedding team has been alerted and can see it's you. Stay where you are if you can.
+              {t("The wedding team has been alerted and can see it's you. Stay where you are if you can.")}
             </Body>
-            <Button label="Done" variant="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} style={{ marginTop: space.md }} />
+            <Button label={t('Done')} variant="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} style={{ marginTop: space.md }} />
           </View>
         ) : (
           <>
-            <Eyebrow color={colors.sos}>SOS</Eyebrow>
+            <Eyebrow color={colors.sos}>{t('SOS')}</Eyebrow>
             <Title size={34} style={{ marginTop: 2 }}>
-              Need help?
+              {t('Need help?')}
             </Title>
             <Body muted style={{ marginTop: 6 }}>
-              This sends an alert to the wedding team's phones straight away, with your name. Use it if you're unwell, lost, stuck or worried
-              about someone.
+              {t("This sends an alert to the wedding team's phones straight away, with your name. Use it if you're unwell, lost, stuck or worried about someone.")}
             </Body>
 
             <Card style={{ marginTop: space.xl }}>
-              <Body style={styles.label}>What's happening and where are you? (optional)</Body>
+              <Body style={styles.label}>{t("What's happening and where are you? (optional)")}</Body>
               <TextInput
                 value={note}
                 onChangeText={setNote}
-                placeholder="e.g. Feeling faint, near the pool"
+                placeholder={t('e.g. Feeling faint, near the pool')}
                 placeholderTextColor="#9A9C8E"
                 multiline
                 maxLength={300}
                 style={styles.input}
-                accessibilityLabel="What's happening and where are you"
+                accessibilityLabel={t("What's happening and where are you")}
               />
               {error ? <Body style={{ color: colors.sos, marginTop: space.sm }}>{error}</Body> : null}
-              <Button label="Send SOS to the wedding team" icon="alert-circle" onPress={send} busy={busy} style={styles.sosButton} />
+              <Button label={t('Send SOS to the wedding team')} icon="alert-circle" onPress={send} busy={busy} style={styles.sosButton} />
             </Card>
 
             {data?.reception_phone ? (
               <Button
-                label="Call reception"
+                label={t('Call reception')}
                 icon="phone"
                 variant="quiet"
                 onPress={() => void Linking.openURL(`tel:${data.reception_phone!.replace(/[^\d+]/g, '')}`)}
@@ -86,7 +86,7 @@ export default function Sos() {
 
             {data?.contact_phone ? (
               <Button
-                label={`Call ${data.contact_name ?? 'the wedding planner'}`}
+                label={data.contact_name == null ? t('Call the wedding planner') : t('Call {name}', { name: data.contact_name })}
                 icon="phone"
                 variant="quiet"
                 onPress={() => void Linking.openURL(`tel:${data.contact_phone}`)}

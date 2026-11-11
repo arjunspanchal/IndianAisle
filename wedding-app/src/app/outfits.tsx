@@ -5,6 +5,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, Vie
 import { Accent, Body, Button, Card, Eyebrow, GoldRule, Loading, Notice, Title } from '@/components/ui';
 import { api, errorMessage, type Home, type Outfit, type WeddingEvent } from '@/lib/api';
 import { tell } from '@/lib/dialog';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { colour, PALETTE } from '@/lib/outfits';
 import { useSession } from '@/lib/session';
@@ -27,6 +28,14 @@ function outfitOf(e: WeddingEvent): Outfit {
 
 const hasDetails = (o: Outfit) =>
   !!(o.setting || o.dress_code || o.dress || o.guest_colours.length || o.bride_colour || o.groom_colour);
+
+/** "Sun 17 Jan · 3:00 pm onwards" for an event: the day, month and "onwards" are translated, the clock time is not. */
+function whenOf(e: WeddingEvent): string {
+  const [weekday, date, month] = formatDayShort(istDayKey(e.starts_at)).split(' ');
+  const day = t('{weekday} {date} {month}', { weekday: t(weekday), date, month: t(month) });
+  const time = e.time_label.endsWith(' onwards') ? `${e.time_label.slice(0, -' onwards'.length)} ${t('onwards')}` : e.time_label;
+  return `${day} · ${time}`;
+}
 
 // The outfits guide: one card per celebration, saying where it is held, whether
 // there is a colour code, colours to wear, and what the bride and groom are
@@ -62,9 +71,9 @@ export default function Outfits() {
     return (
       <Notice
         icon="cloud-off"
-        title="Can't load the outfits guide"
+        title={t("Can't load the outfits guide")}
         body={error ?? undefined}
-        action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />}
+        action={<Button label={t('Try again')} variant="quiet" onPress={() => void reload()} />}
       />
     );
   }
@@ -79,24 +88,24 @@ export default function Outfits() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.olive} />}>
-      <Eyebrow>Before you pack</Eyebrow>
+      <Eyebrow>{t('Before you pack')}</Eyebrow>
       <Title size={34} style={{ marginTop: 2 }}>
-        What to wear
+        {t('What to wear')}
       </Title>
-      <Accent style={{ fontSize: 20, marginTop: 4 }}>One look for each celebration.</Accent>
+      <Accent style={{ fontSize: 20, marginTop: 4 }}>{t('One look for each celebration.')}</Accent>
 
       {!anyDetails ? (
         <Card tone="blush" style={styles.interim}>
           <Feather name="scissors" size={18} color={colors.rose} style={{ marginTop: 3 }} />
           <Body muted style={{ flex: 1, fontSize: 15.5, lineHeight: 22 }}>
-            {wedding.dressInterim}
+            {t(wedding.dressInterim)}
           </Body>
         </Card>
       ) : null}
 
       {inGuide.length === 0 ? (
         <Body muted style={{ marginTop: space.lg }}>
-          Nothing here yet.
+          {t('Nothing here yet.')}
         </Body>
       ) : null}
 
@@ -130,7 +139,7 @@ export default function Outfits() {
 function OutfitCard({ event, isHost, onChanged }: { event: WeddingEvent; isHost: boolean; onChanged: () => Promise<void> | void }) {
   const [editing, setEditing] = useState(false);
   const o = outfitOf(event);
-  const when = `${formatDayShort(istDayKey(event.starts_at))} · ${event.time_label}`;
+  const when = whenOf(event);
 
   if (editing) return <OutfitEditor event={event} when={when} onDone={() => setEditing(false)} onChanged={onChanged} />;
 
@@ -153,24 +162,24 @@ function OutfitCard({ event, isHost, onChanged }: { event: WeddingEvent; isHost:
           </Pressable>
         ) : null}
       </View>
-      <Title size={28}>{event.title}</Title>
+      <Title size={28}>{t(event.title)}</Title>
 
       {o.setting || o.dress_code ? (
         <View style={styles.pills}>
-          {o.setting ? <Pill icon={o.setting === 'open' ? 'sun' : 'home'} label={o.setting === 'open' ? 'Open air' : 'Indoors'} /> : null}
-          {o.dress_code ? <Pill icon={o.dress_code === 'coded' ? 'droplet' : 'smile'} label={o.dress_code === 'coded' ? 'Colour code' : 'No dress code'} /> : null}
+          {o.setting ? <Pill icon={o.setting === 'open' ? 'sun' : 'home'} label={o.setting === 'open' ? t('Open air') : t('Indoors')} /> : null}
+          {o.dress_code ? <Pill icon={o.dress_code === 'coded' ? 'droplet' : 'smile'} label={o.dress_code === 'coded' ? t('Colour code') : t('No dress code')} /> : null}
         </View>
       ) : null}
 
       {!hasDetails(o) ? (
         <Body muted style={{ marginTop: space.sm }}>
-          Details coming soon.
+          {t('Details coming soon.')}
         </Body>
       ) : (
         <>
           {forGuests ? (
             <View style={styles.block}>
-              <Text style={styles.kicker}>For you</Text>
+              <Text style={styles.kicker}>{t('For you')}</Text>
               {o.guest_colours.length > 0 ? (
                 <View style={styles.swatches}>
                   {o.guest_colours.map((k) => (
@@ -179,13 +188,13 @@ function OutfitCard({ event, isHost, onChanged }: { event: WeddingEvent; isHost:
                 </View>
               ) : null}
               {o.dress ? <Body style={{ marginTop: o.guest_colours.length ? 8 : 4 }}>{o.dress}</Body> : null}
-              {!o.dress && o.guest_colours.length === 0 && o.dress_code === 'free' ? <Body style={{ marginTop: 4 }}>Wear what you love.</Body> : null}
+              {!o.dress && o.guest_colours.length === 0 && o.dress_code === 'free' ? <Body style={{ marginTop: 4 }}>{t('Wear what you love.')}</Body> : null}
             </View>
           ) : null}
 
           {couple ? (
             <View style={styles.block}>
-              <Text style={styles.kicker}>The couple will be in</Text>
+              <Text style={styles.kicker}>{t('The couple will be in')}</Text>
               <CoupleLine name={wedding.first} colourKey={o.bride_colour} />
               <CoupleLine name={wedding.second} colourKey={o.groom_colour} />
             </View>
@@ -212,9 +221,9 @@ function Dot({ hex, size = 22 }: { hex: string; size?: number }) {
 function Swatch({ colourKey }: { colourKey: string }) {
   const c = colour(colourKey);
   return (
-    <View style={styles.swatch} accessible accessibilityLabel={c.name}>
+    <View style={styles.swatch} accessible accessibilityLabel={t(c.name)}>
       <Dot hex={c.hex} />
-      <Text style={styles.swatchText}>{c.name}</Text>
+      <Text style={styles.swatchText}>{t(c.name)}</Text>
     </View>
   );
 }
@@ -222,15 +231,15 @@ function Swatch({ colourKey }: { colourKey: string }) {
 function CoupleLine({ name, colourKey }: { name: string; colourKey: string }) {
   const c = colourKey ? colour(colourKey) : null;
   return (
-    <View style={styles.coupleLine} accessible accessibilityLabel={c ? `${name} will be in ${c.name}` : `${name}: coming soon`}>
-      <Text style={styles.coupleName}>{name}</Text>
+    <View style={styles.coupleLine} accessible accessibilityLabel={c ? t('{name} will be in {colour}', { name: t(name), colour: t(c.name) }) : t('{name}: coming soon', { name: t(name) })}>
+      <Text style={styles.coupleName}>{t(name)}</Text>
       {c ? (
         <>
           <Dot hex={c.hex} />
-          <Text style={styles.swatchText}>{c.name}</Text>
+          <Text style={styles.swatchText}>{t(c.name)}</Text>
         </>
       ) : (
-        <Text style={[styles.swatchText, { color: colors.muted }]}>Coming soon</Text>
+        <Text style={[styles.swatchText, { color: colors.muted }]}>{t('Coming soon')}</Text>
       )}
     </View>
   );

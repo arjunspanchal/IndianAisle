@@ -8,12 +8,13 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import '@/lib/arrival'; // registers the arrival-welcome background task at startup
 import { flush } from '@/lib/roll';
+import { loadLang, useLang } from '@/lib/i18n';
 import { SessionProvider, useSession } from '@/lib/session';
 import { colors, fonts } from '@/lib/theme';
 
@@ -29,7 +30,13 @@ export default function RootLayout() {
     DMSans_600SemiBold,
   });
 
-  if (!fontsLoaded && !fontError) return null;
+  // The saved language is read before anything is drawn, so the app never flashes in the wrong one.
+  const [langReady, setLangReady] = useState(false);
+  useEffect(() => {
+    void loadLang().then(() => setLangReady(true));
+  }, []);
+
+  if ((!fontsLoaded && !fontError) || !langReady) return null;
 
   return (
     <SafeAreaProvider>
@@ -43,6 +50,8 @@ export default function RootLayout() {
 
 function Screens() {
   const { ready, guest } = useSession();
+  // Changing language redraws every screen from the top (the key below), so nothing is left in the old one.
+  const lang = useLang();
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync().catch(() => {});
@@ -66,6 +75,7 @@ function Screens() {
 
   return (
     <Stack
+      key={lang}
       screenOptions={{
         headerStyle: { backgroundColor: colors.paper },
         headerTintColor: colors.ink,

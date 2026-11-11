@@ -1,6 +1,8 @@
 // Everything in the app is shown in India time, whatever the phone is set to.
 // Done by hand (shift to IST, read UTC fields) so it behaves the same on every engine.
 
+import { t } from './i18n';
+
 const IST_MS = 330 * 60 * 1000;
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -26,13 +28,13 @@ export function formatTime(d: Date | string): string {
 /** "Sunday, 17 January" from a day key. */
 export function formatDayLong(dayKey: string): string {
   const d = new Date(dayKey + 'T00:00:00Z');
-  return `${DAYS[d.getUTCDay()]}, ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+  return `${t(DAYS[d.getUTCDay()])}, ${d.getUTCDate()} ${t(MONTHS[d.getUTCMonth()])}`;
 }
 
 /** "Sun 17 Jan" from a day key. */
 export function formatDayShort(dayKey: string): string {
   const d = new Date(dayKey + 'T00:00:00Z');
-  return `${DAYS[d.getUTCDay()].slice(0, 3)} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()].slice(0, 3)}`;
+  return `${t(DAYS[d.getUTCDay()].slice(0, 3))} ${d.getUTCDate()} ${t(MONTHS[d.getUTCMonth()].slice(0, 3))}`;
 }
 
 /** Whole IST calendar days from `from` until `to` (0 if the same day). */
@@ -46,20 +48,20 @@ export function daysBetween(from: Date | string, to: Date | string): number {
 export function formatWhen(d: Date | string, now: Date = new Date()): string {
   const then = new Date(d);
   const mins = Math.floor((now.getTime() - then.getTime()) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 1) return t('just now');
+  if (mins < 60) return t('{n} min ago', { n: mins });
   const gap = daysBetween(then, now);
   if (gap === 0) return formatTime(then);
-  if (gap === 1) return `Yesterday, ${formatTime(then)}`;
+  if (gap === 1) return t('Yesterday, {time}', { time: formatTime(then) });
   const s = shifted(then);
-  return `${s.getUTCDate()} ${MONTHS[s.getUTCMonth()].slice(0, 3)}, ${formatTime(then)}`;
+  return `${s.getUTCDate()} ${t(MONTHS[s.getUTCMonth()].slice(0, 3))}, ${formatTime(then)}`;
 }
 
 /** When a roll develops, said plainly: "9:00 am tomorrow" / "9:00 am today" / "9:00 am on Mon 18 Jan". */
 export function formatReveal(revealAt: string, now: Date = new Date()): string {
   const gap = daysBetween(now, revealAt);
-  const t = formatTime(revealAt);
-  if (gap <= 0) return `${t} today`;
-  if (gap === 1) return `${t} tomorrow`;
-  return `${t} on ${formatDayShort(istDayKey(revealAt))}`;
+  const time = formatTime(revealAt);
+  if (gap <= 0) return t('{time} today', { time });
+  if (gap === 1) return t('{time} tomorrow', { time });
+  return t('{time} on {day}', { time, day: formatDayShort(istDayKey(revealAt)) });
 }

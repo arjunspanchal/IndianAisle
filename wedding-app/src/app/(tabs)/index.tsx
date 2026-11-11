@@ -7,14 +7,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WeatherLine } from '@/components/Weather';
 import { Accent, Body, Button, Card, Eyebrow, GoldRule, IconButton, Loading, Notice, Title } from '@/components/ui';
-import { arrivalStatus, enableArrival, type ArrivalStatus } from '@/lib/arrival';
-import { api, errorMessage, type Rsvp, type Home, type SosAlert, type SosState, type Update, type WeddingEvent } from '@/lib/api';
+import { arrivalStatus, enableArrival, rememberRide, type ArrivalStatus } from '@/lib/arrival';
+import { api, errorMessage, type MyRide, type Rsvp, type Home, type SosAlert, type SosState, type Update, type WeddingEvent } from '@/lib/api';
 import { confirm, tell } from '@/lib/dialog';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { enablePush, pushStatus, type PushStatus } from '@/lib/push';
+import { syncReminders } from '@/lib/reminders';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space, wedding } from '@/lib/theme';
-import { daysBetween, formatWhen } from '@/lib/time';
+import { daysBetween, formatTime, formatWhen } from '@/lib/time';
 
 export default function Today() {
   const insets = useSafeAreaInsets();
@@ -36,9 +38,24 @@ export default function Today() {
   // Hosts keep an eye on open SOS alerts; a new one arrives as an 'updates' nudge (and a push).
   const sos = useLoad<SosState>(() => api.sosState(), isHost ? 30000 : undefined);
 
+  // This guest's own van to the resort, and whether they've said they have arrived.
+  const ride = useLoad<MyRide | null>(() => (isVendor ? Promise.resolve(null) : api.rideMine()));
+  useEffect(() => {
+    // Kept on the phone so the Chandigarh welcome can name the vehicle with no signal.
+    if (ride.data) void rememberRide(ride.data.arrive);
+  }, [ride.data]);
+
+  // Reminders 30 minutes before each event, set on the phone from the programme it has just loaded.
+  const programme = (data?.events ?? []).map((e) => `${e.id}|${e.starts_at}|${e.title}|${e.dress}|${e.setting ?? ''}`).join(';');
+  useEffect(() => {
+    if (data && push === 'on') void syncReminders(data.events);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programme, push]);
+
   useLive('updates', () => {
     void reload();
     void sos.reload();
+    void ride.reload();
   });
   useLive('quiz', () => void reload());
 
@@ -62,26 +79,26 @@ export default function Today() {
           <View style={{ flex: 1 }} />
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="SOS. Ask the wedding team for help"
+            accessibilityLabel={t('SOS. Ask the wedding team for help')}
             onPress={() => router.push('/sos')}
             style={({ pressed }) => [styles.sos, pressed && { opacity: 0.75 }]}>
             <Feather name="alert-circle" size={16} color={colors.white} />
-            <Text style={styles.sosText}>SOS</Text>
+            <Text style={styles.sosText}>{t('SOS')}</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="You and the wedding details"
+            accessibilityLabel={t('You and the wedding details')}
             onPress={() => router.push('/me')}
             style={({ pressed }) => [styles.avatar, pressed && { opacity: 0.7 }]}>
             <Text style={styles.avatarText}>{firstName.slice(0, 1).toUpperCase()}</Text>
           </Pressable>
         </View>
-        <Eyebrow>{wedding.tagline}</Eyebrow>
+        <Eyebrow>{t(wedding.tagline)}</Eyebrow>
         <Text style={styles.names} accessibilityRole="header">
-          {wedding.first} <Accent style={{ fontSize: 38 }}>&</Accent> {wedding.second}
+          {t(wedding.first)} <Accent style={{ fontSize: 38 }}>{t('&')}</Accent> {t(wedding.second)}
         </Text>
         <Body muted style={{ marginTop: 4 }}>
-          Hello, {firstName}. {isVendor ? 'Thank you for making this happen.' : "So glad you're here."}
+          {t('Hello, {name}.', { name: firstName })} {isVendor ? t('Thank you for making this happen.') : t("So glad you're here.")}
         </Body>
         <WeatherLine />
       </View>
@@ -92,9 +109,9 @@ export default function Today() {
         ) : !data ? (
           <Notice
             icon="cloud-off"
-            title="Can't reach the wedding"
+            title={t("Can't reach the wedding")}
             body={error ?? undefined}
-            action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />}
+            action={<Button label={t('Try again')} variant="quiet" onPress={() => void reload()} />}
           />
         ) : (
           <>
@@ -103,7 +120,7 @@ export default function Today() {
             {!isVendor && !rsvp.loading && !rsvp.error ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={rsvp.data ? 'See or change your RSVP' : 'Reply to the invitation'}
+                accessibilityLabel={rsvp.data ? t('See or change your RSVP') : t('Reply to the invitation')}
                 onPress={() => router.push('/rsvp')}
                 style={({ pressed }) => pressed && { opacity: 0.85 }}>
                 <Card tone={rsvp.data ? 'card' : 'blush'} style={[styles.row, !rsvp.data && styles.pinned]}>
@@ -112,10 +129,37 @@ export default function Today() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.rowTitle}>
-                      {rsvp.data ? (rsvp.data.attending ? `You're coming · ${rsvp.data.people}` : "You can't make it") : 'Will you join us?'}
+                      {rsvp.data ? (rsvp.data.attending ? t("You're coming · {n}", { n: rsvp.data.people }) : t("You can't make it")) : t('Will you join us?')}
                     </Text>
                     <Body muted style={styles.rowBody}>
-                      {rsvp.data ? (isHost ? 'Tap to see every reply and the headcount.' : 'Tap to change your reply.') : 'Please RSVP. It takes a minute.'}
+                      {rsvp.data ? (isHost ? t('Tap to see every reply and the headcount.') : t('Tap to change your reply.')) : t('Please RSVP. It takes a minute.')}
+                    </Body>
+                  </View>
+                  <Feather name="chevron-right" size={22} color={colors.muted} />
+                </Card>
+              </Pressable>
+            ) : null}
+
+            {!isVendor && ride.data ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Open your ride to the resort')}
+                onPress={() => router.push('/ride')}
+                style={({ pressed }) => pressed && { opacity: 0.85 }}>
+                <Card tone={ride.data.arrive && !ride.data.reached_at ? 'moss' : 'card'} style={styles.row}>
+                  <View style={[styles.badge, { backgroundColor: colors.ink }]}>
+                    <Feather name="truck" size={19} color={colors.white} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowTitle}>{ride.data.arrive?.vehicle ? t('Your ride: {vehicle}', { vehicle: ride.data.arrive.vehicle }) : t('Your ride to the resort')}</Text>
+                    <Body muted style={styles.rowBody}>
+                      {ride.data.reached_at
+                        ? t('You reached the resort at {time}.', { time: formatTime(ride.data.reached_at) })
+                        : ride.data.landed_at
+                          ? t('You arrived at {time}. Tap when you reach the resort.', { time: formatTime(ride.data.landed_at) })
+                          : ride.data.arrive
+                            ? [ride.data.arrive.pickup, t("Tap here when you arrive in Chandigarh.")].filter(Boolean).join(' ')
+                            : t("Your van will appear here once it's assigned. Tap here when you arrive in Chandigarh.")}
                     </Body>
                   </View>
                   <Feather name="chevron-right" size={22} color={colors.muted} />
@@ -131,14 +175,14 @@ export default function Today() {
                   <Feather name="bell" size={20} color={colors.white} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>Don't miss a thing</Text>
+                  <Text style={styles.rowTitle}>{t("Don't miss a thing")}</Text>
                   <Body muted style={styles.rowBody}>
-                    Get a nudge when something's starting, and when the photos develop.
+                    {t("Get a nudge when something's starting, and when the photos develop.")}
                   </Body>
                   <Button
-                    label="Turn on notifications"
+                    label={t('Turn on notifications')}
                     variant="quiet"
-                    onPress={() => void enablePush().then(setPush)}
+                    onPress={() => void enablePush().then(setPush)} // reminders are set by the effect above once this is on
                     style={{ alignSelf: 'flex-start', marginTop: space.sm, minHeight: 44 }}
                   />
                 </View>
@@ -151,12 +195,12 @@ export default function Today() {
                   <Feather name="map-pin" size={20} color={colors.white} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>A welcome when you arrive</Text>
+                  <Text style={styles.rowTitle}>{t('A welcome when you arrive')}</Text>
                   <Body muted style={styles.rowBody}>
-                    Get a hello when you reach Chandigarh and again as you near the resort. Your location stays on your phone.
+                    {t('Get a hello when you reach Chandigarh and again as you near the resort. Your location stays on your phone.')}
                   </Body>
                   <Button
-                    label="Tell me when I arrive"
+                    label={t('Tell me when I arrive')}
                     variant="quiet"
                     onPress={() => void enableArrival().then(setArrival)}
                     style={{ alignSelf: 'flex-start', marginTop: space.sm, minHeight: 44 }}
@@ -168,7 +212,7 @@ export default function Today() {
             {isVendor ? null : (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Open the camera"
+              accessibilityLabel={t('Open the camera')}
               onPress={() => router.push('/camera')}
               style={({ pressed }) => pressed && { opacity: 0.85 }}>
               <Card tone="moss" style={styles.row}>
@@ -176,9 +220,9 @@ export default function Today() {
                   <Feather name="camera" size={20} color={colors.white} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>{Math.max(data.camera.limit - data.camera.used, 0)} shots left on today's roll</Text>
+                  <Text style={styles.rowTitle}>{t("{n} shots left on today's roll", { n: Math.max(data.camera.limit - data.camera.used, 0) })}</Text>
                   <Body muted style={styles.rowBody}>
-                    No peeking. Photos develop overnight.
+                    {t('No peeking. Photos develop overnight.')}
                   </Body>
                 </View>
                 <Feather name="chevron-right" size={22} color={colors.muted} />
@@ -189,7 +233,7 @@ export default function Today() {
             {isVendor ? null : (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Open the outfits guide"
+                accessibilityLabel={t('Open the outfits guide')}
                 onPress={() => router.push('/outfits')}
                 style={({ pressed }) => pressed && { opacity: 0.85 }}>
                 <Card style={styles.row}>
@@ -197,9 +241,9 @@ export default function Today() {
                     <Feather name="scissors" size={19} color={colors.white} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>What to wear</Text>
+                    <Text style={styles.rowTitle}>{t('What to wear')}</Text>
                     <Body muted style={styles.rowBody}>
-                      {isHost ? 'Set the colours and dress code for each celebration.' : 'Colours and dress codes, celebration by celebration.'}
+                      {isHost ? t('Set the colours and dress code for each celebration.') : t('Colours and dress codes, celebration by celebration.')}
                     </Body>
                   </View>
                   <Feather name="chevron-right" size={22} color={colors.muted} />
@@ -210,7 +254,7 @@ export default function Today() {
             {isVendor ? null : (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Open your table and room"
+                accessibilityLabel={t('Open your table and room')}
                 onPress={() => router.push('/places')}
                 style={({ pressed }) => pressed && { opacity: 0.85 }}>
                 <Card style={styles.row}>
@@ -218,9 +262,9 @@ export default function Today() {
                     <Feather name="map" size={19} color={colors.white} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>{isHost ? 'Tables & rooms' : 'Your table & room'}</Text>
+                    <Text style={styles.rowTitle}>{isHost ? t('Tables & rooms') : t('Your table & room')}</Text>
                     <Body muted style={styles.rowBody}>
-                      {isHost ? 'Set the Sangeet tables and room numbers.' : 'Your room number and your Sangeet table.'}
+                      {isHost ? t('Set the Sangeet tables and room numbers.') : t('Your room number and your Sangeet table.')}
                     </Body>
                   </View>
                   <Feather name="chevron-right" size={22} color={colors.muted} />
@@ -231,7 +275,7 @@ export default function Today() {
             {isVendor ? null : (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Open travel documents"
+                accessibilityLabel={t('Open travel documents')}
                 onPress={() => router.push('/docs')}
                 style={({ pressed }) => pressed && { opacity: 0.85 }}>
                 <Card style={styles.row}>
@@ -239,9 +283,9 @@ export default function Today() {
                     <Feather name="lock" size={19} color={colors.white} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>{isHost ? "Guests' travel documents" : 'Your ID and tickets'}</Text>
+                    <Text style={styles.rowTitle}>{isHost ? t("Guests' travel documents") : t('Your ID and tickets')}</Text>
                     <Body muted style={styles.rowBody}>
-                      {isHost ? 'The private vault of IDs and tickets.' : 'Share them privately with the wedding team for travel.'}
+                      {isHost ? t('The private vault of IDs and tickets.') : t('Share them privately with the wedding team for travel.')}
                     </Body>
                   </View>
                   <Feather name="chevron-right" size={22} color={colors.muted} />
@@ -249,10 +293,19 @@ export default function Today() {
               </Pressable>
             )}
 
+            {isVendor ? null : (
+              <View style={styles.tiles}>
+                <Tile icon="coffee" label={t('Menus')} onPress={() => router.push('/menus')} />
+                <Tile icon="award" label={t('Photo challenges')} onPress={() => router.push('/challenges')} />
+                <Tile icon="bar-chart-2" label={t('Polls')} onPress={() => router.push('/polls')} />
+                <Tile icon="heart" label={t('Wishes for the couple')} onPress={() => router.push('/wishes')} />
+              </View>
+            )}
+
             {!isVendor && (data.quiz.total > 0 || isHost) ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Open the couple quiz"
+                accessibilityLabel={t('Open the couple quiz')}
                 onPress={() => router.push('/quiz')}
                 style={({ pressed }) => pressed && { opacity: 0.85 }}>
                 <Card tone="blush" style={styles.row}>
@@ -260,11 +313,11 @@ export default function Today() {
                     <Feather name="help-circle" size={20} color={colors.white} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>How well do you know us?</Text>
+                    <Text style={styles.rowTitle}>{t('How well do you know us?')}</Text>
                     <Body muted style={styles.rowBody}>
                       {data.quiz.total === 0
-                        ? 'No questions yet. Add the first one.'
-                        : `${data.quiz.answered} of ${data.quiz.total} answered`}
+                        ? t('No questions yet. Add the first one.')
+                        : t('{n} of {total} answered', { n: data.quiz.answered, total: data.quiz.total })}
                     </Body>
                   </View>
                   <Feather name="chevron-right" size={22} color={colors.muted} />
@@ -273,7 +326,7 @@ export default function Today() {
             ) : null}
 
             <View style={styles.sectionHead}>
-              <Eyebrow>From {wedding.couple}</Eyebrow>
+              <Eyebrow>{t('From {couple}', { couple: t(wedding.couple) })}</Eyebrow>
               <GoldRule style={{ flex: 1, marginLeft: space.md }} />
             </View>
 
@@ -281,24 +334,24 @@ export default function Today() {
 
             {data.updates.length === 0 ? (
               <Card>
-                <Body muted>Nothing yet. News from the couple will appear here as the days unfold.</Body>
+                <Body muted>{t('Nothing yet. News from the couple will appear here as the days unfold.')}</Body>
               </Card>
             ) : (
               data.updates.map((u) => <UpdateCard key={u.id} update={u} now={data.now} canDelete={isHost} onChanged={reload} />)
             )}
 
             <View style={styles.sectionHead}>
-              <Eyebrow>Good to know</Eyebrow>
+              <Eyebrow>{t('Good to know')}</Eyebrow>
               <GoldRule style={{ flex: 1, marginLeft: space.md }} />
             </View>
             <Card>
               <Title size={22}>{wedding.venue}</Title>
               <Body muted style={{ marginTop: 6 }}>
-                {wedding.gettingThere}
+                {t(wedding.gettingThere)}
               </Body>
               <View style={styles.links}>
-                <Button label="Travel, weather & FAQs" icon="info" variant="quiet" onPress={() => router.push('/info')} />
-                <Button label="Open in Maps" variant="ghost" onPress={() => void Linking.openURL(wedding.mapsUrl)} />
+                <Button label={t('Travel, weather & FAQs')} icon="info" variant="quiet" onPress={() => router.push('/info')} />
+                <Button label={t('Open in Maps')} variant="ghost" onPress={() => void Linking.openURL(wedding.mapsUrl)} />
               </View>
             </Card>
           </>
@@ -353,12 +406,12 @@ function NowCard({ events }: { events: WeddingEvent[] }) {
   if (last && now >= ends(last)) {
     return (
       <Card tone="sage">
-        <Eyebrow>Until next time</Eyebrow>
+        <Eyebrow>{t('Until next time')}</Eyebrow>
         <Title size={28} style={{ marginTop: 4 }}>
-          Thank you for being there.
+          {t('Thank you for being there.')}
         </Title>
         <Body muted style={{ marginTop: 6 }}>
-          The album stays open, so keep reliving it.
+          {t('The album stays open, so keep reliving it.')}
         </Body>
       </Card>
     );
@@ -368,18 +421,18 @@ function NowCard({ events }: { events: WeddingEvent[] }) {
     const days = daysBetween(new Date(), wedding.startsAt);
     return (
       <Card tone="sage" style={{ alignItems: 'center', paddingVertical: space.xl }}>
-        <Eyebrow>{wedding.dates}</Eyebrow>
+        <Eyebrow>{t(wedding.dates)}</Eyebrow>
         {days > 0 ? (
           <>
             <Text style={styles.count}>{days}</Text>
-            <Title size={24}>{days === 1 ? 'day to go' : 'days to go'}</Title>
+            <Title size={24}>{days === 1 ? t('day to go') : t('days to go')}</Title>
           </>
         ) : (
           <Title size={32} style={{ marginTop: space.sm }}>
-            It begins today
+            {t('It begins today')}
           </Title>
         )}
-        <Accent style={{ fontSize: 19, marginTop: 6, textAlign: 'center' }}>The hills are calling. And so is the dance floor.</Accent>
+        <Accent style={{ fontSize: 19, marginTop: 6, textAlign: 'center' }}>{t('The hills are calling. And so is the dance floor.')}</Accent>
       </Card>
     );
   }
@@ -390,7 +443,7 @@ function NowCard({ events }: { events: WeddingEvent[] }) {
         <>
           <View style={styles.liveRow}>
             <View style={styles.liveDot} />
-            <Eyebrow color={colors.rose}>Happening now</Eyebrow>
+            <Eyebrow color={colors.rose}>{t('Happening now')}</Eyebrow>
           </View>
           {current.map((e) => (
             <EventLine key={e.id} event={e} big />
@@ -400,27 +453,39 @@ function NowCard({ events }: { events: WeddingEvent[] }) {
       {next ? (
         <>
           {current.length > 0 ? <GoldRule style={{ marginVertical: space.md }} /> : null}
-          <Eyebrow>Up next</Eyebrow>
+          <Eyebrow>{t('Up next')}</Eyebrow>
           <EventLine event={next} big={current.length === 0} />
         </>
       ) : null}
-      <Button label="See the full programme" variant="ghost" onPress={() => router.push('/schedule')} style={{ alignSelf: 'flex-start', marginLeft: -space.md, marginTop: 4 }} />
+      <Button label={t('See the full programme')} variant="ghost" onPress={() => router.push('/schedule')} style={{ alignSelf: 'flex-start', marginLeft: -space.md, marginTop: 4 }} />
     </Card>
+  );
+}
+
+/** A half-width shortcut on Today: an icon and a couple of words. */
+function Tile({ icon, label, onPress }: { icon: React.ComponentProps<typeof Feather>['name']; label: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.tile, pressed && { opacity: 0.8 }]}>
+      <View style={[styles.badge, styles.tileBadge]}>
+        <Feather name={icon} size={18} color={colors.white} />
+      </View>
+      <Text style={styles.tileText}>{label}</Text>
+    </Pressable>
   );
 }
 
 function EventLine({ event, big }: { event: WeddingEvent; big?: boolean }) {
   return (
     <View style={{ marginTop: 6 }}>
-      <Title size={big ? 30 : 24}>{event.title}</Title>
+      <Title size={big ? 30 : 24}>{t(event.title)}</Title>
       <Body muted>
         {event.time_label}
-        {event.location ? ` · ${event.location}` : ''}
+        {event.location ? ` · ${t(event.location)}` : ''}
       </Body>
-      {event.note ? <Body style={{ marginTop: 2 }}>{event.note}</Body> : null}
+      {event.note ? <Body style={{ marginTop: 2 }}>{t(event.note)}</Body> : null}
       {event.dress ? (
         <Body style={{ marginTop: 2 }}>
-          <Text style={{ fontFamily: fonts.bodyBold }}>Wear: </Text>
+          <Text style={{ fontFamily: fonts.bodyBold }}>{t('Wear:')} </Text>
           {event.dress}
         </Body>
       ) : null}
@@ -452,7 +517,7 @@ function UpdateCard({ update, now, canDelete, onChanged }: { update: Update; now
       {update.pinned ? (
         <View style={styles.liveRow}>
           <Feather name="bookmark" size={13} color={colors.rose} />
-          <Eyebrow color={colors.rose}>Pinned</Eyebrow>
+          <Eyebrow color={colors.rose}>{t('Pinned')}</Eyebrow>
         </View>
       ) : null}
       <Body style={styles.updateBody}>{update.body}</Body>
@@ -580,6 +645,22 @@ const styles = StyleSheet.create({
   names: { fontFamily: fonts.display, fontSize: 42, lineHeight: 48, color: colors.ink, letterSpacing: -0.6, marginTop: 2 },
   stack: { paddingHorizontal: space.lg, gap: space.md, marginTop: -space.xl },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  tile: {
+    flexBasis: '48%',
+    flexGrow: 1,
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    padding: space.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.card,
+  },
+  tileBadge: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.olive },
+  tileText: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 15, lineHeight: 19, color: colors.ink },
   badge: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   rowTitle: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.ink },
   rowBody: { fontSize: 14.5, lineHeight: 20 },

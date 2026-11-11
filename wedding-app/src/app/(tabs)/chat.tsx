@@ -8,6 +8,7 @@ import { People } from '@/components/People';
 import { Body, Button, Loading, Notice, ScreenHeader, Title } from '@/components/ui';
 import { useSession } from '@/lib/session';
 import { api, type Channel } from '@/lib/api';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { colors, fonts, radius, space } from '@/lib/theme';
 import { formatWhen } from '@/lib/time';
@@ -49,18 +50,18 @@ export default function Chat() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <ScreenHeader eyebrow="Our favourite people" title={tab === 'people' ? 'People' : 'Chat'} />
+      <ScreenHeader eyebrow={t('Our favourite people')} title={tab === 'people' ? t('People') : t('Chat')} />
       {isVendor ? null : (
         <View style={styles.segments} accessibilityRole="tablist">
-          {(['rooms', 'people'] as const).map((t) => (
+          {(['rooms', 'people'] as const).map((seg) => (
             <Pressable
-              key={t}
+              key={seg}
               accessibilityRole="tab"
-              accessibilityState={{ selected: tab === t }}
-              onPress={() => setTab(t)}
-              style={[styles.segment, tab === t && styles.segmentOn]}>
-              <Feather name={t === 'rooms' ? 'message-circle' : 'users'} size={16} color={tab === t ? colors.white : colors.ink} />
-              <Text style={[styles.segmentText, tab === t && { color: colors.white }]}>{t === 'rooms' ? 'Chat rooms' : 'Get to know everyone'}</Text>
+              accessibilityState={{ selected: tab === seg }}
+              onPress={() => setTab(seg)}
+              style={[styles.segment, tab === seg && styles.segmentOn]}>
+              <Feather name={seg === 'rooms' ? 'message-circle' : 'users'} size={16} color={tab === seg ? colors.white : colors.ink} />
+              <Text style={[styles.segmentText, tab === seg && { color: colors.white }]}>{seg === 'rooms' ? t('Chat rooms') : t('Get to know everyone')}</Text>
             </Pressable>
           ))}
         </View>
@@ -72,9 +73,9 @@ export default function Chat() {
       ) : !data ? (
         <Notice
           icon="cloud-off"
-          title="Can't load the chat"
+          title={t("Can't load the chat")}
           body={error ?? undefined}
-          action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />}
+          action={<Button label={t('Try again')} variant="quiet" onPress={() => void reload()} />}
         />
       ) : (
         <ScrollView
@@ -86,13 +87,13 @@ export default function Chat() {
               <Pressable
                 key={c.slug}
                 accessibilityRole="button"
-                accessibilityLabel={`${c.name}${c.private ? ', private team room' : ''}${unread ? ', new messages' : ''}`}
+                accessibilityLabel={`${t(c.name)}${c.private ? t(', private team room') : ''}${unread ? t(', new messages') : ''}`}
                 onPress={() => router.push({ pathname: '/chat/[channel]', params: { channel: c.slug, name: c.name } })}
                 style={({ pressed }) => [styles.room, pressed && { opacity: 0.8 }]}>
                 <View style={{ flex: 1 }}>
                   <View style={styles.roomHead}>
                     <Title size={24} style={{ flexShrink: 1 }} numberOfLines={1}>
-                      {c.name}
+                      {t(c.name)}
                     </Title>
                     {c.private ? <Feather name="lock" size={15} color={colors.olive} /> : null}
                     {unread ? <View style={styles.dot} /> : null}
@@ -104,7 +105,7 @@ export default function Chat() {
                     </Body>
                   ) : (
                     <Body muted numberOfLines={2} style={styles.preview}>
-                      {c.blurb}
+                      {t(c.blurb)}
                     </Body>
                   )}
                   {c.last ? <Text style={styles.when}>{formatWhen(c.last.created_at)}</Text> : null}
@@ -114,7 +115,7 @@ export default function Chat() {
             );
           })}
           <Body muted style={styles.foot}>
-            Be kind. Everyone at the wedding can read these.
+            {t('Be kind. Everyone at the wedding can read these.')}
           </Body>
         </ScrollView>
       )}

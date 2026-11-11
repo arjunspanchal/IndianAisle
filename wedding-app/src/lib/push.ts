@@ -28,7 +28,8 @@ function supported(): boolean {
 
 let prepared = false;
 
-async function notifications() {
+/** The notifications library, set up once (how banners show, the Android channel, what a tap opens). */
+export async function notifications() {
   const N = await import('expo-notifications');
   if (!prepared) {
     prepared = true;
@@ -51,6 +52,8 @@ async function notifications() {
     N.addNotificationResponseReceivedListener((res) => {
       const screen = (res.notification.request.content.data as { screen?: string } | null)?.screen;
       if (screen === 'album') router.navigate('/album');
+      else if (screen === 'ride') router.navigate('/ride');
+      else if (screen === 'programme') router.navigate('/schedule');
       else router.navigate('/');
     });
   }

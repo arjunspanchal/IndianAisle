@@ -24,6 +24,7 @@ import { Body, Button, Card, Eyebrow, GoldRule, IconButton, Loading, Notice, Tit
 import { docsApi, errorMessage, KaError, type TravelDoc } from '@/lib/api';
 import { confirm, tell } from '@/lib/dialog';
 import { readBytes } from '@/lib/files';
+import { t } from '@/lib/i18n';
 import { useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space } from '@/lib/theme';
@@ -37,6 +38,11 @@ const WORDS: Record<Kind, { title: string; add: string; hint: string; fallback: 
   id: { title: 'Your ID', add: 'Add an ID', hint: 'e.g. Aadhaar, passport', fallback: 'ID' },
   ticket: { title: 'Your tickets', add: 'Add a ticket', hint: 'e.g. Mumbai to Chandigarh, 16 Jan', fallback: 'Ticket' },
 };
+
+/** What the guest called it. Left blank, it was saved as "ID" or "Ticket": show that in their language. */
+function shownLabel(doc: TravelDoc): string {
+  return doc.label === WORDS[doc.kind].fallback ? t(doc.label) : doc.label;
+}
 
 // Travel documents: a guest's ID and tickets, shared with the couple's team so
 // they can sort out travel and check-in. Kept in a private vault: only the
@@ -57,11 +63,11 @@ export default function Docs() {
   }
 
   async function upload(kind: Kind, file: { uri: string; mime: TravelDoc['mime'] }) {
-    setBusy('Uploading securely…');
+    setBusy(t('Uploading securely…'));
     try {
       const bytes = await readBytes(file.uri);
       if (bytes.byteLength > MAX_BYTES) {
-        tell('That file is too big', 'Please choose one under 10 MB.');
+        tell(t('That file is too big'), t('Please choose one under 10 MB.'));
         return;
       }
       const r = await docsApi.reserve(kind, label.trim() || WORDS[kind].fallback, file.mime);
@@ -70,7 +76,7 @@ export default function Docs() {
       setLabel('');
       await reload();
     } catch (e) {
-      tell("That didn't upload", errorMessage(e));
+      tell(t("That didn't upload"), errorMessage(e));
     } finally {
       setBusy(null);
     }
@@ -88,7 +94,7 @@ export default function Docs() {
       if (from === 'camera') {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          tell('Camera access is off', 'Allow the camera in Settings to photograph a document.');
+          tell(t('Camera access is off'), t('Allow the camera in Settings to photograph a document.'));
           return;
         }
       }
@@ -106,12 +112,12 @@ export default function Docs() {
       );
       await upload(kind, { uri: img.uri, mime: 'image/jpeg' });
     } catch (e) {
-      tell("That didn't upload", e instanceof KaError ? errorMessage(e) : 'Please try again.');
+      tell(t("That didn't upload"), e instanceof KaError ? errorMessage(e) : t('Please try again.'));
     }
   }
 
   async function open(doc: TravelDoc) {
-    setBusy('Opening…');
+    setBusy(t('Opening…'));
     try {
       const r = await docsApi.open(doc.id);
       if (doc.mime === 'application/pdf') await Linking.openURL(r.url);
@@ -124,7 +130,7 @@ export default function Docs() {
   }
 
   function remove(doc: TravelDoc) {
-    confirm(`Delete ${doc.label || 'this document'}?`, 'It is erased from the vault straight away and cannot be brought back.', 'Delete', async () => {
+    confirm(t('Delete {name}?', { name: shownLabel(doc) || t('this document') }), t('It is erased from the vault straight away and cannot be brought back.'), t('Delete'), async () => {
       try {
         await docsApi.remove(doc.id);
         await reload();
@@ -159,9 +165,9 @@ export default function Docs() {
     return (
       <Notice
         icon="cloud-off"
-        title="Can't open your documents"
+        title={t("Can't open your documents")}
         body={error ?? undefined}
-        action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />}
+        action={<Button label={t('Try again')} variant="quiet" onPress={() => void reload()} />}
       />
     );
 
@@ -175,23 +181,23 @@ export default function Docs() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.olive} />}>
-        <Eyebrow>For your journey</Eyebrow>
+        <Eyebrow>{t('For your journey')}</Eyebrow>
         <Title size={34} style={{ marginTop: 2 }}>
-          Travel documents
+          {t('Travel documents')}
         </Title>
         <Body muted style={{ marginTop: 6 }}>
-          Add your ID and tickets so the wedding team can sort out travel and check-in for you.
+          {t('Add your ID and tickets so the wedding team can sort out travel and check-in for you.')}
         </Body>
 
         <Card tone="sage" style={styles.lock}>
           <Feather name="lock" size={18} color={colors.olive} style={{ marginTop: 3 }} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.lockTitle}>Kept private</Text>
+            <Text style={styles.lockTitle}>{t('Kept private')}</Text>
             <Body muted style={styles.small}>
-              Only you and the couple's team can open these. Other guests can't see them, and you can delete them whenever you like.
+              {t("Only you and the couple's team can open these. Other guests can't see them, and you can delete them whenever you like.")}
             </Body>
             <Body muted style={[styles.small, { marginTop: 6 }]}>
-              Sharing Aadhaar? UIDAI lets you download a masked Aadhaar that hides the first eight digits. Use that if you can.
+              {t('Sharing Aadhaar? UIDAI lets you download a masked Aadhaar that hides the first eight digits. Use that if you can.')}
             </Body>
           </View>
         </Card>
@@ -201,17 +207,17 @@ export default function Docs() {
           return (
             <View key={kind}>
               <View style={styles.sectionHead}>
-                <Eyebrow>{WORDS[kind].title}</Eyebrow>
+                <Eyebrow>{t(WORDS[kind].title)}</Eyebrow>
                 <GoldRule style={{ flex: 1, marginLeft: space.md }} />
               </View>
               {list.length === 0 ? (
                 <Body muted style={{ marginBottom: space.sm }}>
-                  Nothing added yet.
+                  {t('Nothing added yet.')}
                 </Body>
               ) : (
                 list.map((d) => <DocRow key={d.id} doc={d} onOpen={() => void open(d)} onDelete={() => remove(d)} />)
               )}
-              <Button label={WORDS[kind].add} icon="plus" variant="quiet" onPress={() => setAdding(kind)} disabled={!!busy} style={{ alignSelf: 'flex-start' }} />
+              <Button label={t(WORDS[kind].add)} icon="plus" variant="quiet" onPress={() => setAdding(kind)} disabled={!!busy} style={{ alignSelf: 'flex-start' }} />
             </View>
           );
         })}
@@ -252,23 +258,23 @@ export default function Docs() {
 
       {/* Where is the document coming from? */}
       <Modal visible={adding !== null} transparent animationType="fade" onRequestClose={() => setAdding(null)}>
-        <Pressable style={styles.scrim} onPress={() => setAdding(null)} accessibilityLabel="Close">
+        <Pressable style={styles.scrim} onPress={() => setAdding(null)} accessibilityLabel={t('Close')}>
           {adding ? (
             <Pressable style={styles.sheet} onPress={() => {}}>
-              <Title size={24}>{WORDS[adding].add}</Title>
-              <Text style={styles.fieldLabel}>What is it? (optional)</Text>
+              <Title size={24}>{t(WORDS[adding].add)}</Title>
+              <Text style={styles.fieldLabel}>{t('What is it? (optional)')}</Text>
               <TextInput
                 value={label}
                 onChangeText={setLabel}
-                placeholder={WORDS[adding].hint}
+                placeholder={t(WORDS[adding].hint)}
                 placeholderTextColor="#9A9C8E"
                 maxLength={80}
                 style={styles.field}
-                accessibilityLabel="What is this document"
+                accessibilityLabel={t('What is this document')}
               />
-              <SourceRow icon="camera" label="Take a photo of it" onPress={() => void pick(adding, 'camera')} />
-              <SourceRow icon="image" label="Choose a photo" onPress={() => void pick(adding, 'library')} />
-              <SourceRow icon="file-text" label="Choose a PDF" onPress={() => void pick(adding, 'pdf')} />
+              <SourceRow icon="camera" label={t('Take a photo of it')} onPress={() => void pick(adding, 'camera')} />
+              <SourceRow icon="image" label={t('Choose a photo')} onPress={() => void pick(adding, 'library')} />
+              <SourceRow icon="file-text" label={t('Choose a PDF')} onPress={() => void pick(adding, 'pdf')} />
             </Pressable>
           ) : null}
         </Pressable>
@@ -285,7 +291,7 @@ function DocRow({ doc, showKind, onOpen, onDelete }: { doc: TravelDoc; showKind?
     <View style={styles.row}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Open ${doc.label || (doc.kind === 'id' ? 'ID' : 'ticket')}`}
+        accessibilityLabel={t('Open {name}', { name: shownLabel(doc) || (doc.kind === 'id' ? t('ID') : t('ticket')) })}
         onPress={onOpen}
         style={({ pressed }) => [styles.rowMain, pressed && { opacity: 0.7 }]}>
         <View style={styles.rowIcon}>
@@ -293,15 +299,15 @@ function DocRow({ doc, showKind, onOpen, onDelete }: { doc: TravelDoc; showKind?
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.rowTitle} numberOfLines={1}>
-            {doc.label || (doc.kind === 'id' ? 'ID' : 'Ticket')}
+            {shownLabel(doc) || (doc.kind === 'id' ? t('ID') : t('Ticket'))}
           </Text>
           <Text style={styles.rowMeta}>
-            {showKind ? `${doc.kind === 'id' ? 'ID' : 'Ticket'} · ` : ''}
-            {pdf ? 'PDF' : 'Photo'} · added {formatWhen(doc.created_at)}
+            {showKind ? `${doc.kind === 'id' ? t('ID') : t('Ticket')} · ` : ''}
+            {t('{type} · added {when}', { type: pdf ? 'PDF' : t('Photo'), when: formatWhen(doc.created_at) })}
           </Text>
         </View>
       </Pressable>
-      <IconButton icon="trash-2" label={`Delete ${doc.label || 'document'}`} size={18} color={colors.muted} onPress={onDelete} />
+      <IconButton icon="trash-2" label={t('Delete {name}', { name: shownLabel(doc) || t('document') })} size={18} color={colors.muted} onPress={onDelete} />
     </View>
   );
 }
@@ -325,9 +331,9 @@ function DocViewer({ url, doc, onClose }: { url: string; doc: TravelDoc; onClose
       <SwipeDown onClose={onClose} enabled={!zoomed}>
         <ZoomImage uri={url} width={width} height={height} cachePolicy="none" onZoom={setZoomed} />
         <View style={[styles.viewerTop, { paddingTop: insets.top + 4 }]}>
-          <IconButton icon="x" label="Close" color={colors.white} size={26} onPress={onClose} />
+          <IconButton icon="x" label={t('Close')} color={colors.white} size={26} onPress={onClose} />
           <Text style={styles.viewerTitle} numberOfLines={1}>
-            {doc.mine ? doc.label : `${doc.by} · ${doc.label}`}
+            {doc.mine ? shownLabel(doc) : `${doc.by} · ${shownLabel(doc)}`}
           </Text>
         </View>
       </SwipeDown>

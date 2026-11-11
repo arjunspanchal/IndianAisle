@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WeatherChip } from '@/components/Weather';
+import { getLang } from '@/lib/i18n';
 import { colors, fonts, radius, space } from '@/lib/theme';
 
 type TextProps = { children: ReactNode; style?: StyleProp<TextStyle>; numberOfLines?: number };
@@ -25,7 +26,8 @@ export function Eyebrow({ children, style, color }: TextProps & { color?: string
 /** Cormorant headline. */
 export function Title({ children, style, numberOfLines, size = 30 }: TextProps & { size?: number }) {
   return (
-    <Text numberOfLines={numberOfLines} style={[styles.title, { fontSize: size, lineHeight: Math.round(size * 1.12) }, style]}>
+    // Gujarati letters carry marks above and below the line, so they need more room than Latin capitals.
+    <Text numberOfLines={numberOfLines} style={[styles.title, { fontSize: size, lineHeight: Math.round(size * (getLang() === 'gu' ? 1.34 : 1.12)) }, style]}>
       {children}
     </Text>
   );

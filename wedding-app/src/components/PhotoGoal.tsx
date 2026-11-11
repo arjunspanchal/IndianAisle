@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Body } from '@/components/ui';
 import { type PhotoGoal as Goal } from '@/lib/api';
+import { t } from '@/lib/i18n';
 import { colors, fonts, radius, space } from '@/lib/theme';
 
 // Gold, silver, bronze for 1st, 2nd and 3rd.
@@ -27,8 +28,8 @@ export function PhotoGoal({ goal }: { goal: Goal }) {
       accessibilityState={{ expanded: open }}
       accessibilityLabel={
         done
-          ? `You have added ${goal.mine} photos and earned the Wedding Photographer badge`
-          : `You have added ${goal.mine} of ${goal.goal} photos. ${left} to go for the Wedding Photographer badge`
+          ? t('You have added {n} photos and earned the Wedding Photographer badge', { n: goal.mine })
+          : t('You have added {mine} of {goal} photos. {left} to go for the Wedding Photographer badge', { mine: goal.mine, goal: goal.goal, left })
       }
       onPress={() => setOpen((v) => !v)}
       style={[styles.card, done && styles.cardDone]}>
@@ -37,13 +38,13 @@ export function PhotoGoal({ goal }: { goal: Goal }) {
           <Feather name={done ? 'award' : 'camera'} size={18} color={colors.white} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{done ? 'Wedding Photographer' : `${goal.mine} of ${goal.goal} photos`}</Text>
+          <Text style={styles.title}>{done ? t('Wedding Photographer') : t('{mine} of {goal} photos', { mine: goal.mine, goal: goal.goal })}</Text>
           <Body muted style={styles.small}>
             {done
-              ? `You've added ${goal.mine}. The album is richer for it. Keep going!`
+              ? t("You've added {n}. The album is richer for it. Keep going!", { n: goal.mine })
               : goal.mine === 0
-                ? `Add ${goal.goal} photos to the album to earn your Wedding Photographer badge.`
-                : `${left} more for your Wedding Photographer badge.`}
+                ? t('Add {n} photos to the album to earn your Wedding Photographer badge.', { n: goal.goal })
+                : t('{n} more for your Wedding Photographer badge.', { n: left })}
           </Body>
         </View>
         <Feather name={open ? 'chevron-up' : 'chevron-down'} size={20} color={colors.muted} />
@@ -54,35 +55,37 @@ export function PhotoGoal({ goal }: { goal: Goal }) {
 
       {open ? (
         <View style={{ marginTop: space.md }}>
-          <Text style={styles.boardTitle}>Most photos so far</Text>
+          <Text style={styles.boardTitle}>{t('Most photos so far')}</Text>
           {goal.top.length === 0 ? (
             <Body muted style={styles.small}>
-              No photos yet. Be the first on the board.
+              {t('No photos yet. Be the first on the board.')}
             </Body>
           ) : (
-            goal.top.map((t, i) => (
-              <View key={`${t.name}-${i}`} style={styles.row}>
+            goal.top.map((p, i) => (
+              <View key={`${p.name}-${i}`} style={styles.row}>
                 {i < 3 ? (
-                  <View style={[styles.medal, { backgroundColor: MEDALS[i] }]} accessibilityLabel={PLACES[i]}>
+                  <View style={[styles.medal, { backgroundColor: MEDALS[i] }]} accessibilityLabel={t(PLACES[i])}>
                     <Text style={styles.medalText}>{i + 1}</Text>
                   </View>
                 ) : (
                   <Text style={styles.rank}>{i + 1}</Text>
                 )}
-                <Text style={[styles.name, t.me && { fontFamily: fonts.bodyBold }]} numberOfLines={1}>
-                  {t.name}
-                  {t.me ? ' (you)' : ''}
-                  {i < 3 ? <Text style={styles.lead}>  ·  {PLACES[i]}</Text> : null}
+                <Text style={[styles.name, p.me && { fontFamily: fonts.bodyBold }]} numberOfLines={1}>
+                  {p.name}
+                  {p.me ? ` ${t('(you)')}` : ''}
+                  {i < 3 ? <Text style={styles.lead}>  ·  {t(PLACES[i])}</Text> : null}
                 </Text>
-                {t.count >= goal.goal ? <Feather name="award" size={15} color={colors.gold} /> : null}
-                <Text style={styles.count}>{t.count}</Text>
+                {p.count >= goal.goal ? <Feather name="award" size={15} color={colors.gold} /> : null}
+                <Text style={styles.count}>{p.count}</Text>
               </View>
             ))
           )}
           {goal.prize ? <Body style={[styles.small, { marginTop: 6, color: colors.rose }]}>{goal.prize}</Body> : null}
           <Body muted style={[styles.small, { marginTop: 6 }]}>
-            Camera shots and photos added from your phone both count. {goal.reached}{' '}
-            {goal.reached === 1 ? 'person has' : 'people have'} earned the badge so far.
+            {t('Camera shots and photos added from your phone both count.')}{' '}
+            {goal.reached === 1
+              ? t('{n} person has earned the badge so far.', { n: goal.reached })
+              : t('{n} people have earned the badge so far.', { n: goal.reached })}
           </Body>
         </View>
       ) : null}

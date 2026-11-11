@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WeatherChip } from '@/components/Weather';
 import { Body, Button, Eyebrow, Title } from '@/components/ui';
 import { api, type CameraState } from '@/lib/api';
+import { t } from '@/lib/i18n';
 import { useLoad } from '@/lib/live';
 import { addShot, flush, shotsTakenToday, subscribeWaiting } from '@/lib/roll';
 import { colors, fonts, radius, space } from '@/lib/theme';
@@ -86,7 +87,7 @@ export default function Camera() {
       });
       setLocalTaken(await addShot({ uri: full.uri, thumbUri: thumb.uri, width: full.width, height: full.height }));
     } catch {
-      setProblem("That one didn't take. Try again.");
+      setProblem(t("That one didn't take. Try again."));
     } finally {
       // The pause is the film winding on. It also stops accidental double shots.
       setTimeout(() => setWinding(false), 900);
@@ -96,15 +97,15 @@ export default function Camera() {
   const header = (
     <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
       <View style={styles.headRow}>
-        <Eyebrow>Today's roll</Eyebrow>
+        <Eyebrow>{t("Today's roll")}</Eyebrow>
         <WeatherChip />
       </View>
       <View style={styles.counterRow}>
-        <Text style={styles.counter} accessibilityLabel={`${left} of ${ROLL} shots left`}>
+        <Text style={styles.counter} accessibilityLabel={t('{left} of {total} shots left', { left, total: ROLL })}>
           {left}
         </Text>
         <Title size={22} style={{ marginBottom: 9 }}>
-          {left === 1 ? 'shot left' : 'shots left'} <Text style={styles.of}>of {ROLL}</Text>
+          {left === 1 ? t('shot left') : t('shots left')} <Text style={styles.of}>{t('of {total}', { total: ROLL })}</Text>
         </Title>
       </View>
     </View>
@@ -119,15 +120,15 @@ export default function Camera() {
         <View style={styles.center}>
           <Feather name="camera" size={34} color={colors.olive} />
           <Title size={26} style={{ textAlign: 'center' }}>
-            Your wedding camera
+            {t('Your wedding camera')}
           </Title>
           <Body muted style={{ textAlign: 'center' }}>
-            You get {ROLL} photos a day. They stay a secret until the next morning, when everyone's develop together in the album.
+            {t("You get {n} photos a day. They stay a secret until the next morning, when everyone's develop together in the album.", { n: ROLL })}
           </Body>
           {permission.canAskAgain ? (
-            <Button label="Turn on the camera" icon="camera" onPress={() => void requestPermission()} />
+            <Button label={t('Turn on the camera')} icon="camera" onPress={() => void requestPermission()} />
           ) : (
-            <Button label="Open Settings to allow the camera" variant="quiet" onPress={() => void Linking.openSettings()} />
+            <Button label={t('Open Settings to allow the camera')} variant="quiet" onPress={() => void Linking.openSettings()} />
           )}
         </View>
       </View>
@@ -153,12 +154,12 @@ export default function Camera() {
               }}
               animateShutter={false}
               onCameraReady={() => setReady(true)}
-              onMountError={() => setProblem("The camera couldn't start. Close other camera apps and try again.")}
+              onMountError={() => setProblem(t("The camera couldn't start. Close other camera apps and try again."))}
             />
           ) : null}
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.blink, { opacity: blink }]} />
           {facing === 'back' && hasUltra && left > 0 ? (
-            <View style={styles.lenses} accessibilityRole="radiogroup" accessibilityLabel="Lens">
+            <View style={styles.lenses} accessibilityRole="radiogroup" accessibilityLabel={t('Lens')}>
               {[true, false].map((wide) => {
                 const on = ultra === wide;
                 return (
@@ -166,7 +167,7 @@ export default function Camera() {
                     key={wide ? 'ultra' : 'normal'}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
-                    accessibilityLabel={wide ? 'Wide angle, 0.5 times' : 'Normal, 1 times'}
+                    accessibilityLabel={wide ? t('Wide angle, 0.5 times') : t('Normal, 1 times')}
                     hitSlop={6}
                     onPress={() => setUltra(wide)}
                     style={[styles.lens, on && styles.lensOn]}>
@@ -179,9 +180,9 @@ export default function Camera() {
           {left === 0 ? (
             <View style={[StyleSheet.absoluteFill, styles.finished]}>
               <Title size={28} style={{ color: colors.white, textAlign: 'center' }}>
-                That's the whole roll.
+                {t("That's the whole roll.")}
               </Title>
-              <Body style={{ color: '#E8E9DF', textAlign: 'center' }}>Fresh film tomorrow morning.</Body>
+              <Body style={{ color: '#E8E9DF', textAlign: 'center' }}>{t('Fresh film tomorrow morning.')}</Body>
             </View>
           ) : null}
         </View>
@@ -190,7 +191,7 @@ export default function Camera() {
           <Pressable
             accessibilityRole="switch"
             accessibilityState={{ checked: flash === 'on' }}
-            accessibilityLabel="Flash"
+            accessibilityLabel={t('Flash')}
             hitSlop={8}
             onPress={() => {
               if (Platform.OS !== 'web') void Haptics.selectionAsync().catch(() => {});
@@ -200,12 +201,12 @@ export default function Camera() {
             <View style={[styles.flashDisc, flash === 'on' && styles.flashDiscOn]}>
               <Feather name={flash === 'on' ? 'zap' : 'zap-off'} size={20} color={flash === 'on' ? colors.camera : '#C9CDBD'} />
             </View>
-            <Text style={[styles.sideLabel, flash === 'on' && { color: colors.gold }]}>{flash === 'on' ? 'Flash on' : 'Flash off'}</Text>
+            <Text style={[styles.sideLabel, flash === 'on' && { color: colors.gold }]}>{flash === 'on' ? t('Flash on') : t('Flash off')}</Text>
           </Pressable>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={left === 0 ? 'Roll finished' : 'Take photo'}
+            accessibilityLabel={left === 0 ? t('Roll finished') : t('Take photo')}
             accessibilityState={{ disabled: !ready || winding || left === 0 }}
             disabled={!ready || winding || left === 0}
             onPress={shoot}
@@ -215,14 +216,14 @@ export default function Camera() {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Switch between front and back camera"
+            accessibilityLabel={t('Switch between front and back camera')}
             onPress={() => {
               setReady(false);
               setFacing((f) => (f === 'back' ? 'front' : 'back'));
             }}
             style={({ pressed }) => [styles.side, pressed && { opacity: 0.7 }]}>
             <Feather name="refresh-cw" size={22} color="#C9CDBD" />
-            <Text style={styles.sideLabel}>Flip</Text>
+            <Text style={styles.sideLabel}>{t('Flip')}</Text>
           </Pressable>
         </View>
       </View>
@@ -232,18 +233,20 @@ export default function Camera() {
           <Body style={{ color: colors.rose, textAlign: 'center' }}>{problem}</Body>
         ) : winding ? (
           <Body muted style={{ textAlign: 'center' }}>
-            Winding on…
+            {t('Winding on…')}
           </Body>
         ) : (
           <Body muted style={{ textAlign: 'center' }}>
-            No peeking. Today's photos develop at {server ? formatReveal(server.reveal_at) : '9:00 am tomorrow'}.
+            {t("No peeking. Today's photos develop at {time}.", { time: server ? formatReveal(server.reveal_at) : t('9:00 am tomorrow') })}
           </Body>
         )}
         {waiting > 0 ? (
           <View style={styles.waiting}>
             <Feather name="upload-cloud" size={14} color={colors.muted} />
             <Text style={styles.waitingText}>
-              {waiting} {waiting === 1 ? 'photo' : 'photos'} safe on your phone, sending when there's signal
+              {waiting === 1
+                ? t("{n} photo safe on your phone, sending when there's signal", { n: waiting })
+                : t("{n} photos safe on your phone, sending when there's signal", { n: waiting })}
             </Text>
           </View>
         ) : null}

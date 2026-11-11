@@ -7,6 +7,7 @@ import { Accent, Body, Button, Card, Eyebrow, GoldRule, Loading, Title } from '@
 import { api, errorMessage, type Companion, type Rsvp, type RsvpSummary } from '@/lib/api';
 import { DEFAULT_COUNTRY, joinPhone, splitPhone, type Country } from '@/lib/countries';
 import { tell } from '@/lib/dialog';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space } from '@/lib/theme';
@@ -64,7 +65,7 @@ export default function RsvpScreen() {
   async function send() {
     if (attending === null || busy) return;
     if (namesMissing) {
-      tell('A name is missing', 'Please give a first and last name for yourself and everyone coming with you.');
+      tell(t('A name is missing'), t('Please give a first and last name for yourself and everyone coming with you.'));
       return;
     }
     setBusy(true);
@@ -95,114 +96,114 @@ export default function RsvpScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={96}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Eyebrow>RSVP</Eyebrow>
+        <Eyebrow>{t('RSVP')}</Eyebrow>
         <Title size={36} style={{ marginTop: 2 }}>
-          Will you <Accent style={{ fontSize: 36 }}>join us?</Accent>
+          {t('Will you')} <Accent style={{ fontSize: 36 }}>{t('join us?')}</Accent>
         </Title>
         <Body muted style={{ marginTop: 6 }}>
-          One reply per family is perfect. It takes a minute, and you can change it later.
+          {t('One reply per family is perfect. It takes a minute, and you can change it later.')}
         </Body>
 
         {saved ? (
           <Card tone="moss" style={styles.thanks}>
             <Feather name="check-circle" size={22} color={colors.ink} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{attending ? "Wonderful. We can't wait to see you." : "We'll miss you. Thank you for letting us know."}</Text>
+              <Text style={styles.cardTitle}>{attending ? t("Wonderful. We can't wait to see you.") : t("We'll miss you. Thank you for letting us know.")}</Text>
               <Body muted style={styles.small}>
-                Your reply is saved. Change anything below and send again if plans shift.
+                {t('Your reply is saved. Change anything below and send again if plans shift.')}
               </Body>
             </View>
           </Card>
         ) : null}
 
-        <Text style={styles.label}>Your name</Text>
+        <Text style={styles.label}>{t('Your name')}</Text>
         <View style={styles.nameRow}>
           <TextInput
             value={first}
             onChangeText={setFirst}
-            placeholder="First name"
+            placeholder={t('First name')}
             placeholderTextColor="#9A9C8E"
             autoCapitalize="words"
             autoCorrect={false}
             maxLength={40}
             style={[styles.input, styles.half]}
-            accessibilityLabel="Your first name"
+            accessibilityLabel={t('Your first name')}
           />
           <TextInput
             value={last}
             onChangeText={setLast}
-            placeholder="Last name"
+            placeholder={t('Last name')}
             placeholderTextColor="#9A9C8E"
             autoCapitalize="words"
             autoCorrect={false}
             maxLength={40}
             style={[styles.input, styles.half]}
-            accessibilityLabel="Your last name"
+            accessibilityLabel={t('Your last name')}
           />
         </View>
 
-        <Text style={styles.label}>Will you be coming?</Text>
+        <Text style={styles.label}>{t('Will you be coming?')}</Text>
         <View style={styles.choices}>
-          <Choice label="Yes, we'll be there" on={attending === true} onPress={() => setAttending(true)} />
-          <Choice label="Sorry, we can't come" on={attending === false} onPress={() => setAttending(false)} />
+          <Choice label={t("Yes, we'll be there")} on={attending === true} onPress={() => setAttending(true)} />
+          <Choice label={t("Sorry, we can't come")} on={attending === false} onPress={() => setAttending(false)} />
         </View>
 
         {attending ? (
           <>
-            <Text style={styles.label}>How many people, including you?</Text>
+            <Text style={styles.label}>{t('How many people, including you?')}</Text>
             <View style={styles.stepper}>
-              <Step icon="minus" label="One fewer" onPress={() => setCompanions((all) => all.slice(0, -1))} />
-              <Text style={styles.count} accessibilityLabel={`${people} people`}>
+              <Step icon="minus" label={t('One fewer')} onPress={() => setCompanions((all) => all.slice(0, -1))} />
+              <Text style={styles.count} accessibilityLabel={t('{n} people', { n: people })}>
                 {people}
               </Text>
               <Step
                 icon="plus"
-                label="One more"
+                label={t('One more')}
                 onPress={() => setCompanions((all) => (all.length >= 11 ? all : [...all, { first: '', last: '' }]))}
               />
             </View>
 
             {companions.map((c, i) => (
               <View key={i}>
-                <Text style={styles.label}>Guest {i + 2}</Text>
+                <Text style={styles.label}>{t('Guest {n}', { n: i + 2 })}</Text>
                 <View style={styles.nameRow}>
                   <TextInput
                     value={c.first}
                     onChangeText={(t) => setCompanion(i, { first: t })}
-                    placeholder="First name"
+                    placeholder={t('First name')}
                     placeholderTextColor="#9A9C8E"
                     autoCapitalize="words"
                     autoCorrect={false}
                     maxLength={40}
                     style={[styles.input, styles.half]}
-                    accessibilityLabel={`Guest ${i + 2} first name`}
+                    accessibilityLabel={t('Guest {n} first name', { n: i + 2 })}
                   />
                   <TextInput
                     value={c.last}
                     onChangeText={(t) => setCompanion(i, { last: t })}
-                    placeholder="Last name"
+                    placeholder={t('Last name')}
                     placeholderTextColor="#9A9C8E"
                     autoCapitalize="words"
                     autoCorrect={false}
                     maxLength={40}
                     style={[styles.input, styles.half]}
-                    accessibilityLabel={`Guest ${i + 2} last name`}
+                    accessibilityLabel={t('Guest {n} last name', { n: i + 2 })}
                   />
                 </View>
               </View>
             ))}
 
             <Text style={styles.label}>
-              Any food needs? <Text style={styles.optional}>(optional)</Text>
+              {t('Any food needs?')} <Text style={styles.optional}>{t('(optional)')}</Text>
             </Text>
             <TextInput
               value={food}
               onChangeText={setFood}
-              placeholder="e.g. Jain, no onion-garlic, allergies"
+              placeholder={t('e.g. Jain, no onion-garlic, allergies')}
               placeholderTextColor="#9A9C8E"
               maxLength={200}
               style={styles.input}
-              accessibilityLabel="Any food needs"
+              accessibilityLabel={t('Any food needs')}
             />
           </>
         ) : null}
@@ -210,7 +211,7 @@ export default function RsvpScreen() {
         {attending !== null ? (
           <>
             <Text style={styles.label}>
-              Mobile number <Text style={styles.optional}>(WhatsApp, if you have it)</Text>
+              {t('Mobile number')} <Text style={styles.optional}>{t('(WhatsApp, if you have it)')}</Text>
             </Text>
             <View style={styles.phoneRow}>
               <CountryPicker value={country} onChange={setCountry} />
@@ -222,14 +223,14 @@ export default function RsvpScreen() {
                 keyboardType="phone-pad"
                 maxLength={18}
                 style={[styles.input, { flex: 1 }]}
-                accessibilityLabel={`Mobile number, without the ${country.dial} country code`}
+                accessibilityLabel={t('Mobile number, without the {code} country code', { code: country.dial })}
               />
             </View>
             <Text style={styles.label}>
-              A note for Kashika & Arjun <Text style={styles.optional}>(optional)</Text>
+              {t('A note for Kashika & Arjun')} <Text style={styles.optional}>{t('(optional)')}</Text>
             </Text>
-            <TextInput value={message} onChangeText={setMessage} multiline maxLength={600} style={[styles.input, styles.multi]} accessibilityLabel="A note for Kashika and Arjun" />
-            <Button label={mine.data ? 'Update my reply' : 'Send my reply'} icon="send" onPress={() => void send()} busy={busy} style={{ marginTop: space.xl }} />
+            <TextInput value={message} onChangeText={setMessage} multiline maxLength={600} style={[styles.input, styles.multi]} accessibilityLabel={t('A note for Kashika and Arjun')} />
+            <Button label={mine.data ? t('Update my reply') : t('Send my reply')} icon="send" onPress={() => void send()} busy={busy} style={{ marginTop: space.xl }} />
           </>
         ) : null}
 

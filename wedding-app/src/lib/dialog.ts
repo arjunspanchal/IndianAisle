@@ -1,5 +1,7 @@
 import { Alert, Platform } from 'react-native';
 
+import { t } from './i18n';
+
 /** Ask before doing something that can't be undone. Works on phones and in the browser. */
 export function confirm(title: string, message: string, actionLabel: string, onYes: () => void) {
   if (Platform.OS === 'web') {
@@ -7,7 +9,7 @@ export function confirm(title: string, message: string, actionLabel: string, onY
     return;
   }
   Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
+    { text: t('Cancel'), style: 'cancel' },
     { text: actionLabel, style: 'destructive', onPress: onYes },
   ]);
 }
@@ -17,5 +19,5 @@ export function tell(title: string, message?: string) {
     if (typeof window !== 'undefined') window.alert(message ? `${title}\n\n${message}` : title);
     return;
   }
-  Alert.alert(title, message);
+  Alert.alert(title, message, [{ text: t('OK') }]);
 }

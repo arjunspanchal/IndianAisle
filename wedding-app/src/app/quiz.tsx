@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, 
 import { Body, Button, Card, Eyebrow, GoldRule, IconButton, Loading, Notice, Title } from '@/components/ui';
 import { api, errorMessage, type Quiz, type QuizQuestion } from '@/lib/api';
 import { confirm, tell } from '@/lib/dialog';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space } from '@/lib/theme';
@@ -47,7 +48,7 @@ export default function QuizScreen() {
   }
 
   if (loading && !data) return <Loading />;
-  if (!data) return <Notice icon="cloud-off" title="Can't load the quiz" body={error ?? undefined} action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />} />;
+  if (!data) return <Notice icon="cloud-off" title={t("Can't load the quiz")} body={error ?? undefined} action={<Button label={t('Try again')} variant="quiet" onPress={() => void reload()} />} />;
 
   const answered = data.questions.filter((q) => q.choice !== null);
   const score = answered.filter((q) => q.choice === q.answer).length;
@@ -58,27 +59,28 @@ export default function QuizScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.olive} />}>
-        <Eyebrow>These two kids are getting married</Eyebrow>
+        <Eyebrow>{t('These two kids are getting married')}</Eyebrow>
         <Title size={34} style={{ marginTop: 2 }}>
-          How well do you know us?
+          {t('How well do you know us?')}
         </Title>
         {data.questions.length > 0 ? (
           <Body muted style={{ marginTop: 4 }}>
-            You've answered {answered.length} of {data.questions.length}
-            {answered.length > 0 ? ` and got ${score} right` : ''}. One go at each.
+            {answered.length > 0
+              ? t("You've answered {n} of {total} and got {score} right. One go at each.", { n: answered.length, total: data.questions.length, score })
+              : t("You've answered {n} of {total}. One go at each.", { n: answered.length, total: data.questions.length })}
           </Body>
         ) : null}
 
         {data.questions.length === 0 ? (
           <Card style={{ marginTop: space.lg }}>
-            <Body muted>{isHost ? 'No questions yet. Add your first one below.' : 'The couple are still writing the questions. Check back soon.'}</Body>
+            <Body muted>{isHost ? 'No questions yet. Add your first one below.' : t('The couple are still writing the questions. Check back soon.')}</Body>
           </Card>
         ) : null}
 
         {data.questions.map((q, i) => (
           <Card key={q.id} style={{ marginTop: space.lg }}>
             <View style={styles.qHead}>
-              <Eyebrow>Question {i + 1}</Eyebrow>
+              <Eyebrow>{t('Question {n}', { n: i + 1 })}</Eyebrow>
               <View style={{ flex: 1 }} />
               {isHost ? <IconButton icon="trash-2" label="Remove question" size={18} color={colors.muted} onPress={() => remove(q)} /> : null}
             </View>
@@ -94,7 +96,7 @@ export default function QuizScreen() {
                 <Pressable
                   key={n}
                   accessibilityRole="button"
-                  accessibilityLabel={`${opt}${right ? ', correct answer' : wrong ? ', your answer, not right' : ''}`}
+                  accessibilityLabel={right ? t('{answer}, correct answer', { answer: opt }) : wrong ? t('{answer}, your answer, not right', { answer: opt }) : opt}
                   disabled={done}
                   onPress={() => void answer(q, n)}
                   style={({ pressed }) => [styles.option, right && styles.optionRight, wrong && styles.optionWrong, pressed && { opacity: 0.8 }]}>
@@ -109,7 +111,7 @@ export default function QuizScreen() {
         {data.leaderboard.length > 0 ? (
           <>
             <View style={styles.sectionHead}>
-              <Eyebrow>Leaderboard</Eyebrow>
+              <Eyebrow>{t('Leaderboard')}</Eyebrow>
               <GoldRule style={{ flex: 1, marginLeft: space.md }} />
             </View>
             <Card tone="sage">
@@ -118,7 +120,7 @@ export default function QuizScreen() {
                   <Text style={styles.rank}>{i + 1}</Text>
                   <Text style={[styles.leaderName, row.me && { fontFamily: fonts.bodyBold }]} numberOfLines={1}>
                     {row.name}
-                    {row.me ? ' (you)' : ''}
+                    {row.me ? ` ${t('(you)')}` : ''}
                   </Text>
                   <Text style={styles.leaderScore}>{row.score}</Text>
                 </View>

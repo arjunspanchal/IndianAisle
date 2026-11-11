@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router/js-tabs';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { colors, fonts } from '@/lib/theme';
 
@@ -29,17 +30,17 @@ export default function TabsLayout() {
       }}>
       <Tabs.Screen
         name="index"
-        options={{ title: 'Today', tabBarIcon: ({ color, size }) => <Feather name="sun" color={color as string} size={size} /> }}
+        options={{ title: t('Today'), tabBarIcon: ({ color, size }) => <Feather name="sun" color={color as string} size={size} /> }}
       />
       <Tabs.Screen
         name="schedule"
-        options={{ title: 'Programme', tabBarIcon: ({ color, size }) => <Feather name="calendar" color={color as string} size={size} /> }}
+        options={{ title: t('Programme'), tabBarIcon: ({ color, size }) => <Feather name="calendar" color={color as string} size={size} /> }}
       />
       <Tabs.Screen
         name="camera"
         options={{
           ...guestOnly,
-          title: 'Camera',
+          title: t('Camera'),
           tabBarIcon: ({ focused }) => (
             <View style={[styles.cameraTab, focused && { backgroundColor: colors.rose }]}>
               <Feather name="camera" color={colors.white} size={22} />
@@ -49,11 +50,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="album"
-        options={{ ...guestOnly, title: 'Album', tabBarIcon: ({ color, size }) => <Feather name="image" color={color as string} size={size} /> }}
+        options={{ ...guestOnly, title: t('Album'), tabBarIcon: ({ color, size }) => <Feather name="image" color={color as string} size={size} /> }}
       />
       <Tabs.Screen
         name="chat"
-        options={{ title: 'Chat', tabBarIcon: ({ color, size }) => <Feather name="message-circle" color={color as string} size={size} /> }}
+        options={{ title: t('Chat'), tabBarIcon: ({ color, size }) => <Feather name="message-circle" color={color as string} size={size} /> }}
       />
     </Tabs>
   );

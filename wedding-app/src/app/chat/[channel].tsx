@@ -50,6 +50,7 @@ import { api, chatMediaUrl, errorMessage, REACTIONS, removeChatFiles, type Messa
 import { cachedRoom, localMedia, rememberRoom, restoreRoom } from '@/lib/chatCache';
 import { MAX_VOICE_SECONDS } from '@/lib/chatMedia';
 import { confirm, tell } from '@/lib/dialog';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { compose, discard, onDelivered, outboxFor, queue, retry, rowKey, subscribeOutbox, type Shown } from '@/lib/outbox';
 import { saveImageUrl, shareImageUrl } from '@/lib/photos';
@@ -64,7 +65,8 @@ function clock(seconds: number): string {
   return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 }
 
-const preview = (m: Message) => (m.kind === 'image' ? (m.body ? `Photo: ${m.body}` : 'Photo') : m.kind === 'voice' ? 'Voice note' : m.body);
+const preview = (m: Message) =>
+  m.kind === 'image' ? (m.body ? t('Photo: {caption}', { caption: m.body }) : t('Photo')) : m.kind === 'voice' ? t('Voice note') : m.body;
 
 /** Where a message's photo or voice note is: on this phone if it was just sent from here, otherwise on the server. */
 function mediaUri(m: Shown): string | null {
@@ -95,7 +97,11 @@ type Actions = {
 // The voice note that is playing. Only voice bubbles listen, so playback ticks do not redraw the room.
 const Playback = createContext<{ id: string | null; playing: boolean; position: number }>({ id: null, playing: false, position: 0 });
 
-const EMPTY_ROOM = <Notice icon="message-circle" title="Quiet in here" body="Say hello. Someone has to go first." />;
+function EmptyRoom() {
+  return <Notice icon="message-circle" title={t('Quiet in here')} body={t('Say hello. Someone has to go first.')} />;
+}
+// One element, made once, so the list's props stay the same between redraws.
+const EMPTY_ROOM = <EmptyRoom />;
 // Keep your place when reading older messages; follow along when you are at the bottom.
 const KEEP_PLACE = { minIndexForVisible: 1, autoscrollToTopThreshold: 120 };
 
@@ -236,7 +242,7 @@ export default function Thread() {
 
   // ───── sending ─────
 
-  const me = { name: guest?.name ?? 'You', host: isHost };
+  const me = { name: guest?.name ?? t('You'), host: isHost };
   const quoted = () => (replyTo ? { id: replyTo.id, by: replyTo.by, preview: preview(replyTo) } : null);
 
   function toBottom() {
@@ -259,7 +265,7 @@ export default function Thread() {
       if (from === 'camera') {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          tell('Camera access is off', 'Allow the camera in Settings to take a photo here.');
+          tell(t('Camera access is off'), t('Allow the camera in Settings to take a photo here.'));
           return;
         }
       }
@@ -275,7 +281,7 @@ export default function Thread() {
       setReplyTo(null);
       toBottom();
     } catch (e) {
-      tell("Couldn't open your photos", errorMessage(e));
+      tell(t("Couldn't open your photos"), errorMessage(e));
     }
   }
 
@@ -297,7 +303,7 @@ export default function Thread() {
     try {
       const perm = await requestRecordingPermissionsAsync();
       if (!perm.granted) {
-        tell('Microphone access is off', 'Allow the microphone in Settings to send voice notes.');
+        tell(t('Microphone access is off'), t('Allow the microphone in Settings to send voice notes.'));
         return;
       }
       if (playingId) {
@@ -312,7 +318,7 @@ export default function Thread() {
       setRecording(true);
       if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch {
-      tell("Couldn't start recording", 'Close other apps using the microphone and try again.');
+      tell(t("Couldn't start recording"), t('Close other apps using the microphone and try again.'));
     }
   }
 
@@ -326,14 +332,14 @@ export default function Thread() {
       const uri = recorder.uri;
       if (!andSend || !uri) return;
       if (seconds < 1) {
-        tell('That was very short', 'Tap the microphone, speak, then tap send.');
+        tell(t('That was very short'), t('Tap the microphone, speak, then tap send.'));
         return;
       }
       queue(compose(channel, me, { kind: 'voice', uri, seconds }, quoted()));
       setReplyTo(null);
       toBottom();
     } catch (e) {
-      if (andSend) tell("That voice note didn't record", errorMessage(e));
+      if (andSend) tell(t("That voice note didn't record"), errorMessage(e));
     }
   }
 
@@ -372,7 +378,7 @@ export default function Thread() {
 
   function remove(m: Shown) {
     setPicked(null);
-    confirm('Remove this message?', 'It will disappear for everyone.', 'Remove', async () => {
+    confirm(t('Remove this message?'), t('It will disappear for everyone.'), t('Remove'), async () => {
       // Gone from the screen first; put back if the server says no.
       const before = { latest, older };
       setData((d) => (d ? d.filter((x) => x.id !== m.id) : d));
@@ -397,7 +403,7 @@ export default function Thread() {
     setPicked(null);
     try {
       await api.report('message', m.id);
-      tell('Thank you', 'The couple will take a look.');
+      tell(t('Thank you'), t('The couple will take a look.'));
     } catch (e) {
       tell(errorMessage(e));
     }
@@ -405,7 +411,7 @@ export default function Thread() {
 
   function block(m: Shown) {
     setPicked(null);
-    confirm(`Block ${m.by}?`, "You won't see their messages or photos any more. They won't be told.", 'Block', async () => {
+    confirm(t('Block {name}?', { name: m.by }), t("You won't see their messages or photos any more. They won't be told."), t('Block'), async () => {
       try {
         await api.blockAuthor('message', m.id);
         setOlder([]);
@@ -449,11 +455,11 @@ export default function Thread() {
       style={{ flex: 1, backgroundColor: colors.paper }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 96 : 0}>
-      <Stack.Screen options={{ title: name ?? 'Chat' }} />
+      <Stack.Screen options={{ title: t(name ?? 'Chat') }} />
       {loading && !latest ? (
         <Loading />
       ) : !latest ? (
-        <Notice icon="cloud-off" title="Can't load messages" body={error ?? undefined} />
+        <Notice icon="cloud-off" title={t("Can't load messages")} body={error ?? undefined} />
       ) : (
         <Playback.Provider value={playbackNow}>
           <FlatList
@@ -480,45 +486,45 @@ export default function Thread() {
         <View style={styles.replyBar}>
           <View style={styles.replyStripe} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.replyName}>Replying to {replyTo.mine ? 'yourself' : replyTo.by}</Text>
+            <Text style={styles.replyName}>{replyTo.mine ? t('Replying to yourself') : t('Replying to {name}', { name: replyTo.by })}</Text>
             <Text style={styles.replyText} numberOfLines={1}>
               {preview(replyTo)}
             </Text>
           </View>
-          <IconButton icon="x" label="Cancel reply" size={20} color={colors.muted} onPress={() => setReplyTo(null)} />
+          <IconButton icon="x" label={t('Cancel reply')} size={20} color={colors.muted} onPress={() => setReplyTo(null)} />
         </View>
       ) : null}
 
       {recording ? (
         <View style={[styles.inputBar, styles.recordBar, { paddingBottom: Math.max(insets.bottom, space.sm) }]}>
-          <IconButton icon="trash-2" label="Discard recording" color={colors.muted} onPress={() => void finishRecording(false)} />
-          <View style={styles.recordMid} accessible accessibilityLabel={`Recording, ${Math.floor(elapsed)} seconds`}>
+          <IconButton icon="trash-2" label={t('Discard recording')} color={colors.muted} onPress={() => void finishRecording(false)} />
+          <View style={styles.recordMid} accessible accessibilityLabel={t('Recording, {n} seconds', { n: Math.floor(elapsed) })}>
             <View style={styles.recordDot} />
             <Text style={styles.recordTime}>{clock(elapsed)}</Text>
-            <Text style={styles.recordHint}>Recording… tap send when done</Text>
+            <Text style={styles.recordHint}>{t('Recording… tap send when done')}</Text>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Send voice note" onPress={() => void finishRecording(true)} style={styles.send}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Send voice note')} onPress={() => void finishRecording(true)} style={styles.send}>
             <Feather name="arrow-up" size={22} color={colors.white} />
           </Pressable>
         </View>
       ) : (
         <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, space.sm) }]}>
-          <IconButton icon="image" label="Send a photo" color={colors.olive} size={24} onPress={() => setAttach(true)} style={{ marginBottom: 1 }} />
+          <IconButton icon="image" label={t('Send a photo')} color={colors.olive} size={24} onPress={() => setAttach(true)} style={{ marginBottom: 1 }} />
           <TextInput
             ref={input}
             value={draft}
             onChangeText={setDraft}
-            placeholder="Message"
+            placeholder={t('Message')}
             placeholderTextColor="#9A9C8E"
             multiline
             maxLength={1000}
             style={styles.input}
-            accessibilityLabel="Write a message"
+            accessibilityLabel={t('Write a message')}
           />
           {draft.trim() ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Send"
+              accessibilityLabel={t('Send')}
               onPress={send}
               style={({ pressed }) => [styles.send, pressed && { opacity: 0.8 }]}>
               <Feather name="arrow-up" size={22} color={colors.white} />
@@ -526,7 +532,7 @@ export default function Thread() {
           ) : (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Record a voice note"
+              accessibilityLabel={t('Record a voice note')}
               onPress={() => void startRecording()}
               style={({ pressed }) => [styles.send, styles.mic, pressed && { opacity: 0.8 }]}>
               <Feather name="mic" size={21} color={colors.white} />
@@ -537,12 +543,12 @@ export default function Thread() {
 
       {/* Photo source */}
       <Modal visible={attach} transparent animationType="fade" onRequestClose={() => setAttach(false)}>
-        <Pressable style={styles.scrim} onPress={() => setAttach(false)} accessibilityLabel="Close">
+        <Pressable style={styles.scrim} onPress={() => setAttach(false)} accessibilityLabel={t('Close')}>
           <View style={[styles.sheet, { paddingBottom: insets.bottom + space.xl }]}>
-            <SheetAction icon="camera" label="Take a photo" onPress={() => void pickPhoto('camera')} />
-            <SheetAction icon="image" label="Choose from your photos" onPress={() => void pickPhoto('library')} />
+            <SheetAction icon="camera" label={t('Take a photo')} onPress={() => void pickPhoto('camera')} />
+            <SheetAction icon="image" label={t('Choose from your photos')} onPress={() => void pickPhoto('library')} />
             <Body muted style={{ fontSize: 14 }}>
-              Anything typed in the message box is sent as the caption.
+              {t('Anything typed in the message box is sent as the caption.')}
             </Body>
           </View>
         </Pressable>
@@ -550,7 +556,7 @@ export default function Thread() {
 
       {/* Hold-a-message menu */}
       <Modal visible={picked !== null} transparent animationType="fade" onRequestClose={() => setPicked(null)}>
-        <Pressable style={styles.scrim} onPress={() => setPicked(null)} accessibilityLabel="Close">
+        <Pressable style={styles.scrim} onPress={() => setPicked(null)} accessibilityLabel={t('Close')}>
           {picked ? (
             <View style={[styles.sheet, { paddingBottom: insets.bottom + space.xl }]}>
               <Body numberOfLines={3} muted style={{ fontSize: 15 }}>
@@ -558,17 +564,17 @@ export default function Thread() {
               </Body>
               <View style={styles.reactRow}>
                 {REACTIONS.map((e) => (
-                  <Pressable key={e} accessibilityRole="button" accessibilityLabel={`React ${e}`} onPress={() => react(picked, e)} style={styles.reactBig}>
+                  <Pressable key={e} accessibilityRole="button" accessibilityLabel={t('React {emoji}', { emoji: e })} onPress={() => react(picked, e)} style={styles.reactBig}>
                     <Text style={{ fontSize: 28 }}>{e}</Text>
                   </Pressable>
                 ))}
               </View>
-              <SheetAction icon="corner-up-left" label="Reply" onPress={() => startReply(picked)} />
-              {picked.mine || isHost ? <SheetAction icon="trash-2" label="Remove message" danger onPress={() => remove(picked)} /> : null}
+              <SheetAction icon="corner-up-left" label={t('Reply')} onPress={() => startReply(picked)} />
+              {picked.mine || isHost ? <SheetAction icon="trash-2" label={t('Remove message')} danger onPress={() => remove(picked)} /> : null}
               {!picked.mine ? (
                 <>
-                  <SheetAction icon="flag" label="Report to the couple" onPress={() => void report(picked)} />
-                  <SheetAction icon="slash" label={`Block ${picked.by}`} danger onPress={() => block(picked)} />
+                  <SheetAction icon="flag" label={t('Report to the couple')} onPress={() => void report(picked)} />
+                  <SheetAction icon="slash" label={t('Block {name}', { name: picked.by })} danger onPress={() => block(picked)} />
                 </>
               ) : null}
             </View>
@@ -630,9 +636,9 @@ function PhotoViewer({ message, onClose }: { message: Message; onClose: () => vo
 
   async function save() {
     const r = await saveImageUrl(url, message.id);
-    if (r === 'saved') tell('Saved to your photos');
-    else if (r === 'denied') tell('Photos access is off', 'Allow access to Photos in Settings to save pictures to your phone.');
-    else tell("Couldn't save that photo", 'Check your signal and try again.');
+    if (r === 'saved') tell(t('Saved to your photos'));
+    else if (r === 'denied') tell(t('Photos access is off'), t('Allow access to Photos in Settings to save pictures to your phone.'));
+    else tell(t("Couldn't save that photo"), t('Check your signal and try again.'));
   }
 
   return (
@@ -640,20 +646,20 @@ function PhotoViewer({ message, onClose }: { message: Message; onClose: () => vo
       <SwipeDown onClose={onClose} enabled={!zoomed}>
         <ZoomImage uri={url} width={width} height={height} transition={120} onZoom={setZoomed} />
         <View style={[styles.viewerTop, { paddingTop: insets.top + 4 }]}>
-          <IconButton icon="x" label="Close" color={colors.white} size={26} onPress={onClose} style={styles.viewerChip} />
+          <IconButton icon="x" label={t('Close')} color={colors.white} size={26} onPress={onClose} style={styles.viewerChip} />
         </View>
         <View style={[styles.viewerBottom, { paddingBottom: insets.bottom + space.md }]}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.viewerBy}>{message.mine ? 'You' : message.by}</Text>
+            <Text style={styles.viewerBy}>{message.mine ? t('You') : message.by}</Text>
             {message.body ? <Text style={styles.viewerCaption}>{message.body}</Text> : null}
           </View>
-          <IconButton icon="download" label="Save to your phone" color={colors.white} size={24} onPress={() => void save()} />
+          <IconButton icon="download" label={t('Save to your phone')} color={colors.white} size={24} onPress={() => void save()} />
           <IconButton
             icon="share"
-            label="Share this photo"
+            label={t('Share this photo')}
             color={colors.white}
             size={24}
-            onPress={() => void shareImageUrl(url, message.id).then((ok) => !ok && tell("Couldn't share that photo"))}
+            onPress={() => void shareImageUrl(url, message.id).then((ok) => !ok && tell(t("Couldn't share that photo")))}
           />
         </View>
       </SwipeDown>
@@ -761,13 +767,13 @@ function Bubble({ message, showName, actions }: { message: Shown; showName: bool
       {showName ? (
         <Text style={styles.name}>
           {message.by}
-          {message.host ? <Text style={styles.hostTag}>  ·  the couple</Text> : null}
+          {message.host ? <Text style={styles.hostTag}>{`  ·  ${t('the couple')}`}</Text> : null}
         </Text>
       ) : null}
       <Pressable
         accessibilityRole={isImage ? 'imagebutton' : 'text'}
-        accessibilityLabel={isImage ? `Photo from ${mine ? 'you' : message.by}${message.body ? `: ${message.body}` : ''}` : undefined}
-        accessibilityHint={local ? undefined : mine ? 'Swipe left or right to reply. Hold for reactions and more.' : 'Swipe right to reply. Hold for reactions and more.'}
+        accessibilityLabel={isImage ? `${mine ? t('Photo from you') : t('Photo from {name}', { name: message.by })}${message.body ? `: ${message.body}` : ''}` : undefined}
+        accessibilityHint={local ? undefined : mine ? t('Swipe left or right to reply. Hold for reactions and more.') : t('Swipe right to reply. Hold for reactions and more.')}
         onPress={isImage && !local ? () => actions.current.open(message) : undefined}
         onLongPress={() => actions.current.pick(message)}
         delayLongPress={280}
@@ -802,7 +808,7 @@ function Bubble({ message, showName, actions }: { message: Shown; showName: bool
 
         {message.body ? <Text style={[styles.text, isImage && { paddingHorizontal: 10, paddingTop: 6 }]}>{message.body}</Text> : null}
         <Text style={[styles.time, isImage && { paddingHorizontal: 10, paddingBottom: 4 }, local?.state === 'failed' && { color: colors.rose }]}>
-          {local ? (local.state === 'sending' ? 'Sending…' : "Didn't send") : formatWhen(message.created_at)}
+          {local ? (local.state === 'sending' ? t('Sending…') : t("Didn't send")) : formatWhen(message.created_at)}
         </Text>
       </Pressable>
 
@@ -810,12 +816,12 @@ function Bubble({ message, showName, actions }: { message: Shown; showName: bool
         <View style={styles.failed} accessibilityLiveRegion="polite">
           {local.error ? <Text style={styles.failedWhy}>{local.error}</Text> : null}
           <View style={styles.failedActions}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Try sending again" hitSlop={8} onPress={() => actions.current.retry(local.key)} style={styles.failedButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Try sending again')} hitSlop={8} onPress={() => actions.current.retry(local.key)} style={styles.failedButton}>
               <Feather name="rotate-cw" size={15} color={colors.rose} />
-              <Text style={styles.failedText}>Try again</Text>
+              <Text style={styles.failedText}>{t('Try again')}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Discard this message" hitSlop={8} onPress={() => actions.current.discard(local.key)} style={styles.failedButton}>
-              <Text style={[styles.failedText, { color: colors.muted }]}>Discard</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Discard this message')} hitSlop={8} onPress={() => actions.current.discard(local.key)} style={styles.failedButton}>
+              <Text style={[styles.failedText, { color: colors.muted }]}>{t('Discard')}</Text>
             </Pressable>
           </View>
         </View>
@@ -852,7 +858,7 @@ function VoiceBody({ message, actions }: { message: Shown; actions: RefObject<Ac
     <View style={styles.voice}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={playing ? 'Pause voice note' : `Play voice note, ${Math.round(total)} seconds`}
+        accessibilityLabel={playing ? t('Pause voice note') : t('Play voice note, {n} seconds', { n: Math.round(total) })}
         hitSlop={8}
         onPress={() => actions.current.play(message)}
         style={styles.play}>

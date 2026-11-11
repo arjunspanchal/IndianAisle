@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet,
 import { Body, Button, Card, Eyebrow, GoldRule, Loading, Notice, Title } from '@/components/ui';
 import { api, errorMessage, type Seating } from '@/lib/api';
 import { tell } from '@/lib/dialog';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space } from '@/lib/theme';
@@ -65,14 +66,15 @@ export default function Places() {
     return (
       <Notice
         icon="cloud-off"
-        title="Can't load this right now"
+        title={t("Can't load this right now")}
         body={tables.error ?? rooms.error ?? undefined}
-        action={<Button label="Try again" variant="quiet" onPress={() => void refresh()} />}
+        action={<Button label={t('Try again')} variant="quiet" onPress={() => void refresh()} />}
       />
     );
 
   const q = query.trim().toLowerCase();
   const chart = q ? tables.data.tables.filter((t) => t.names.some((n) => n.toLowerCase().includes(q))) : tables.data.tables;
+  const tableWord = t(WORDS.sangeet.unit); // worked out here: inside the list below, `t` is a table
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={96}>
@@ -86,23 +88,23 @@ export default function Places() {
         {tables.data.tables.length > 0 ? (
           <>
             <View style={styles.section}>
-              <Eyebrow>All Sangeet tables</Eyebrow>
+              <Eyebrow>{t('All Sangeet tables')}</Eyebrow>
               <GoldRule style={{ flex: 1, marginLeft: space.md }} />
             </View>
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search for a name"
+              placeholder={t('Search for a name')}
               placeholderTextColor="#9A9C8E"
               autoCorrect={false}
               style={styles.search}
-              accessibilityLabel="Search the seating chart by name"
+              accessibilityLabel={t('Search the seating chart by name')}
             />
-            {chart.length === 0 ? <Body muted>No one by that name on the chart.</Body> : null}
+            {chart.length === 0 ? <Body muted>{t('No one by that name on the chart.')}</Body> : null}
             {chart.map((t) => (
               <Card key={t.table_no} style={[styles.table, t.table_no === tables.data!.my_table && styles.tableMine]}>
                 <Text style={styles.tableNo}>
-                  {WORDS.sangeet.unit} {t.table_no}
+                  {tableWord} {t.table_no}
                 </Text>
                 <Body muted style={{ flex: 1 }}>
                   {t.names.join(' · ')}
@@ -129,15 +131,15 @@ function Mine({ kind, data, myName }: { kind: Kind; data: Seating; myName: strin
   const mates = data.tables.find((t) => t.table_no === data.my_table)?.names.filter((n) => n.trim().toLowerCase() !== myName.trim().toLowerCase()) ?? [];
   return (
     <Card tone={kind === 'room' ? 'sage' : 'blush'} style={styles.mine}>
-      <Eyebrow>{w.mine}</Eyebrow>
+      <Eyebrow>{t(w.mine)}</Eyebrow>
       {data.my_table ? (
         <>
-          <Text style={styles.big} accessibilityLabel={`${w.unit} ${data.my_table}`}>
+          <Text style={styles.big} accessibilityLabel={`${t(w.unit)} ${data.my_table}`}>
             {data.my_table}
           </Text>
           {mates.length > 0 ? (
             <Body muted style={{ textAlign: 'center' }}>
-              With {mates.join(', ')}
+              {t('With {names}', { names: mates.join(', ') })}
             </Body>
           ) : null}
         </>
@@ -145,9 +147,9 @@ function Mine({ kind, data, myName }: { kind: Kind; data: Seating; myName: strin
         <Body muted style={{ textAlign: 'center', marginTop: space.sm }}>
           {published
             ? kind === 'room'
-              ? "We couldn't match your name to a room. Please ask the wedding team."
-              : "We couldn't match your name. Search for it in the chart below."
-            : w.none}
+              ? t("We couldn't match your name to a room. Please ask the wedding team.")
+              : t("We couldn't match your name. Search for it in the chart below.")
+            : t(w.none)}
         </Body>
       )}
     </Card>

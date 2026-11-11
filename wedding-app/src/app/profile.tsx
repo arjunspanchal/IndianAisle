@@ -10,6 +10,7 @@ import { Body, Button, Eyebrow, Loading, Title } from '@/components/ui';
 import { api, errorMessage, PHOTO_BUCKET, photoUrl, removePhotoFiles, supabase, type Person, type Side } from '@/lib/api';
 import { tell } from '@/lib/dialog';
 import { readBytes } from '@/lib/files';
+import { t } from '@/lib/i18n';
 import { useLoad } from '@/lib/live';
 import { colors, fonts, radius, space, wedding } from '@/lib/theme';
 
@@ -52,7 +53,7 @@ export default function Profile() {
       if (done.old_path) void removePhotoFiles([done.old_path]);
       await reload();
     } catch (e) {
-      tell("That photo didn't upload", errorMessage(e));
+      tell(t("That photo didn't upload"), errorMessage(e));
     } finally {
       setPhotoBusy(false);
     }
@@ -75,15 +76,15 @@ export default function Profile() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={96}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Eyebrow>Say hello</Eyebrow>
+        <Eyebrow>{t('Say hello')}</Eyebrow>
         <Title size={34} style={{ marginTop: 2 }}>
-          Introduce yourself
+          {t('Introduce yourself')}
         </Title>
         <Body muted style={{ marginTop: 6 }}>
-          Other guests see this under People, so everyone knows who's who before the first dance. All of it is optional.
+          {t("Other guests see this under People, so everyone knows who's who before the first dance. All of it is optional.")}
         </Body>
 
-        <Pressable accessibilityRole="button" accessibilityLabel="Choose your photo" onPress={() => void choosePhoto()} style={styles.photoRow}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Choose your photo')} onPress={() => void choosePhoto()} style={styles.photoRow}>
           {me?.avatar_path ? (
             <Image source={{ uri: photoUrl(me.avatar_path) }} style={styles.avatar} contentFit="cover" />
           ) : (
@@ -93,11 +94,11 @@ export default function Profile() {
           )}
           <View style={{ flex: 1 }}>
             <Text style={styles.name}>{me?.name}</Text>
-            <Text style={styles.link}>{photoBusy ? 'Uploading…' : me?.avatar_path ? 'Change photo' : 'Add a photo'}</Text>
+            <Text style={styles.link}>{photoBusy ? t('Uploading…') : me?.avatar_path ? t('Change photo') : t('Add a photo')}</Text>
           </View>
         </Pressable>
 
-        <Text style={styles.label}>Whose side are you on?</Text>
+        <Text style={styles.label}>{t('Whose side are you on?')}</Text>
         <View style={styles.sides}>
           {SIDES.map((s) => {
             const on = side === s.value;
@@ -108,28 +109,28 @@ export default function Profile() {
                 accessibilityState={{ checked: on }}
                 onPress={() => setSide(on ? null : s.value)}
                 style={[styles.side, on && styles.sideOn]}>
-                <Text style={[styles.sideText, on && { color: colors.white }]}>{s.label}</Text>
+                <Text style={[styles.sideText, on && { color: colors.white }]}>{t(s.label)}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        <Text style={styles.label}>How do you know them?</Text>
+        <Text style={styles.label}>{t('How do you know them?')}</Text>
         <TextInput
           value={about}
           onChangeText={setAbout}
-          placeholder={`e.g. ${wedding.first}'s cousin, college friend`}
+          placeholder={t("e.g. {name}'s cousin, college friend", { name: t(wedding.first) })}
           placeholderTextColor="#9A9C8E"
           multiline
           maxLength={160}
           style={[styles.input, styles.multi]}
-          accessibilityLabel="How do you know the couple"
+          accessibilityLabel={t('How do you know the couple')}
         />
 
-        <Text style={styles.label}>Where are you coming from?</Text>
-        <TextInput value={city} onChangeText={setCity} placeholder="City" placeholderTextColor="#9A9C8E" maxLength={40} style={styles.input} accessibilityLabel="Where are you coming from" />
+        <Text style={styles.label}>{t('Where are you coming from?')}</Text>
+        <TextInput value={city} onChangeText={setCity} placeholder={t('City')} placeholderTextColor="#9A9C8E" maxLength={40} style={styles.input} accessibilityLabel={t('Where are you coming from')} />
 
-        <Button label="Save" onPress={() => void save()} busy={busy} style={{ marginTop: space.xl }} />
+        <Button label={t('Save')} onPress={() => void save()} busy={busy} style={{ marginTop: space.xl }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

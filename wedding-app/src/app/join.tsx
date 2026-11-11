@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { Accent, Body, Button, Eyebrow } from '@/components/ui';
 import { configured, errorMessage } from '@/lib/api';
+import { t } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space, wedding } from '@/lib/theme';
 
@@ -50,33 +52,37 @@ export default function Join() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
             <Image source={require('../../assets/florals/parrot.webp')} style={styles.parrot} contentFit="contain" />
-            <Eyebrow style={{ textAlign: 'center' }}>{wedding.eyebrow}</Eyebrow>
+            <Eyebrow style={{ textAlign: 'center' }}>{t(wedding.eyebrow)}</Eyebrow>
             <Text style={styles.names} accessibilityRole="header">
-              {wedding.first} <Accent style={styles.amp}>&</Accent> {wedding.second}
+              {t(wedding.first)} <Accent style={styles.amp}>{t('&')}</Accent> {t(wedding.second)}
             </Text>
             <View style={styles.rule} />
-            <Text style={styles.dates}>{wedding.dates}</Text>
-            <Accent style={styles.tagline}>{wedding.tagline}</Accent>
+            <Text style={styles.dates}>{t(wedding.dates)}</Text>
+            <Accent style={styles.tagline}>{t(wedding.tagline)}</Accent>
+
+            <View style={{ alignItems: 'center', marginTop: 18 }}>
+              <LanguageSwitch />
+            </View>
 
             <View style={styles.form}>
-              <Text style={styles.label}>Your name</Text>
+              <Text style={styles.label}>{t('Your name')}</Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="Your full name"
+                placeholder={t('Your full name')}
                 placeholderTextColor="#9A9C8E"
                 autoCapitalize="words"
                 autoCorrect={false}
                 maxLength={40}
                 returnKeyType="next"
                 style={styles.input}
-                accessibilityLabel="Your name"
+                accessibilityLabel={t('Your name')}
               />
-              <Text style={[styles.label, { marginTop: space.md }]}>Invite code</Text>
+              <Text style={[styles.label, { marginTop: space.md }]}>{t('Invite code')}</Text>
               <TextInput
                 value={code}
-                onChangeText={(t) => setCode(t.toUpperCase())}
-                placeholder="On your invitation"
+                onChangeText={(text) => setCode(text.toUpperCase())}
+                placeholder={t('On your invitation')}
                 placeholderTextColor="#9A9C8E"
                 autoCapitalize="characters"
                 autoCorrect={false}
@@ -84,17 +90,17 @@ export default function Join() {
                 returnKeyType="go"
                 onSubmitEditing={submit}
                 style={[styles.input, styles.code]}
-                accessibilityLabel="Invite code"
+                accessibilityLabel={t('Invite code')}
               />
               {error ? (
                 <Body style={styles.error}>{error}</Body>
               ) : null}
-              {!configured ? <Body style={styles.error}>This build has no server address set.</Body> : null}
-              <Button label="Come on in" onPress={submit} busy={busy} disabled={!canSubmit} style={{ marginTop: space.lg }} />
+              {!configured ? <Body style={styles.error}>{t('This build has no server address set.')}</Body> : null}
+              <Button label={t('Come on in')} onPress={submit} busy={busy} disabled={!canSubmit} style={{ marginTop: space.lg }} />
             </View>
 
             <Body muted style={styles.foot}>
-              Photos, plans and chatter for our three days in the hills.
+              {t('Photos, plans and chatter for our three days in the hills.')}
             </Body>
           </ScrollView>
         </KeyboardAvoidingView>

@@ -36,6 +36,37 @@ export async function saveToPhone(photos: Photo[], onProgress?: (done: number) =
 }
 
 /**
+ * Save a long list one at a time. The caller is told after each photo, so it can
+ * show progress and remember what is already on the phone, and can stop early.
+ */
+export async function saveEach(
+  photos: Photo[],
+  onSaved: (photo: Photo, done: number) => void,
+  shouldStop: () => boolean,
+): Promise<SaveResult | 'stopped'> {
+  if (Platform.OS === 'web') return 'failed';
+  try {
+    const perm = await MediaLibrary.requestPermissionsAsync(true);
+    if (!perm.granted) return 'denied';
+    let done = 0;
+    let missed = 0;
+    for (const p of photos) {
+      if (shouldStop()) return 'stopped';
+      try {
+        await MediaLibrary.saveToLibraryAsync(await download(p));
+        onSaved(p, ++done);
+      } catch {
+        // one bad download should not end the whole run, but a dead connection should
+        if (++missed >= 5 && done === 0) return 'failed';
+      }
+    }
+    return done === 0 && missed > 0 ? 'failed' : 'saved';
+  } catch {
+    return 'failed';
+  }
+}
+
+/**
  * Open the phone's share sheet. One photo is shared as the picture itself;
  * several are shared as links (the system sheet takes one file at a time).
  */

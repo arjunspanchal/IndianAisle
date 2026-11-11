@@ -6,6 +6,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 import { CallButtons } from '@/components/Contacts';
 import { WeatherLine } from '@/components/Weather';
 import { Accent, Body, Button, Card, Eyebrow, GoldRule, Title } from '@/components/ui';
+import { t } from '@/lib/i18n';
 import { arriving, faqs, fogNote, gettingHere, packing, travelCaveat, typicalWeather } from '@/lib/info';
 import { colors, fonts, radius, space, wedding } from '@/lib/theme';
 
@@ -36,17 +37,17 @@ export default function Info() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.paper }} contentContainerStyle={styles.content}>
-      <Eyebrow>The useful little things</Eyebrow>
+      <Eyebrow>{t('The useful little things')}</Eyebrow>
       <Title size={34} style={{ marginTop: 2 }}>
-        Less wondering.
+        {t('Less wondering.')}
       </Title>
-      <Accent style={{ fontSize: 26 }}>More celebrating.</Accent>
+      <Accent style={{ fontSize: 26 }}>{t('More celebrating.')}</Accent>
 
-      <Section title="Hello, hills" />
+      <Section title={t('Hello, hills')} />
       {arriving.map((a) => (
         <Card key={a.when} style={styles.gap}>
-          <Text style={styles.kicker}>{a.when}</Text>
-          <Body style={{ marginTop: 4 }}>{a.what}</Body>
+          <Text style={styles.kicker}>{t(a.when)}</Text>
+          <Body style={{ marginTop: 4 }}>{t(a.what)}</Body>
         </Card>
       ))}
       <Card style={styles.gap}>
@@ -54,69 +55,69 @@ export default function Info() {
         <Body muted style={{ marginTop: 4 }}>
           {wedding.address}
         </Body>
-        <Button label="Open in Maps" icon="map-pin" variant="quiet" onPress={() => void Linking.openURL(wedding.mapsUrl)} style={styles.inlineButton} />
+        <Button label={t('Open in Maps')} icon="map-pin" variant="quiet" onPress={() => void Linking.openURL(wedding.mapsUrl)} style={styles.inlineButton} />
         <CallButtons />
       </Card>
 
-      <Section title="Winter in the north" />
+      <Section title={t('Winter in the north')} />
       <Card tone="sage" style={styles.gap}>
-        <Text style={styles.kicker}>Right now</Text>
+        <Text style={styles.kicker}>{t('Right now')}</Text>
         <WeatherLine />
         <Text
           style={styles.credit}
           accessibilityRole="link"
           onPress={() => void Linking.openURL('https://open-meteo.com/')}>
-          Weather data by Open-Meteo.com
+          {t('Weather data by Open-Meteo.com')}
         </Text>
         <GoldRule style={{ marginVertical: space.md }} />
-        <Text style={styles.kicker}>Typical mid-January</Text>
+        <Text style={styles.kicker}>{t('Typical mid-January')}</Text>
         {typicalWeather.map((w) => (
           <View key={w.place} style={styles.weatherRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.place}>{w.place}</Text>
+              <Text style={styles.place}>{t(w.place)}</Text>
               <Body muted style={styles.small}>
-                {w.note}
+                {t(w.note)}
               </Body>
             </View>
-            <View style={styles.temps} accessible accessibilityLabel={`${w.place}: ${w.day} by day, ${w.night} at night`}>
+            <View style={styles.temps} accessible accessibilityLabel={t('{place}: {day} by day, {night} at night', { place: t(w.place), day: w.day, night: w.night })}>
               <Text style={styles.temp}>{w.day}</Text>
-              <Text style={styles.tempLabel}>day</Text>
+              <Text style={styles.tempLabel}>{t('day')}</Text>
               <Text style={[styles.temp, { marginTop: 4 }]}>{w.night}</Text>
-              <Text style={styles.tempLabel}>night</Text>
+              <Text style={styles.tempLabel}>{t('night')}</Text>
             </View>
           </View>
         ))}
         <Body muted style={[styles.small, { marginTop: space.sm }]}>
-          Typical weather, not a forecast.
+          {t('Typical weather, not a forecast.')}
         </Body>
       </Card>
       <Card tone="blush" style={[styles.gap, styles.fog]}>
         <Feather name="cloud" size={18} color={colors.rose} style={{ marginTop: 3 }} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>A note on January fog</Text>
+          <Text style={styles.cardTitle}>{t('A note on January fog')}</Text>
           <Body muted style={styles.small}>
-            {fogNote}
+            {t(fogNote)}
           </Body>
         </View>
       </Card>
 
-      <Section title="The journey here" />
+      <Section title={t('The journey here')} />
       {gettingHere.map((g) => (
         <Card key={g.from} style={styles.gap}>
-          <Text style={styles.kicker}>{g.from}</Text>
+          <Text style={styles.kicker}>{t(g.from)}</Text>
           <Title size={22} style={{ marginTop: 2 }}>
-            {g.how}
+            {t(g.how)}
           </Title>
           <Body muted style={{ marginTop: 4 }}>
-            {g.note}
+            {t(g.note)}
           </Body>
         </Card>
       ))}
       <Body muted style={[styles.small, { marginTop: space.sm }]}>
-        {travelCaveat}
+        {t(travelCaveat)}
       </Body>
 
-      <Section title="Questions" />
+      <Section title={t('Questions')} />
       {faqs.map((f, i) => {
         const on = open === i;
         return (
@@ -127,17 +128,17 @@ export default function Info() {
             onPress={() => setOpen(on ? null : i)}
             style={[styles.faq, on && styles.faqOn]}>
             <View style={styles.faqHead}>
-              <Text style={styles.faqQ}>{f.q}</Text>
+              <Text style={styles.faqQ}>{t(f.q)}</Text>
               <Feather name={on ? 'minus' : 'plus'} size={20} color={colors.rose} />
             </View>
-            {on ? <Body style={{ marginTop: space.sm }}>{f.a}</Body> : null}
+            {on ? <Body style={{ marginTop: space.sm }}>{t(f.a)}</Body> : null}
           </Pressable>
         );
       })}
 
-      <Section title="A little packing list" />
+      <Section title={t('A little packing list')} />
       <Card style={styles.gap}>
-        <Accent style={{ fontSize: 20, marginBottom: space.sm }}>Bring the essentials. We’ll bring the happy tears.</Accent>
+        <Accent style={{ fontSize: 20, marginBottom: space.sm }}>{t('Bring the essentials. We’ll bring the happy tears.')}</Accent>
         {packing.map((item, i) => {
           const done = packed.has(i);
           return (
@@ -148,16 +149,19 @@ export default function Info() {
               onPress={() => togglePacked(i)}
               style={styles.packRow}>
               <View style={[styles.box, done && styles.boxOn]}>{done ? <Feather name="check" size={16} color={colors.white} /> : null}</View>
-              <Text style={[styles.packText, done && styles.packDone]}>{item}</Text>
+              <Text style={[styles.packText, done && styles.packDone]}>{t(item)}</Text>
             </Pressable>
           );
         })}
         <Body muted style={[styles.small, { marginTop: space.sm }]}>
-          {packed.size} of {packing.length} packed. A friendly packing suggestion, not a dress code. Your ticks stay on this phone.
+          {t('{done} of {total} packed. A friendly packing suggestion, not a dress code. Your ticks stay on this phone.', {
+            done: packed.size,
+            total: packing.length,
+          })}
         </Body>
       </Card>
 
-      <Button label="Open the wedding website" variant="ghost" onPress={() => void Linking.openURL(wedding.siteUrl)} style={{ alignSelf: 'center', marginTop: space.lg }} />
+      <Button label={t('Open the wedding website')} variant="ghost" onPress={() => void Linking.openURL(wedding.siteUrl)} style={{ alignSelf: 'center', marginTop: space.lg }} />
     </ScrollView>
   );
 }

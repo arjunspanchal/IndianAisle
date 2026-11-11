@@ -6,6 +6,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, Vie
 import { Accent, Body, Button, Card, Eyebrow, Loading, Notice, ScreenHeader, Title } from '@/components/ui';
 import { api, errorMessage, type Home, type WeddingEvent } from '@/lib/api';
 import { addToCalendar } from '@/lib/calendar';
+import { t } from '@/lib/i18n';
 import { tell } from '@/lib/dialog';
 import { useLive, useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
@@ -47,15 +48,15 @@ export default function Schedule() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
-      <ScreenHeader eyebrow={wedding.dates} title="The programme" />
+      <ScreenHeader eyebrow={t(wedding.dates)} title={t('The programme')} />
       {loading && !data ? (
         <Loading />
       ) : !data ? (
         <Notice
           icon="cloud-off"
-          title="Can't load the programme"
+          title={t("Can't load the programme")}
           body={error ?? undefined}
-          action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />}
+          action={<Button label={t('Try again')} variant="quiet" onPress={() => void reload()} />}
         />
       ) : (
         <>
@@ -69,12 +70,17 @@ export default function Schedule() {
                   key={d}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: on }}
-                  accessibilityLabel={`Day ${DAY_WORDS[d - 1]}, ${weekday} ${rest}`}
+                  accessibilityLabel={t('Day {word}, {weekday} {date} {month}', {
+                    word: t(DAY_WORDS[d - 1]),
+                    weekday: t(weekday),
+                    date: rest.split(' ')[0],
+                    month: t(rest.split(' ')[1]),
+                  })}
                   onPress={() => setDay(d)}
                   style={[styles.tab, on && styles.tabOn]}>
-                  <Text style={[styles.tabDay, on && { color: colors.white }]}>{weekday.slice(0, 3)}</Text>
+                  <Text style={[styles.tabDay, on && { color: colors.white }]}>{t(weekday.slice(0, 3))}</Text>
                   <Text style={[styles.tabDate, on && { color: colors.white }]}>{rest.split(' ')[0]}</Text>
-                  <Text style={[styles.tabMonth, on && { color: '#F3DDE4' }]}>{rest.split(' ')[1].slice(0, 3)}</Text>
+                  <Text style={[styles.tabMonth, on && { color: '#F3DDE4' }]}>{t(rest.split(' ')[1].slice(0, 3))}</Text>
                 </Pressable>
               );
             })}
@@ -86,11 +92,11 @@ export default function Schedule() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.olive} />}>
             {day !== null ? (
               <View style={styles.dayHead}>
-                <Eyebrow>Day {DAY_WORDS[day - 1]}</Eyebrow>
+                <Eyebrow>{t('Day {word}', { word: t(DAY_WORDS[day - 1]) })}</Eyebrow>
                 <Title size={32} style={{ marginTop: 2 }}>
-                  {wedding.dayNames[day - 1]}
+                  {t(wedding.dayNames[day - 1])}
                 </Title>
-                <Accent style={{ fontSize: 19, marginTop: 4 }}>{wedding.dayLines[day - 1]}</Accent>
+                <Accent style={{ fontSize: 19, marginTop: 4 }}>{t(wedding.dayLines[day - 1])}</Accent>
               </View>
             ) : null}
 
@@ -98,9 +104,9 @@ export default function Schedule() {
               <Card tone="blush" style={styles.wear}>
                 <Feather name="scissors" size={18} color={colors.rose} style={{ marginTop: 3 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.wearTitle}>What to wear</Text>
+                  <Text style={styles.wearTitle}>{t('What to wear')}</Text>
                   <Body muted style={{ fontSize: 15, lineHeight: 21 }}>
-                    {wedding.dressInterim}
+                    {t(wedding.dressInterim)}
                   </Body>
                 </View>
               </Card>
@@ -109,11 +115,11 @@ export default function Schedule() {
             {isVendor ? null : (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Open the outfits guide"
+                accessibilityLabel={t('Open the outfits guide')}
                 onPress={() => router.push('/outfits')}
                 style={({ pressed }) => [styles.outfits, pressed && { opacity: 0.6 }]}>
                 <Feather name="scissors" size={16} color={colors.rose} />
-                <Text style={styles.calendarText}>What to wear, celebration by celebration</Text>
+                <Text style={styles.calendarText}>{t('What to wear, celebration by celebration')}</Text>
                 <Feather name="chevron-right" size={18} color={colors.rose} />
               </Pressable>
             )}
@@ -123,7 +129,7 @@ export default function Schedule() {
             ))}
 
             <Body muted style={styles.foot}>
-              All times are India time. If plans shift, you'll see it on the Today tab first.
+              {t("All times are India time. If plans shift, you'll see it on the Today tab first.")}
             </Body>
           </ScrollView>
         </>
@@ -165,17 +171,33 @@ function EventCard({ event, now, isHost, onChanged }: { event: WeddingEvent; now
       <View style={styles.cardTop}>
         <Text style={[styles.time, live && { color: colors.rose }]}>
           {timeMain}
-          {timeRest ? <Text style={styles.timeRest}> {timeRest}</Text> : null}
+          {timeRest ? <Text style={styles.timeRest}> {t(timeRest)}</Text> : null}
         </Text>
         {live ? (
           <View style={styles.livePill}>
             <View style={styles.liveDot} />
-            <Text style={styles.liveText}>Now</Text>
+            <Text style={styles.liveText}>{t('Now')}</Text>
           </View>
         ) : null}
       </View>
-      <Title size={26}>{event.title}</Title>
-      {event.note ? <Body muted style={{ marginTop: 2 }}>{event.note}</Body> : null}
+      <Title size={26}>{t(event.title)}</Title>
+      {event.note ? <Body muted style={{ marginTop: 2 }}>{t(event.note)}</Body> : null}
+      {event.location ? (
+        <View style={styles.where}>
+          <Feather name="map-pin" size={14} color={colors.olive} />
+          <Text style={styles.whereText}>{event.location}</Text>
+        </View>
+      ) : null}
+      {event.menu ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('See the menu for {event}', { event: t(event.title) })}
+          onPress={() => router.push('/menus')}
+          style={({ pressed }) => [styles.calendar, { marginBottom: 0 }, pressed && { opacity: 0.6 }]}>
+          <Feather name="coffee" size={16} color={colors.rose} />
+          <Text style={styles.calendarText}>{t('See the menu')}</Text>
+        </Pressable>
+      ) : null}
 
       {editing ? (
         <View style={{ marginTop: space.sm }}>
@@ -205,7 +227,7 @@ function EventCard({ event, now, isHost, onChanged }: { event: WeddingEvent; now
         <View style={styles.dressRow}>
           <Feather name="scissors" size={15} color={colors.rose} style={{ marginTop: 4 }} />
           <Body style={{ flex: 1 }}>
-            <Text style={{ fontFamily: fonts.bodyBold }}>Wear: </Text>
+            <Text style={{ fontFamily: fonts.bodyBold }}>{t('Wear:')} </Text>
             {event.dress}
           </Body>
           {isHost ? (
@@ -227,11 +249,11 @@ function EventCard({ event, now, isHost, onChanged }: { event: WeddingEvent; now
       {!done && !editing ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Add ${event.title} to your calendar`}
-          onPress={() => void addToCalendar(event).catch(() => tell("Couldn't open your calendar", 'Please try again in a moment.'))}
+          accessibilityLabel={t('Add {event} to your calendar', { event: t(event.title) })}
+          onPress={() => void addToCalendar(event).catch(() => tell(t("Couldn't open your calendar"), t('Please try again in a moment.')))}
           style={({ pressed }) => [styles.calendar, pressed && { opacity: 0.6 }]}>
           <Feather name="calendar" size={16} color={colors.rose} />
-          <Text style={styles.calendarText}>Add to calendar</Text>
+          <Text style={styles.calendarText}>{t('Add to calendar')}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -293,6 +315,8 @@ const styles = StyleSheet.create({
   },
   dressActions: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm },
   calendar: { flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start', minHeight: 44, marginTop: 4, marginBottom: -8 },
+  where: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  whereText: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.ink },
   outfits: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 4 },
   calendarText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.rose },
   foot: { textAlign: 'center', fontSize: 14.5, marginTop: space.sm },

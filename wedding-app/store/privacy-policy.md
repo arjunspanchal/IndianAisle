@@ -14,6 +14,9 @@ KA Wedding is a private app for guests and vendors of Kashika & Arjun's wedding
 - An optional introduction other guests can see: a photo, which side you're on, your city and a line about how you know the couple.
 - A notification token for your phone, if you turn notifications on.
 - SOS alerts you send, with your name and any note you add.
+- If you tap "I've arrived" in Chandigarh or at the resort, the time you tapped. It is a button you press; the app does not track where you are.
+- Wishes you write for Kashika & Arjun, your answers to polls, and which of your photos you enter in a photo challenge.
+- Which language you chose and whether event reminders are on. These stay on your phone.
 
 **What we do not collect**
 
@@ -24,6 +27,8 @@ KA Wedding is a private app for guests and vendors of Kashika & Arjun's wedding
 
 - RSVP replies and phone numbers are seen only by the couple and their wedding planner.
 - Room numbers: you see only your own. Sangeet tables: guests can see the seating chart.
+- Your ride: the wedding team enters which vehicle you are in. You see your own vehicle and who shares it. When you tap "I've arrived", the couple and their wedding planner see that you have.
+- Wishes stay sealed. Only you can read yours until the couple open them after the wedding; other guests never see them.
 - Guests see guest chat rooms, the shared album and each other's introductions. Vendors see only their own team's room. The couple and their wedding planner can see everything and can remove content.
 - Album and chat photos and voice notes are stored at unguessable links that the app shows only to people allowed to see them.
 - Travel documents are different: they sit in a private vault. Only you and the couple's team can open them, through links that stop working after two minutes, and each opening is logged. Other guests and vendors can never see them.

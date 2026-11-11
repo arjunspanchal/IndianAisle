@@ -16,8 +16,46 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
 
+import { loadLang, t } from '@/lib/i18n';
+
 const TASK = 'ka-arrival';
 const FIRED_KEY = 'ka.arrival.fired.';
+const RIDE_KEY = 'ka.ride.line';
+
+type Ride = { vehicle: string; pickup: string; driver: string; driver_phone: string };
+
+/**
+ * Keep the guest's own ride on the phone, so the Chandigarh welcome can say
+ * which vehicle to look for even with no signal at the airport. The details are
+ * kept as they are and only put into words (rideLine) when the welcome is
+ * shown, so the words follow the language the phone is set to at that moment.
+ */
+export async function rememberRide(ride: Ride | null): Promise<void> {
+  const saved =
+    ride && ride.vehicle
+      ? JSON.stringify({ vehicle: ride.vehicle, pickup: ride.pickup, driver: ride.driver, driver_phone: ride.driver_phone })
+      : '';
+  await (saved ? AsyncStorage.setItem(RIDE_KEY, saved) : AsyncStorage.removeItem(RIDE_KEY)).catch(() => {});
+}
+
+/** "Your ride: Urbania 1. Arrivals gate, 1:30 pm. Driver: Ramesh, +91 …" in the current language. */
+function rideLine(saved: string | null): string {
+  if (!saved) return '';
+  let ride: Partial<Ride>;
+  try {
+    ride = JSON.parse(saved);
+  } catch {
+    return saved; // a finished English line, saved before the app spoke Gujarati
+  }
+  if (!ride || typeof ride !== 'object' || !ride.vehicle) return '';
+  return [
+    t('Your ride: {vehicle}', { vehicle: ride.vehicle }),
+    ride.pickup,
+    ride.driver ? t('Driver: {driver}', { driver: ride.driver_phone ? `${ride.driver}, ${ride.driver_phone}` : ride.driver }) : '',
+  ]
+    .filter(Boolean)
+    .join('. ');
+}
 
 type Place = { id: string; latitude: number; longitude: number; radius: number; title: string; body: string };
 
@@ -64,8 +102,17 @@ if (supported()) {
     await AsyncStorage.setItem(FIRED_KEY + place.id, '1').catch(() => {});
     try {
       const N = await import('expo-notifications');
+      // This can run with the app closed, before the saved language has been read.
+      await loadLang();
+      // In Chandigarh, say which vehicle to look for if one has been assigned.
+      const ride = place.id === 'chandigarh' ? rideLine(await AsyncStorage.getItem(RIDE_KEY).catch(() => null)) : '';
       await N.scheduleNotificationAsync({
-        content: { title: place.title, body: place.body, sound: 'default', data: { screen: 'today' } },
+        content: {
+          title: t(place.title),
+          body: ride ? t("{ride}. Tap to tell us you've arrived.", { ride }) : t(place.body),
+          sound: 'default',
+          data: { screen: place.id === 'chandigarh' ? 'ride' : 'today' },
+        },
         trigger: null, // straight away
       });
     } catch {

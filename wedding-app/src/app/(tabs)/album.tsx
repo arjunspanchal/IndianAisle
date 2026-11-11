@@ -1,9 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -22,8 +24,9 @@ import { Body, Button, Card, IconButton, Loading, Notice, ScreenHeader } from '@
 import { api, errorMessage, photoUrl, removePhotoFiles, type Album, type AlbumDay, type Photo, type PhotoGoal as Goal } from '@/lib/api';
 import { confirm, tell } from '@/lib/dialog';
 import { addToAlbum, pickFromPhone } from '@/lib/galleryUpload';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
-import { saveToPhone, sharePhotos } from '@/lib/photos';
+import { saveEach, saveToPhone, sharePhotos } from '@/lib/photos';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space } from '@/lib/theme';
 import { formatDayShort, formatReveal, formatTime } from '@/lib/time';
@@ -31,6 +34,8 @@ import { formatDayShort, formatReveal, formatTime } from '@/lib/time';
 const COLUMNS = 3;
 const GAP = 3;
 const PAGE = 90;
+// Which album photos this phone has already saved, so "save the whole album" never saves one twice.
+const SAVED_KEY = 'ka.album.saved';
 
 export default function AlbumScreen() {
   const { width } = useWindowDimensions();
@@ -48,6 +53,8 @@ export default function AlbumScreen() {
   // Whose photos to show: the whole shared album, everyone else's, or just this guest's.
   const [who, setWho] = useState<'all' | 'others' | 'mine'>('all');
   const [adding, setAdding] = useState<string | null>(null);
+  const [savingAll, setSavingAll] = useState<string | null>(null);
+  const stopSaving = useRef(false);
   const dayRef = useRef(day);
   dayRef.current = day;
 
@@ -110,14 +117,14 @@ export default function AlbumScreen() {
     try {
       const assets = await pickFromPhone();
       if (assets.length === 0) return;
-      setAdding(`Adding 0 of ${assets.length}…`);
-      const { added, error: failed } = await addToAlbum(assets, (n, total) => setAdding(`Adding ${n} of ${total}…`));
+      setAdding(t('Adding {n} of {total}…', { n: 0, total: assets.length }));
+      const { added, error: failed } = await addToAlbum(assets, (n, total) => setAdding(t('Adding {n} of {total}…', { n, total })));
       setDay(null);
       await reload();
       void goal.reload();
-      if (failed) tell(added > 0 ? `${added} added, then it stopped` : "Those photos didn't upload", errorMessage(failed));
+      if (failed) tell(added > 0 ? t('{n} added, then it stopped', { n: added }) : t("Those photos didn't upload"), errorMessage(failed));
     } catch (e) {
-      tell("Those photos didn't upload", errorMessage(e));
+      tell(t("Those photos didn't upload"), errorMessage(e));
     } finally {
       setAdding(null);
     }
@@ -137,23 +144,83 @@ export default function AlbumScreen() {
 
   async function saveChosen() {
     if (working) return;
-    setWorking(`Saving 0 of ${chosen.length}…`);
-    const result = await saveToPhone(chosen, (n) => setWorking(`Saving ${n} of ${chosen.length}…`));
+    setWorking(t('Saving {done} of {n}…', { done: 0, n: chosen.length }));
+    const result = await saveToPhone(chosen, (n) => setWorking(t('Saving {done} of {n}…', { done: n, n: chosen.length })));
     setWorking(null);
     if (result === 'saved') {
-      tell(chosen.length === 1 ? 'Saved to your photos' : `${chosen.length} photos saved to your phone`);
+      tell(chosen.length === 1 ? t('Saved to your photos') : t('{n} photos saved to your phone', { n: chosen.length }));
       setSelected(new Set());
-    } else if (result === 'denied') tell('Photos access is off', 'Allow access to Photos in Settings to save pictures to your phone.');
-    else tell("Couldn't save those photos", 'Check your signal and try again.');
+    } else if (result === 'denied') tell(t('Photos access is off'), t('Allow access to Photos in Settings to save pictures to your phone.'));
+    else tell(t("Couldn't save those photos"), t('Check your signal and try again.'));
   }
 
   async function shareChosen() {
     if (working) return;
-    setWorking('Getting ready to share…');
+    setWorking(t('Getting ready to share…'));
     const ok = await sharePhotos(chosen);
     setWorking(null);
     if (ok) setSelected(new Set());
-    else tell("Couldn't share those photos", 'Check your signal and try again.');
+    else tell(t("Couldn't share those photos"), t('Check your signal and try again.'));
+  }
+
+  // Save every photo in the album to this phone: all days, everyone's, skipping any saved before.
+  async function saveWholeAlbum() {
+    if (savingAll || working) return;
+    if (Platform.OS === 'web') {
+      tell(t('Open the app on your phone'), t('Saving the whole album works in the phone app.'));
+      return;
+    }
+    setSavingAll(t('Counting the photos…'));
+    try {
+      const all: Photo[] = [];
+      for (const d of (data?.days ?? []).filter((x) => x.ready > 0)) {
+        for (let offset = 0; ; offset += PAGE) {
+          const page = await api.album(d.day, offset);
+          all.push(...page.photos);
+          if (page.photos.length < PAGE) break;
+        }
+      }
+      const saved = new Set<string>(JSON.parse((await AsyncStorage.getItem(SAVED_KEY).catch(() => null)) ?? '[]') as string[]);
+      const todo = all.filter((p) => !saved.has(p.id));
+      setSavingAll(null);
+      if (all.length === 0) {
+        tell(t('No photos to save yet'));
+        return;
+      }
+      if (todo.length === 0) {
+        tell(t('You already have them all'), t('Every photo in the album has been saved to this phone.'));
+        return;
+      }
+      const remember = () => AsyncStorage.setItem(SAVED_KEY, JSON.stringify([...saved])).catch(() => {});
+      confirm(
+        todo.length === 1 ? t('Save 1 photo to your phone?') : t('Save {n} photos to your phone?', { n: todo.length }),
+        t('Every photo in the album you have not saved yet, at full size. Keep the app open while it works. Wi-Fi is best.'),
+        t('Save'),
+        async () => {
+          stopSaving.current = false;
+          setSavingAll(t('Saving {done} of {n}…', { done: 0, n: todo.length }));
+          const result = await saveEach(
+            todo,
+            (p, done) => {
+              saved.add(p.id);
+              setSavingAll(t('Saving {done} of {n}…', { done, n: todo.length }));
+              if (done % 10 === 0) void remember();
+            },
+            () => stopSaving.current,
+          );
+          await remember();
+          setSavingAll(null);
+          const got = todo.filter((p) => saved.has(p.id)).length;
+          if (result === 'denied') tell(t('Photos access is off'), t('Allow access to Photos in Settings to save pictures to your phone.'));
+          else if (result === 'failed') tell(t("Couldn't save the photos"), t('Check your signal and try again. Photos already saved are kept.'));
+          else if (result === 'stopped') tell(t('Stopped'), t('{got} of {n} saved. Tap again any time to save the rest.', { got, n: todo.length }));
+          else tell(got === todo.length ? t('The whole album is on your phone') : t('{got} of {n} saved', { got, n: todo.length }), got === todo.length ? undefined : t('Tap again to try the rest.'));
+        },
+      );
+    } catch (e) {
+      setSavingAll(null);
+      tell(errorMessage(e));
+    }
   }
 
   // Remove several at once. Guests can remove their own; the couple can remove any.
@@ -162,19 +229,23 @@ export default function AlbumScreen() {
     const mine = chosen.filter((p) => p.mine || isHost);
     const skipped = chosen.length - mine.length;
     if (mine.length === 0) {
-      tell('Those are not yours to remove', "You can remove photos you took or added. To flag someone else's, open it and tap the flag.");
+      tell(t('Those are not yours to remove'), t("You can remove photos you took or added. To flag someone else's, open it and tap the flag."));
       return;
     }
-    const what = mine.length === 1 ? 'this photo' : `these ${mine.length} photos`;
+    const title = mine.length === 1 ? t('Remove this photo?') : t('Remove these {n} photos?', { n: mine.length });
     const note =
-      (mine.length === 1 ? 'It' : 'They') +
-      ' will disappear from the album for everyone.' +
-      (skipped > 0 ? ` ${skipped} of the ones you picked ${skipped === 1 ? "isn't" : "aren't"} yours and will stay.` : '');
-    confirm(`Remove ${what}?`, note, 'Remove', async () => {
+      (mine.length === 1 ? t('It will disappear from the album for everyone.') : t('They will disappear from the album for everyone.')) +
+      (skipped > 0
+        ? ' ' +
+          (skipped === 1
+            ? t("{n} of the ones you picked isn't yours and will stay.", { n: skipped })
+            : t("{n} of the ones you picked aren't yours and will stay.", { n: skipped }))
+        : '');
+    confirm(title, note, t('Remove'), async () => {
       let done = 0;
       let failed = 0;
       for (const p of mine) {
-        setWorking(`Removing ${done + failed + 1} of ${mine.length}…`);
+        setWorking(t('Removing {n} of {total}…', { n: done + failed + 1, total: mine.length }));
         try {
           await api.deletePhoto(p.id);
           void removePhotoFiles([p.path, `t/${p.path}`]);
@@ -188,7 +259,7 @@ export default function AlbumScreen() {
       setSelected(new Set());
       void goal.reload();
       void reload();
-      if (failed > 0) tell(done > 0 ? `${done} removed, ${failed} could not be` : "Couldn't remove those photos", 'Check your signal and try again.');
+      if (failed > 0) tell(done > 0 ? t('{done} removed, {failed} could not be', { done, failed }) : t("Couldn't remove those photos"), t('Check your signal and try again.'));
     });
   }
 
@@ -206,7 +277,7 @@ export default function AlbumScreen() {
         <Button label="Develop everything now" icon="sunrise" variant="ghost" onPress={developNow} style={{ alignSelf: 'center' }} />
       ) : null}
       {goal.data ? <PhotoGoal goal={goal.data} /> : null}
-      <View style={styles.filterRow} accessibilityRole="radiogroup" accessibilityLabel="Whose photos to show">
+      <View style={styles.filterRow} accessibilityRole="radiogroup" accessibilityLabel={t('Whose photos to show')}>
         {(
           [
             { key: 'all', label: 'Everyone', icon: 'users' },
@@ -220,18 +291,28 @@ export default function AlbumScreen() {
               key={f.key}
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
-              accessibilityLabel={f.key === 'all' ? "Everyone's photos" : f.key === 'others' ? "Everyone else's photos, without mine" : 'Only my photos'}
+              accessibilityLabel={f.key === 'all' ? t("Everyone's photos") : f.key === 'others' ? t("Everyone else's photos, without mine") : t('Only my photos')}
               onPress={() => {
                 setWho(f.key);
                 setSelected(new Set());
               }}
               style={[styles.chip, styles.filterChip, on && styles.chipOn]}>
               <Feather name={f.icon} size={15} color={on ? colors.white : colors.ink} />
-              <Text style={[styles.chipText, on && { color: colors.white }]}>{f.label}</Text>
+              <Text style={[styles.chipText, on && { color: colors.white }]}>{t(f.label)}</Text>
             </Pressable>
           );
         })}
       </View>
+      {days.some((d) => d.ready > 0) ? (
+        <Button
+          label={t('Save the whole album to my phone')}
+          icon="download"
+          variant="ghost"
+          disabled={!!savingAll}
+          onPress={() => void saveWholeAlbum()}
+          style={{ alignSelf: 'flex-start', marginLeft: space.sm }}
+        />
+      ) : null}
       {days.some((d) => d.ready > 0) ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {days
@@ -258,19 +339,19 @@ export default function AlbumScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <ScreenHeader
-        eyebrow="Everyone's photos"
-        title="The album"
+        eyebrow={t("Everyone's photos")}
+        title={t('The album')}
         right={
           <View style={{ alignItems: 'flex-end' }}>
           <WeatherChip />
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Add photos from your phone"
+            accessibilityLabel={t('Add photos from your phone')}
             disabled={!!adding}
             onPress={() => void addFromPhone()}
             style={({ pressed }) => [styles.addButton, (pressed || !!adding) && { opacity: 0.6 }]}>
             <Feather name="plus" size={18} color={colors.white} />
-            <Text style={styles.addText}>Add</Text>
+            <Text style={styles.addText}>{t('Add')}</Text>
           </Pressable>
           </View>
         }
@@ -280,13 +361,19 @@ export default function AlbumScreen() {
           <Text style={[styles.selectText, { marginLeft: space.md }]}>{adding}</Text>
         </View>
       ) : null}
+      {savingAll ? (
+        <View style={styles.selectBar}>
+          <Text style={[styles.selectText, { marginLeft: space.md }]}>{savingAll}</Text>
+          <Button label={t('Stop')} variant="ghost" onPress={() => (stopSaving.current = true)} />
+        </View>
+      ) : null}
       {selecting ? (
         <View style={styles.selectBar}>
-          <IconButton icon="x" label="Cancel selection" onPress={() => setSelected(new Set())} />
-          <Text style={styles.selectText}>{working ?? `${selected.size} selected`}</Text>
-          <IconButton icon="download" label="Save selected to your phone" onPress={() => void saveChosen()} />
-          <IconButton icon="share" label="Share selected" onPress={() => void shareChosen()} />
-          <IconButton icon="trash-2" label="Remove selected photos" color={colors.rose} onPress={removeChosen} />
+          <IconButton icon="x" label={t('Cancel selection')} onPress={() => setSelected(new Set())} />
+          <Text style={styles.selectText}>{working ?? t('{n} selected', { n: selected.size })}</Text>
+          <IconButton icon="download" label={t('Save selected to your phone')} onPress={() => void saveChosen()} />
+          <IconButton icon="share" label={t('Share selected')} onPress={() => void shareChosen()} />
+          <IconButton icon="trash-2" label={t('Remove selected photos')} color={colors.rose} onPress={removeChosen} />
         </View>
       ) : null}
       {loading && !data ? (
@@ -294,9 +381,9 @@ export default function AlbumScreen() {
       ) : !data ? (
         <Notice
           icon="cloud-off"
-          title="Can't open the album"
+          title={t("Can't open the album")}
           body={error ?? undefined}
-          action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />}
+          action={<Button label={t('Try again')} variant="quiet" onPress={() => void reload()} />}
         />
       ) : (
         <FlatList
@@ -309,15 +396,15 @@ export default function AlbumScreen() {
           ListEmptyComponent={
             <Notice
               icon="image"
-              title={developing.length > 0 ? 'In the darkroom' : 'No photos yet'}
+              title={developing.length > 0 ? t('In the darkroom') : t('No photos yet')}
               body={
                 who === 'mine'
-                  ? "You haven't added any to this day yet."
+                  ? t("You haven't added any to this day yet.")
                   : who === 'others'
-                    ? 'Nobody else has added any to this day yet.'
+                    ? t('Nobody else has added any to this day yet.')
                     : developing.length > 0
-                    ? 'Camera photos stay hidden until they develop. Come back in the morning, or add some from your phone now.'
-                    : 'Take the first one with the Camera tab, or tap Add to bring some in from your phone.'
+                    ? t('Camera photos stay hidden until they develop. Come back in the morning, or add some from your phone now.')
+                    : t('Take the first one with the Camera tab, or tap Add to bring some in from your phone.')
               }
             />
           }
@@ -327,8 +414,8 @@ export default function AlbumScreen() {
           renderItem={({ item, index }) => (
             <Pressable
               accessibilityRole="imagebutton"
-              accessibilityLabel={`Photo by ${item.by}, ${formatTime(item.taken_at)}`}
-              accessibilityHint="Hold to select several"
+              accessibilityLabel={t('Photo by {name}, {time}', { name: item.by, time: formatTime(item.taken_at) })}
+              accessibilityHint={t('Hold to select several')}
               accessibilityState={{ selected: selected.has(item.id) }}
               delayLongPress={250}
               onLongPress={() => toggle(item.id)}
@@ -370,10 +457,10 @@ function DevelopingBanner({ day, now }: { day: AlbumDay; now: Date }) {
       <Feather name="moon" size={20} color={colors.rose} />
       <View style={{ flex: 1 }}>
         <Text style={styles.bannerTitle}>
-          {day.developing} {day.developing === 1 ? 'photo is' : 'photos are'} developing
+          {day.developing === 1 ? t('{n} photo is developing', { n: day.developing }) : t('{n} photos are developing', { n: day.developing })}
         </Text>
         <Body muted style={{ fontSize: 14.5, lineHeight: 20 }}>
-          From {formatDayShort(day.day)}. Ready at {formatReveal(day.reveal_at, now)}.
+          {t('From {day}. Ready at {time}.', { day: formatDayShort(day.day), time: formatReveal(day.reveal_at, now) })}
         </Body>
       </View>
     </Card>
@@ -418,17 +505,17 @@ function Viewer({
     setSaving(true);
     const result = await saveToPhone([photo]);
     setSaving(false);
-    if (result === 'saved') tell('Saved to your photos');
-    else if (result === 'denied') tell('Photos access is off', 'Allow access to Photos in Settings to save pictures to your phone.');
-    else tell("Couldn't save that photo", 'Check your signal and try again.');
+    if (result === 'saved') tell(t('Saved to your photos'));
+    else if (result === 'denied') tell(t('Photos access is off'), t('Allow access to Photos in Settings to save pictures to your phone.'));
+    else tell(t("Couldn't save that photo"), t('Check your signal and try again.'));
   }
 
   async function share() {
-    if (!(await sharePhotos([photo]))) tell("Couldn't share that photo", 'Check your signal and try again.');
+    if (!(await sharePhotos([photo]))) tell(t("Couldn't share that photo"), t('Check your signal and try again.'));
   }
 
   function remove() {
-    confirm('Remove this photo?', 'It will disappear from the album for everyone.', 'Remove', async () => {
+    confirm(t('Remove this photo?'), t('It will disappear from the album for everyone.'), t('Remove'), async () => {
       try {
         await api.deletePhoto(photo.id);
         void removePhotoFiles([photo.path, `t/${photo.path}`]);
@@ -441,10 +528,10 @@ function Viewer({
   }
 
   function report() {
-    confirm('Report this photo?', 'The couple will take a look and can remove it.', 'Report', async () => {
+    confirm(t('Report this photo?'), t('The couple will take a look and can remove it.'), t('Report'), async () => {
       try {
         await api.report('photo', photo.id);
-        tell('Thank you', 'The couple will take a look.');
+        tell(t('Thank you'), t('The couple will take a look.'));
       } catch (e) {
         tell(errorMessage(e));
       }
@@ -452,7 +539,7 @@ function Viewer({
   }
 
   function block() {
-    confirm(`Block ${photo.by}?`, "You won't see their photos or messages any more. They won't be told.", 'Block', async () => {
+    confirm(t('Block {name}?', { name: photo.by }), t("You won't see their photos or messages any more. They won't be told."), t('Block'), async () => {
       try {
         await api.blockAuthor('photo', photo.id);
         onClose();
@@ -491,24 +578,24 @@ function Viewer({
           )}
         />
         <View style={[styles.viewerTop, { paddingTop: insets.top + 4 }]}>
-          <IconButton icon="x" label="Close" color={colors.white} size={26} onPress={onClose} style={styles.viewerChip} />
+          <IconButton icon="x" label={t('Close')} color={colors.white} size={26} onPress={onClose} style={styles.viewerChip} />
           <View style={{ flex: 1 }} />
           {!photo.mine ? (
             <>
-              <IconButton icon="flag" label="Report this photo" color={colors.white} size={20} onPress={report} style={styles.viewerChip} />
-              <IconButton icon="slash" label={`Block ${photo.by}`} color={colors.white} size={20} onPress={block} style={styles.viewerChip} />
+              <IconButton icon="flag" label={t('Report this photo')} color={colors.white} size={20} onPress={report} style={styles.viewerChip} />
+              <IconButton icon="slash" label={t('Block {name}', { name: photo.by })} color={colors.white} size={20} onPress={block} style={styles.viewerChip} />
             </>
           ) : null}
-          {photo.mine || isHost ? <IconButton icon="trash-2" label="Remove photo" color={colors.white} onPress={remove} style={styles.viewerChip} /> : null}
+          {photo.mine || isHost ? <IconButton icon="trash-2" label={t('Remove photo')} color={colors.white} onPress={remove} style={styles.viewerChip} /> : null}
         </View>
         <View style={[styles.viewerBottom, { paddingBottom: insets.bottom + space.md }]}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.viewerBy}>{photo.mine ? 'You' : photo.by}</Text>
+            <Text style={styles.viewerBy}>{photo.mine ? t('You') : photo.by}</Text>
             <Text style={styles.viewerWhen}>{formatTime(photo.taken_at)}</Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={photo.liked ? 'Unlike' : 'Like'}
+            accessibilityLabel={photo.liked ? t('Unlike') : t('Like')}
             accessibilityState={{ selected: photo.liked }}
             onPress={like}
             hitSlop={8}
@@ -516,8 +603,8 @@ function Viewer({
             <Feather name="heart" size={24} color={photo.liked ? '#F08AA8' : colors.white} />
             <Text style={styles.viewerCount}>{photo.likes > 0 ? photo.likes : ''}</Text>
           </Pressable>
-          <IconButton icon={saving ? 'loader' : 'download'} label="Save to your phone" color={colors.white} size={24} onPress={() => void save()} />
-          <IconButton icon="share" label="Share this photo" color={colors.white} size={24} onPress={() => void share()} />
+          <IconButton icon={saving ? 'loader' : 'download'} label={t('Save to your phone')} color={colors.white} size={24} onPress={() => void save()} />
+          <IconButton icon="share" label={t('Share this photo')} color={colors.white} size={24} onPress={() => void share()} />
         </View>
       </SwipeDown>
     </Modal>

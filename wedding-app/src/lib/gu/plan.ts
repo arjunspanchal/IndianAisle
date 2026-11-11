@@ -1,0 +1,295 @@
+// Gujarati for the planning screens: the programme (app/(tabs)/schedule.tsx),
+// what to wear (app/outfits.tsx), good to know (app/info.tsx), the resort map
+// (app/map.tsx), the RSVP form (app/rsvp.tsx) and the two small pieces they use
+// (components/CountryPicker.tsx, components/Weather.tsx).
+//
+// Keyed by the exact English text. Where the wedding website already says the
+// same thing in Gujarati, the wording here is the website's (see site.ts), and
+// lines that are already in site.ts or common.ts are not repeated.
+const plan: Record<string, string> = {
+  // ── days and months, wherever a date is shown ──
+  'Sunday': 'રવિવાર',
+  'Monday': 'સોમવાર',
+  'Tuesday': 'મંગળવાર',
+  'Wednesday': 'બુધવાર',
+  'Thursday': 'ગુરુવાર',
+  'Friday': 'શુક્રવાર',
+  'Saturday': 'શનિવાર',
+  'Sun': 'રવિ',
+  'Mon': 'સોમ',
+  'Tue': 'મંગળ',
+  'Wed': 'બુધ',
+  'Thu': 'ગુરુ',
+  'Fri': 'શુક્ર',
+  'Sat': 'શનિ',
+  'January': 'જાન્યુઆરી',
+  'February': 'ફેબ્રુઆરી',
+  'March': 'માર્ચ',
+  'April': 'એપ્રિલ',
+  'May': 'મે',
+  'June': 'જૂન',
+  'July': 'જુલાઈ',
+  'August': 'ઑગસ્ટ',
+  'September': 'સપ્ટેમ્બર',
+  'October': 'ઑક્ટોબર',
+  'November': 'નવેમ્બર',
+  'December': 'ડિસેમ્બર',
+  'Jan': 'જાન્યુ.',
+  'Feb': 'ફેબ્રુ.',
+  'Mar': 'માર્ચ',
+  'Apr': 'એપ્રિલ',
+  'Jun': 'જૂન',
+  'Jul': 'જુલાઈ',
+  'Aug': 'ઑગ.',
+  'Sep': 'સપ્ટે.',
+  'Oct': 'ઑક્ટો.',
+  'Nov': 'નવે.',
+  'Dec': 'ડિસે.',
+  // "Sun 17 Jan"
+  '{weekday} {date} {month}': '{weekday} {date} {month}',
+  // "3:00 pm onwards": the clock time stays as it is, only this word changes
+  'onwards': 'થી',
+
+  // ── the programme ──
+  '17 — 19 January 2027': '17 — 19 જાન્યુઆરી 2027',
+  "Can't load the programme": 'કાર્યક્રમ હમણાં ખૂલતો નથી',
+  // "Day One", "Day Two", "Day Three": the website says પહેલો દિવસ, બીજો દિવસ, ત્રીજો દિવસ
+  'Day {word}': '{word} દિવસ',
+  'Day {word}, {weekday} {date} {month}': '{word} દિવસ, {weekday} {date} {month}',
+  'One': 'પહેલો',
+  'Two': 'બીજો',
+  'Three': 'ત્રીજો',
+  'The warm welcome': 'હૂંફાળું સ્વાગત',
+  'The forever day': 'જીવનભરનો દિવસ',
+  'The sweetest goodbye': 'સૌથી મીઠી વિદાય',
+  'One more coffee. One more hug.': 'એક વધુ કોફી. એક વધુ આલિંગન.',
+  'Open the outfits guide': 'શું પહેરવું તેની વિગત ખોલો',
+  'What to wear, celebration by celebration': 'દરેક પ્રસંગમાં શું પહેરવું',
+  "All times are India time. If plans shift, you'll see it on the Today tab first.":
+    'બધા સમય ભારતીય સમય મુજબ છે. કાર્યક્રમમાં ફેરફાર થશે તો સૌથી પહેલાં “આજે” ટૅબ પર દેખાશે.',
+  'Now': 'અત્યારે',
+  'See the menu': 'મેનુ જુઓ',
+  'See the menu for {event}': '{event} માટેનું મેનુ જુઓ',
+  'Wear:': 'પહેરવેશ:',
+  'Add to calendar': 'કેલેન્ડરમાં ઉમેરો',
+  'Add {event} to your calendar': '{event} તમારા કેલેન્ડરમાં ઉમેરો',
+  "Couldn't open your calendar": 'તમારું કેલેન્ડર ખૂલ્યું નહીં',
+  'Please try again in a moment.': 'થોડી વાર પછી ફરી પ્રયત્ન કરજો.',
+
+  // ── programme events (titles come from the server in English; wording from the website) ──
+  'Guest arrival': 'મહેમાનોનું આગમન',
+  'Lunch': 'બપોરનું ભોજન',
+  'Check-in': 'ચેક-ઇન',
+  'Haldi': 'હલ્દી (પીઠી)',
+  'High tea': 'હાઈ ટી (ચા-નાસ્તો)',
+  'Sangeet rehearsal': 'સંગીત રિહર્સલ',
+  'Dinner': 'રાત્રિભોજન',
+  'Sangeet': 'સંગીત',
+  'Afterparty': 'આફ્ટર-પાર્ટી',
+  'Devgon': 'દેવગોન',
+  'Breakfast': 'નાસ્તો',
+  'Kahwa & hot snacks': 'કહવા અને ગરમ નાસ્તો',
+  'Baraat procession': 'જાન (બારાત)',
+  "Bride's entry": 'કન્યા આગમન',
+  'Bride’s entry': 'કન્યા આગમન',
+  'Varmala': 'વરમાળા',
+  'Pheras': 'ફેરા',
+  'Posh puja': 'પોશ પૂજા (ફૂલવર્ષા)',
+  'Check-out': 'ચેક-આઉટ',
+  // Event notes: the rest are in site.ts, word for word as on the website. The app
+  // keeps Devgon's two website lines as one note, so that one is joined here.
+  "Kashika's family. A Kashmiri Pandit blessing for the bride. Everyone else, enjoy a slow morning.":
+    'કાશિકાનો પરિવાર. કન્યા માટે કાશ્મીરી પંડિત વિધિ. બાકી બધા, નિરાંતે સવાર માણો.',
+  'Kashika’s family. A Kashmiri Pandit blessing for the bride. Everyone else, enjoy a slow morning.':
+    'કાશિકાનો પરિવાર. કન્યા માટે કાશ્મીરી પંડિત વિધિ. બાકી બધા, નિરાંતે સવાર માણો.',
+
+  // ── what to wear ──
+  "Can't load the outfits guide": 'શું પહેરવું તેની વિગત હમણાં ખૂલતી નથી',
+  'Before you pack': 'પૅકિંગ કરતાં પહેલાં',
+  'One look for each celebration.': 'દરેક પ્રસંગ માટે એક પહેરવેશ.',
+  'Nothing here yet.': 'હજી અહીં કંઈ નથી.',
+  'Colour code': 'નક્કી કરેલા રંગ',
+  'No dress code': 'કોઈ ડ્રેસ કોડ નથી',
+  'Details coming soon.': 'વિગત ટૂંક સમયમાં આવશે.',
+  'For you': 'તમારા માટે',
+  'Wear what you love.': 'તમને ગમે તે પહેરો.',
+  'The couple will be in': 'વર-વધૂ આ રંગમાં હશે',
+  '{name} will be in {colour}': '{name}નો રંગ: {colour}',
+  '{name}: coming soon': '{name}: ટૂંક સમયમાં',
+
+  // the colours (lib/outfits.ts)
+  'Yellow': 'પીળો',
+  'Marigold': 'ગલગોટા પીળો',
+  'Orange': 'કેસરી',
+  'Peach': 'પીચ',
+  'Blush pink': 'આછો ગુલાબી',
+  'Pink': 'ગુલાબી',
+  'Magenta': 'રાણી ગુલાબી',
+  'Red': 'લાલ',
+  'Maroon': 'મરૂન',
+  'Purple': 'જાંબલી',
+  'Lavender': 'આછો જાંબલી',
+  'Navy': 'નેવી બ્લૂ',
+  'Blue': 'વાદળી',
+  'Sky blue': 'આસમાની',
+  'Teal': 'મોરપીંછ',
+  'Emerald': 'ઘેરો લીલો',
+  'Sage': 'પિસ્તા લીલો',
+  'Mint': 'મિન્ટ (આછો લીલો)',
+  'Ivory': 'આઇવરી (ક્રીમ)',
+  'White': 'સફેદ',
+  'Gold': 'સોનેરી',
+  'Silver': 'રૂપેરી',
+  'Black': 'કાળો',
+
+  // ── good to know ──
+  'The useful little things': 'કામની નાની વાતો',
+  'Less wondering.': 'ઓછી ચિંતા.',
+  'More celebrating.': 'વધુ ઉજવણી.',
+  'Hello, hills': 'નમસ્તે, પહાડો',
+  '17 January · Arrive from 11:00 am': '17 જાન્યુઆરી · સવારે 11:00 થી આગમન',
+  'Chandigarh is about two hours away, so plan your flight or train home with a little buffer.':
+    'ચંડીગઢ લગભગ બે કલાક દૂર છે, એટલે ઘરે જવાની ફ્લાઇટ કે ટ્રેન થોડો સમય હાથમાં રાખીને ગોઠવજો.',
+  'Open in Maps': 'Maps માં ખોલો',
+
+  'Winter in the north': 'ઉત્તર ભારતની ઠંડી',
+  'Right now': 'અત્યારે',
+  'Weather data by Open-Meteo.com': 'હવામાનની માહિતી: Open-Meteo.com',
+  'Typical mid-January': 'જાન્યુઆરીના મધ્યનું સામાન્ય હવામાન',
+  'Chandigarh': 'ચંડીગઢ',
+  'New Delhi': 'નવી દિલ્હી',
+  'At the resort': 'રિસોર્ટ પર',
+  'Cool, sunny afternoons. Mornings are often foggy.': 'ઠંડી, તડકાવાળી બપોર. સવારે ઘણી વાર ધુમ્મસ હોય છે.',
+  'Pleasant days, chilly nights. Dense morning fog is common.': 'સુખદ દિવસો, ઠંડી રાતો. સવારે ગાઢ ધુમ્મસ સામાન્ય છે.',
+  'Crisp, bright days in the hills. Nights are close to freezing, so bring a proper warm jacket.':
+    'પહાડોમાં ચોખ્ખા, તડકાવાળા દિવસો. રાતે ઠંડી શૂન્યની નજીક પહોંચે છે, એટલે સારું ગરમ જૅકેટ જરૂર લાવજો.',
+  '{place}: {day} by day, {night} at night': '{place}: દિવસે {day}, રાતે {night}',
+  'day': 'દિવસ',
+  'night': 'રાત',
+  'Typical weather, not a forecast.': 'સામાન્ય હવામાન, આગાહી નથી.',
+  'A note on January fog': 'જાન્યુઆરીના ધુમ્મસ વિશે',
+  'Early-morning flights into Delhi and Chandigarh are often delayed in January. Pick a late-morning flight, avoid tight connections through Delhi, and give yourself a little buffer.':
+    'જાન્યુઆરીમાં દિલ્હી અને ચંડીગઢની વહેલી સવારની ફ્લાઇટ ઘણી વાર મોડી પડે છે. મોડી સવારની ફ્લાઇટ પસંદ કરો, દિલ્હીમાં ટૂંકા કનેક્શન ટાળો અને થોડો વધારાનો સમય રાખો.',
+
+  'The journey here': 'અહીં સુધીની મુસાફરી',
+  'From Mumbai': 'મુંબઈથી',
+  'Direct flight to Chandigarh · about 2 h 10 min': 'ચંડીગઢની સીધી ફ્લાઇટ · લગભગ 2 કલાક 10 મિનિટ',
+  'IndiGo and Air India fly several times a day. This is the easiest way: one flight, no change in Delhi.':
+    'IndiGo અને Air India દિવસમાં ઘણી વાર ઊડે છે. સૌથી સરળ રસ્તો: એક જ ફ્લાઇટ, દિલ્હીમાં બદલવાની જરૂર નહીં.',
+  'From Delhi': 'દિલ્હીથી',
+  'Flight · about 55 min, or train · about 3 h 20 min': 'ફ્લાઇટ · લગભગ 55 મિનિટ, અથવા ટ્રેન · લગભગ 3 કલાક 20 મિનિટ',
+  'Frequent flights all day. By train, the Kalka Shatabdi (12011) leaves New Delhi at 7:40 am and reaches Chandigarh at about 11:00 am, daily.':
+    'આખો દિવસ ઘણી ફ્લાઇટ છે. ટ્રેનમાં, કાલકા શતાબ્દી (12011) નવી દિલ્હીથી સવારે 7:40 વાગ્યે ઊપડે છે અને લગભગ 11:00 વાગ્યે ચંડીગઢ પહોંચે છે, રોજ.',
+  'Chandigarh to the resort': 'ચંડીગઢથી રિસોર્ટ',
+  'About 2 hours by road': 'રસ્તા માર્ગે લગભગ 2 કલાક',
+  'A scenic drive up into the hills. We’ll share more travel details closer to the date.':
+    'પહાડોમાં એક સુંદર સફર. મુસાફરીની વધુ વિગતો તારીખ નજીક આવતાં જણાવીશું.',
+  'Flight and train timings change. Please check with the airline or IRCTC before you book.':
+    'ફ્લાઇટ અને ટ્રેનના સમય બદલાતા રહે છે. બુક કરતાં પહેલાં એરલાઇન કે IRCTC પર ચકાસી લેજો.',
+
+  'Questions': 'સવાલ-જવાબ',
+  'When should we arrive?': 'અમારે ક્યારે પહોંચવું?',
+  'What’s the plan for departure day?': 'જવાના દિવસે શું આયોજન છે?',
+
+  'A little packing list': 'નાની પેકિંગ યાદી',
+  'Bring the essentials. We’ll bring the happy tears.': 'જરૂરી વસ્તુઓ લાવજો. ખુશીના આંસુ અમે લાવીશું.',
+  'Warm layers & a favourite shawl': 'ગરમ કપડાં અને મનગમતી શાલ',
+  'A Haldi outfit you don’t mind staining': 'હલ્દી માટે એવાં કપડાં જે બગડે તો ચાલે',
+  'Shoes made for “one more song”': '“એક ગીત વધુ” માટેનાં આરામદાયક ચંપલ',
+  'Your charger & room for photographs': 'તમારું ચાર્જર અને ફોટા માટે ફોનમાં જગ્યા',
+  'Medicines, toiletries & personal essentials': 'દવાઓ, ટોઇલેટરીઝ અને અંગત જરૂરી વસ્તુઓ',
+  'Your best (or worst) dance moves': 'તમારા સૌથી સારા (કે સૌથી ખરાબ) ડાન્સ સ્ટેપ્સ',
+  '{done} of {total} packed. A friendly packing suggestion, not a dress code. Your ticks stay on this phone.':
+    '{total} માંથી {done} પૅક થઈ ગયું. આ ફક્ત મૈત્રીભર્યું સૂચન છે, ડ્રેસ કોડ નથી. તમારાં ટિક ફક્ત આ ફોનમાં રહે છે.',
+  'Open the wedding website': 'લગ્નની વેબસાઇટ ખોલો',
+
+  // ── the resort map ──
+  "Can't load the map": 'નકશો હમણાં ખૂલતો નથી',
+  'Finding your way': 'રસ્તો શોધવામાં મદદ',
+  'Where everything is': 'શું ક્યાં છે',
+  'Resort map. Tap to open it full screen and zoom.': 'રિસોર્ટનો નકશો. આખી સ્ક્રીન પર ખોલીને મોટો કરવા દબાવો.',
+  'Tap to zoom': 'મોટું કરવા દબાવો',
+  'The resort map will appear here once it is shared.': 'રિસોર્ટનો નકશો મુકાશે એટલે અહીં દેખાશે.',
+  'Where each event is': 'કયો કાર્યક્રમ ક્યાં છે',
+  'Open the resort in Maps': 'રિસોર્ટ Maps માં ખોલો',
+  'Pinch or double-tap to zoom': 'મોટું કરવા બે આંગળીથી ફેલાવો અથવા બે વાર દબાવો',
+  // hosts
+  "The map didn't upload": 'નકશો અપલોડ ન થયો',
+  'Remove the map?': 'નકશો કાઢી નાખવો છે?',
+  'Guests will no longer see it.': 'પછી મહેમાનોને તે નહીં દેખાય.',
+  'Replace the map': 'નકશો બદલો',
+  'Upload the map': 'નકશો અપલોડ કરો',
+  'Set where each event is held': 'દરેક કાર્યક્રમ ક્યાં છે તે લખો',
+  'Only you see this. A few words is enough. Leave a box empty to show nothing.':
+    'આ ફક્ત તમને દેખાય છે. થોડા શબ્દો પૂરતા છે. કંઈ ન બતાવવું હોય તો ખાનું ખાલી રાખો.',
+  'e.g. Garden lawn': 'દા.ત. ગાર્ડન લૉન',
+  'Where {event} is held': '{event} ક્યાં છે',
+  'Save {n} changes': '{n} ફેરફાર સેવ કરો',
+  'Nothing to save': 'સેવ કરવા જેવું કંઈ નથી',
+
+  // ── RSVP ──
+  'Will you': 'શું તમે',
+  'join us?': 'અમારી સાથે જોડાશો?',
+  'One reply per family is perfect. It takes a minute, and you can change it later.':
+    'દરેક પરિવાર તરફથી એક જવાબ પૂરતો છે. ફક્ત એક મિનિટ લાગશે, અને પછીથી બદલી પણ શકશો.',
+  "Wonderful. We can't wait to see you.": 'ખૂબ સરસ! તમને મળવા અમે આતુર છીએ.',
+  "We'll miss you. Thank you for letting us know.": 'તમારી ખોટ સાલશે. જણાવવા બદલ આભાર.',
+  'Your reply is saved. Change anything below and send again if plans shift.':
+    'તમારો જવાબ સેવ થઈ ગયો છે. કંઈ બદલાય તો નીચે સુધારીને ફરી મોકલજો.',
+  'Your name': 'તમારું નામ',
+  'First name': 'નામ',
+  'Last name': 'અટક',
+  'Your first name': 'તમારું નામ',
+  'Your last name': 'તમારી અટક',
+  'Will you be coming?': 'શું તમે આવશો?',
+  "Yes, we'll be there": 'હા, અમે આવીશું',
+  "Sorry, we can't come": 'માફ કરશો, અમે નહીં આવી શકીએ',
+  'How many people, including you?': 'તમારા સહિત કેટલા લોકો?',
+  'One fewer': 'એક જણ ઓછા',
+  'One more': 'એક જણ વધારે',
+  '{n} people': '{n} જણ',
+  'Guest {n}': 'મહેમાન {n}',
+  'Guest {n} first name': 'મહેમાન {n}નું નામ',
+  'Guest {n} last name': 'મહેમાન {n}ની અટક',
+  'Any food needs?': 'ખાવાપીવાની કોઈ ખાસ જરૂરિયાત?',
+  'Any food needs': 'ખાવાપીવાની કોઈ ખાસ જરૂરિયાત',
+  '(optional)': '(વૈકલ્પિક)',
+  'e.g. Jain, no onion-garlic, allergies': 'દા.ત. જૈન, ડુંગળી-લસણ વગર, એલર્જી',
+  'Mobile number': 'મોબાઇલ નંબર',
+  '(WhatsApp, if you have it)': '(WhatsApp હોય તો તે)',
+  'Mobile number, without the {code} country code': 'મોબાઇલ નંબર, {code} દેશના કોડ વગર',
+  'A note for Kashika & Arjun': 'કાશિકા અને અર્જુન માટે સંદેશ',
+  'A note for Kashika and Arjun': 'કાશિકા અને અર્જુન માટે સંદેશ',
+  'Send my reply': 'મારો જવાબ મોકલો',
+  'Update my reply': 'મારો જવાબ સુધારો',
+  'A name is missing': 'એક નામ બાકી છે',
+  'Please give a first and last name for yourself and everyone coming with you.':
+    'કૃપા કરી તમારું અને તમારી સાથે આવનાર દરેકનું નામ અને અટક લખો.',
+
+  // the country code button beside the phone number (country names stay in English,
+  // and the search matches the English name, so the hint says so)
+  'Country code': 'દેશનો કોડ',
+  'Country code, {country}, {code}. Tap to change.': 'દેશનો કોડ, {country}, {code}. બદલવા માટે દબાવો.',
+  'Search a country or code': 'દેશનું નામ (અંગ્રેજીમાં) કે કોડ શોધો',
+  'No country matches that. You can also type the number in full, starting with +.':
+    'આવો કોઈ દેશ મળ્યો નથી. તમે + થી શરૂ કરીને આખો નંબર પણ લખી શકો છો.',
+
+  // ── the weather at the resort ──
+  'Clear': 'ચોખ્ખું આકાશ',
+  'Partly cloudy': 'થોડાં વાદળ',
+  'Cloudy': 'વાદળછાયું',
+  'Fog': 'ધુમ્મસ',
+  'Drizzle': 'ઝરમર વરસાદ',
+  'Rain': 'વરસાદ',
+  'Snow': 'બરફ',
+  'Showers': 'ઝાપટાં',
+  'Snow showers': 'બરફનાં ઝાપટાં',
+  'Thunderstorm': 'ગાજવીજ સાથે વરસાદ',
+  'Weather at the resort: {temp} degrees, {sky}. High {high}, low {low}.':
+    'રિસોર્ટનું હવામાન: {temp} ડિગ્રી, {sky}. વધુમાં વધુ {high}, ઓછામાં ઓછું {low}.',
+  'At the resort now: {temp} degrees, {sky}. High {high}, low {low}.':
+    'રિસોર્ટ પર અત્યારે: {temp} ડિગ્રી, {sky}. વધુમાં વધુ {high}, ઓછામાં ઓછું {low}.',
+  'at the resort · high {high}°, low {low}°': 'રિસોર્ટ પર · વધુમાં વધુ {high}°, ઓછામાં ઓછું {low}°',
+};
+
+export default plan;

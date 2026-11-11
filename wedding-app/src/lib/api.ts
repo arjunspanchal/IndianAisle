@@ -1,6 +1,8 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 
+import { t } from './i18n';
+
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 /** The project's address, for links a phone opens outside the app (calendar files). */
 export const supabaseUrl = url;
@@ -55,8 +57,8 @@ const MESSAGES: Record<string, string> = {
 };
 
 export function errorMessage(e: unknown): string {
-  if (e instanceof KaError) return MESSAGES[e.code] ?? 'Something went wrong. Please try again.';
-  return 'Something went wrong. Please try again.';
+  if (e instanceof KaError) return t(MESSAGES[e.code] ?? 'Something went wrong. Please try again.');
+  return t('Something went wrong. Please try again.');
 }
 
 // ───────── session token ─────────
@@ -391,6 +393,14 @@ export const api = {
   pinUpdate: (id: string, pinned: boolean) => call<null>('ka_pin_update', { p_id: id, p_pinned: pinned }),
   setDress: (eventId: string, dress: string) => call<null>('ka_event_set_dress', { p_event_id: eventId, p_dress: dress }),
   setMenu: (eventId: string, menu: string) => call<null>('ka_event_set_menu', { p_event_id: eventId, p_menu: menu }),
+  /** Where an event is held, in a few words. */
+  setLocation: (eventId: string, location: string) => call<null>('ka_event_set_location', { p_event_id: eventId, p_location: location }),
+
+  // The resort map: one picture uploaded by the hosts (bucket ka-photos, under m/).
+  map: () => call<{ path: string | null; width: number | null; height: number | null }>('ka_map_get'),
+  mapReserve: () => call<{ path: string }>('ka_map_reserve'),
+  mapConfirm: (width: number, height: number) => call<{ path: string; old_path: string | null }>('ka_map_confirm', { p_width: width, p_height: height }),
+  mapClear: () => call<{ old_path: string | null }>('ka_map_clear'),
 
   rideMine: () => call<MyRide>('ka_ride_mine'),
   /** "I've arrived in Chandigarh" (landed) or "I've reached the resort" (reached). Returns the refreshed MyRide. */

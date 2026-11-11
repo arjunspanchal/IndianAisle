@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { useEffect, useState, type ComponentProps } from 'react';
 import { AppState, StyleSheet, Text, View } from 'react-native';
 
+import { t } from '@/lib/i18n';
 import { colors, fonts, radius } from '@/lib/theme';
 
 // Live weather at the resort (Storii, Naina Tikkar), from Open-Meteo: free, no
@@ -46,18 +47,18 @@ async function load(): Promise<Weather | null> {
   return inflight;
 }
 
-/** WMO weather codes, said plainly. */
+/** WMO weather codes, said plainly. Called while drawing, so the label comes back in the current language. */
 function describe(code: number): { label: string; icon: Icon } {
-  if (code === 0) return { label: 'Clear', icon: 'sun' };
-  if (code <= 2) return { label: 'Partly cloudy', icon: 'cloud' };
-  if (code === 3) return { label: 'Cloudy', icon: 'cloud' };
-  if (code <= 48) return { label: 'Fog', icon: 'cloud' };
-  if (code <= 57) return { label: 'Drizzle', icon: 'cloud-drizzle' };
-  if (code <= 67) return { label: 'Rain', icon: 'cloud-rain' };
-  if (code <= 77) return { label: 'Snow', icon: 'cloud-snow' };
-  if (code <= 82) return { label: 'Showers', icon: 'cloud-rain' };
-  if (code <= 86) return { label: 'Snow showers', icon: 'cloud-snow' };
-  return { label: 'Thunderstorm', icon: 'cloud-lightning' };
+  if (code === 0) return { label: t('Clear'), icon: 'sun' };
+  if (code <= 2) return { label: t('Partly cloudy'), icon: 'cloud' };
+  if (code === 3) return { label: t('Cloudy'), icon: 'cloud' };
+  if (code <= 48) return { label: t('Fog'), icon: 'cloud' };
+  if (code <= 57) return { label: t('Drizzle'), icon: 'cloud-drizzle' };
+  if (code <= 67) return { label: t('Rain'), icon: 'cloud-rain' };
+  if (code <= 77) return { label: t('Snow'), icon: 'cloud-snow' };
+  if (code <= 82) return { label: t('Showers'), icon: 'cloud-rain' };
+  if (code <= 86) return { label: t('Snow showers'), icon: 'cloud-snow' };
+  return { label: t('Thunderstorm'), icon: 'cloud-lightning' };
 }
 
 export function useWeather(): Weather | null {
@@ -87,7 +88,7 @@ export function WeatherChip() {
     <View
       style={styles.chip}
       accessible
-      accessibilityLabel={`Weather at the resort: ${w.temp} degrees, ${d.label}. High ${w.high}, low ${w.low}.`}>
+      accessibilityLabel={t('Weather at the resort: {temp} degrees, {sky}. High {high}, low {low}.', { temp: w.temp, sky: d.label, high: w.high, low: w.low })}>
       <Feather name={d.icon} size={15} color={colors.olive} />
       <Text style={styles.temp}>{w.temp}°</Text>
       <Text style={styles.range}>
@@ -103,13 +104,13 @@ export function WeatherLine() {
   if (!w) return null;
   const d = describe(w.code);
   return (
-    <View style={styles.line} accessible accessibilityLabel={`At the resort now: ${w.temp} degrees, ${d.label}. High ${w.high}, low ${w.low}.`}>
+    <View style={styles.line} accessible accessibilityLabel={t('At the resort now: {temp} degrees, {sky}. High {high}, low {low}.', { temp: w.temp, sky: d.label, high: w.high, low: w.low })}>
       <Feather name={d.icon} size={17} color={colors.olive} />
       <Text style={styles.lineText}>
         <Text style={styles.lineStrong}>
           {w.temp}° {d.label}
         </Text>{' '}
-        at the resort · high {w.high}°, low {w.low}°
+        {t('at the resort · high {high}°, low {low}°', { high: w.high, low: w.low })}
       </Text>
     </View>
   );

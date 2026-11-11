@@ -4,6 +4,7 @@ import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COUNTRIES, flag, type Country } from '@/lib/countries';
+import { t } from '@/lib/i18n';
 import { colors, fonts, radius, space } from '@/lib/theme';
 
 /**
@@ -31,7 +32,7 @@ export function CountryPicker({ value, onChange }: { value: Country; onChange: (
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Country code, ${value.name}, ${value.dial}. Tap to change.`}
+        accessibilityLabel={t('Country code, {country}, {code}. Tap to change.', { country: value.name, code: value.dial })}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}>
         <Text style={styles.flag}>{flag(value.iso)}</Text>
@@ -42,26 +43,26 @@ export function CountryPicker({ value, onChange }: { value: Country; onChange: (
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={[styles.sheet, { paddingTop: insets.top + space.md }]}>
           <View style={styles.head}>
-            <Text style={styles.title}>Country code</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={10} onPress={() => setOpen(false)} style={styles.close}>
+            <Text style={styles.title}>{t('Country code')}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Close')} hitSlop={10} onPress={() => setOpen(false)} style={styles.close}>
               <Feather name="x" size={24} color={colors.ink} />
             </Pressable>
           </View>
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search a country or code"
+            placeholder={t('Search a country or code')}
             placeholderTextColor="#9A9C8E"
             autoCorrect={false}
             style={styles.search}
-            accessibilityLabel="Search a country or code"
+            accessibilityLabel={t('Search a country or code')}
           />
           <FlatList
             data={shown}
             keyExtractor={(c) => c.iso}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingBottom: insets.bottom + space.xl }}
-            ListEmptyComponent={<Text style={styles.empty}>No country matches that. You can also type the number in full, starting with +.</Text>}
+            ListEmptyComponent={<Text style={styles.empty}>{t('No country matches that. You can also type the number in full, starting with +.')}</Text>}
             renderItem={({ item }) => {
               const on = item.iso === value.iso;
               return (

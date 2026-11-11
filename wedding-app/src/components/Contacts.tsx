@@ -4,6 +4,7 @@ import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Body, Button, Card, Eyebrow } from '@/components/ui';
 import { api, errorMessage, type SosState } from '@/lib/api';
 import { tell } from '@/lib/dialog';
+import { t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { colors, fonts, radius, space } from '@/lib/theme';
 
@@ -18,9 +19,14 @@ export function CallButtons() {
   if (!data?.reception_phone && !data?.contact_phone) return null;
   return (
     <View style={styles.row}>
-      {data.reception_phone ? <Button label="Call reception" icon="phone" variant="quiet" onPress={() => dial(data.reception_phone!)} /> : null}
+      {data.reception_phone ? <Button label={t('Call reception')} icon="phone" variant="quiet" onPress={() => dial(data.reception_phone!)} /> : null}
       {data.contact_phone ? (
-        <Button label={`Call ${data.contact_name ?? 'the planner'}`} icon="phone" variant="quiet" onPress={() => dial(data.contact_phone!)} />
+        <Button
+          label={data.contact_name == null ? t('Call the planner') : t('Call {name}', { name: data.contact_name })}
+          icon="phone"
+          variant="quiet"
+          onPress={() => dial(data.contact_phone!)}
+        />
       ) : null}
     </View>
   );

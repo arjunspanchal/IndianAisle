@@ -6,6 +6,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, Vie
 
 import { Body, Button, Loading, Notice } from '@/components/ui';
 import { api, photoUrl, type Person } from '@/lib/api';
+import { t } from '@/lib/i18n';
 import { useLoad } from '@/lib/live';
 import { colors, fonts, radius, space, wedding } from '@/lib/theme';
 
@@ -24,7 +25,7 @@ export function People() {
   }
 
   if (loading && !data) return <Loading />;
-  if (!data) return <Notice icon="cloud-off" title="Can't load the guest list" body={error ?? undefined} action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />} />;
+  if (!data) return <Notice icon="cloud-off" title={t("Can't load the guest list")} body={error ?? undefined} action={<Button label={t('Try again')} variant="quiet" onPress={() => void reload()} />} />;
 
   const q = query.trim().toLowerCase();
   const shown = q ? data.filter((p) => `${p.name} ${p.about} ${p.city}`.toLowerCase().includes(q)) : data;
@@ -40,9 +41,9 @@ export function People() {
         <Pressable accessibilityRole="button" onPress={() => router.push('/profile')} style={styles.nudge}>
           <Feather name="smile" size={20} color={colors.rose} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.nudgeTitle}>Introduce yourself</Text>
+            <Text style={styles.nudgeTitle}>{t('Introduce yourself')}</Text>
             <Body muted style={styles.small}>
-              Add a photo and how you know the couple, so people can put a face to your name.
+              {t('Add a photo and how you know the couple, so people can put a face to your name.')}
             </Body>
           </View>
           <Feather name="chevron-right" size={20} color={colors.muted} />
@@ -52,18 +53,18 @@ export function People() {
       <TextInput
         value={query}
         onChangeText={setQuery}
-        placeholder="Search by name or city"
+        placeholder={t('Search by name or city')}
         placeholderTextColor="#9A9C8E"
         autoCorrect={false}
         style={styles.search}
-        accessibilityLabel="Search people"
+        accessibilityLabel={t('Search people')}
       />
 
       {shown.map((p, i) => (
         <Pressable
           key={`${p.name}-${i}`}
           accessibilityRole={p.me ? 'button' : 'text'}
-          accessibilityLabel={`${p.name}${p.me ? ', you. Edit your introduction' : ''}`}
+          accessibilityLabel={`${p.name}${p.me ? t(', you. Edit your introduction') : ''}`}
           disabled={!p.me}
           onPress={() => router.push('/profile')}
           style={styles.person}>
@@ -77,19 +78,19 @@ export function People() {
           <View style={{ flex: 1 }}>
             <Text style={styles.name} numberOfLines={1}>
               {p.name}
-              {p.me ? <Text style={styles.you}>  (you)</Text> : null}
+              {p.me ? <Text style={styles.you}>{`  ${t('(you)')}`}</Text> : null}
             </Text>
             <Text style={styles.meta} numberOfLines={1}>
-              {[p.host ? 'The couple' : p.side ? SIDE_LABEL[p.side] : null, p.city || null].filter(Boolean).join(' · ') || 'Guest'}
+              {[p.host ? t('The couple') : p.side ? t(SIDE_LABEL[p.side]) : null, p.city || null].filter(Boolean).join(' · ') || t('Guest')}
             </Text>
             {p.about ? <Body style={styles.about}>{p.about}</Body> : null}
           </View>
           {p.me ? <Feather name="edit-2" size={16} color={colors.muted} /> : null}
         </Pressable>
       ))}
-      {shown.length === 0 ? <Body muted>No one by that name yet.</Body> : null}
+      {shown.length === 0 ? <Body muted>{t('No one by that name yet.')}</Body> : null}
       <Body muted style={styles.foot}>
-        {data.length} {data.length === 1 ? 'person has' : 'people have'} joined so far.
+        {data.length === 1 ? t('{n} person has joined so far.', { n: data.length }) : t('{n} people have joined so far.', { n: data.length })}
       </Body>
     </ScrollView>
   );
