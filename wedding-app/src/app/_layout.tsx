@@ -94,6 +94,15 @@ function Screens() {
         <Stack.Screen name="places" options={{ title: 'Your table & room' }} />
         <Stack.Screen name="info" options={{ title: 'Good to know' }} />
         <Stack.Screen name="outfits" options={{ title: 'What to wear' }} />
+        {/* Every screen a guest reaches after joining must be listed inside this guard.
+            A screen file that is not listed here is open to people who have not joined,
+            and the app can even start on it. Each of these sets its own title. */}
+        <Stack.Screen name="ride" />
+        <Stack.Screen name="wishes" />
+        <Stack.Screen name="polls" />
+        <Stack.Screen name="challenges" />
+        <Stack.Screen name="menus" />
+        <Stack.Screen name="map" />
         <Stack.Screen name="docs" options={{ title: 'Travel documents' }} />
         <Stack.Screen name="sos" options={{ title: 'SOS', presentation: 'modal' }} />
         <Stack.Screen name="me" options={{ title: 'You & the wedding', presentation: 'modal' }} />
