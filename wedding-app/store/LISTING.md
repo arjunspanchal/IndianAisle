@@ -9,6 +9,18 @@ This repository is public. **Never write an invite code in any file here** —
 the App Review notes below leave a gap for it; type the code straight into
 App Store Connect.
 
+## Where App Store Connect stands (12 November 2026)
+
+Done: listing text, categories, five screenshots, build 8 attached to version
+1.0, age rating (comes out as 4+), App Review notes with "Sign-in required"
+unticked, App Privacy answers for the six data types below (saved, **not yet
+published** — the blue Publish button on the App Privacy page).
+
+Still open: review contact (name, phone with country code, email — the page
+will not save a contact without a phone number), content rights, price and
+countries (Pricing and Availability is not set up at all), Publish on App
+Privacy, then Add for Review / Submit.
+
 ## Screenshots
 
 `store/screenshots/ios-6.3/` — five images, 1206 × 2622. This is the size App
@@ -79,21 +91,19 @@ Usage Data, Diagnostics.
 
 ## Age rating
 
-Answer this by hand in App Store Connect (App Information → Age Rating): the
-upload tool cannot send it yet, because Apple added a "social media" question
-it does not know. Everything is "None" or "No", except:
-
-- **Messaging and chat: Yes**
-- **User-generated content: Yes** (both are moderated, with report and block)
-- **Social media: No** (guests of one wedding talking to each other, invite only)
-
-Apple works out the rating from those.
+Answered in App Store Connect on 12 November 2026 (the upload tool cannot send
+it: Apple added a "social media" question it does not know). Everything "None"
+or "No", except **Messaging and chat: Yes** and **User-generated content: Yes**;
+**Social media: No**. Apple's result: **4+** (with its usual regional variants).
 
 ## Other questions App Store Connect asks
 
 - **Export compliance / encryption:** already answered in the app
   (`ITSAppUsesNonExemptEncryption: false`), so no question appears per build.
-- **Content rights:** the app contains no third-party content.
+- **Content rights:** not answered yet. The honest answer is **Yes, it shows third-party
+  content and we have the rights**: the weather on every screen comes from Open-Meteo
+  (free to use with credit, CC BY 4.0). The app should carry a "Weather data by
+  Open-Meteo.com" line before this is answered.
 - **Advertising identifier (IDFA):** not used.
 - **Price:** Free. **Availability:** India at least; add other countries for
   guests travelling from abroad.
