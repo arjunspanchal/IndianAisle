@@ -2,8 +2,10 @@ import { Feather } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { CountryPicker } from '@/components/CountryPicker';
 import { Accent, Body, Button, Card, Eyebrow, GoldRule, Loading, Title } from '@/components/ui';
 import { api, errorMessage, type Companion, type Rsvp, type RsvpSummary } from '@/lib/api';
+import { DEFAULT_COUNTRY, joinPhone, splitPhone, type Country } from '@/lib/countries';
 import { tell } from '@/lib/dialog';
 import { useLive, useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
@@ -23,6 +25,8 @@ export default function RsvpScreen() {
   // Everyone coming along, one first + last name each.
   const [companions, setCompanions] = useState<Companion[]>([]);
   const people = 1 + companions.length;
+  // The number is kept as one line ('+91 98200 12345'); the form shows the country code separately.
+  const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [phone, setPhone] = useState('');
   const [food, setFood] = useState('');
   const [message, setMessage] = useState('');
@@ -43,7 +47,9 @@ export default function RsvpScreen() {
     }
     // Replies sent before names were split have a head count but no name rows: make empty rows to fill in.
     setCompanions(r.companions?.length ? r.companions : Array.from({ length: Math.max(r.people - 1, 0) }, () => ({ first: '', last: '' })));
-    setPhone(r.phone);
+    const had = splitPhone(r.phone);
+    setCountry(had.country);
+    setPhone(had.number);
     setFood(r.food);
     setMessage(r.message);
   }, [mine.data, mine.loading, filled]);
@@ -71,7 +77,7 @@ export default function RsvpScreen() {
         first_name: first.trim(),
         last_name: last.trim(),
         companions: coming,
-        phone,
+        phone: joinPhone(country, phone),
         food: attending ? food : '',
         message,
       });
@@ -206,16 +212,19 @@ export default function RsvpScreen() {
             <Text style={styles.label}>
               Mobile number <Text style={styles.optional}>(WhatsApp, if you have it)</Text>
             </Text>
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="e.g. +91 98200 12345"
-              placeholderTextColor="#9A9C8E"
-              keyboardType="phone-pad"
-              maxLength={24}
-              style={styles.input}
-              accessibilityLabel="Mobile number"
-            />
+            <View style={styles.phoneRow}>
+              <CountryPicker value={country} onChange={setCountry} />
+              <TextInput
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="98200 12345"
+                placeholderTextColor="#9A9C8E"
+                keyboardType="phone-pad"
+                maxLength={18}
+                style={[styles.input, { flex: 1 }]}
+                accessibilityLabel={`Mobile number, without the ${country.dial} country code`}
+              />
+            </View>
             <Text style={styles.label}>
               A note for Kashika & Arjun <Text style={styles.optional}>(optional)</Text>
             </Text>
@@ -341,6 +350,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: colors.ink,
   },
+  phoneRow: { flexDirection: 'row', gap: space.sm },
   nameRow: { flexDirection: 'row', gap: space.sm },
   half: { flex: 1, paddingHorizontal: space.md },
   multi: { minHeight: 88, paddingTop: space.md, textAlignVertical: 'top' },

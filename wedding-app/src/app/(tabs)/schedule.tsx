@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -16,7 +17,7 @@ const DAY_WORDS = ['One', 'Two', 'Three'];
 // The programme, one day at a time: pick a day at the top, then read down.
 // Each event is a card with its time, where it is and what to wear.
 export default function Schedule() {
-  const { isHost } = useSession();
+  const { isHost, isVendor } = useSession();
   const { data, error, loading, reload } = useLoad<Home>(() => api.home(), 120000);
   const [refreshing, setRefreshing] = useState(false);
   const [day, setDay] = useState<number | null>(null);
@@ -104,6 +105,18 @@ export default function Schedule() {
                 </View>
               </Card>
             ) : null}
+
+            {isVendor ? null : (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Open the outfits guide"
+                onPress={() => router.push('/outfits')}
+                style={({ pressed }) => [styles.outfits, pressed && { opacity: 0.6 }]}>
+                <Feather name="scissors" size={16} color={colors.rose} />
+                <Text style={styles.calendarText}>What to wear, celebration by celebration</Text>
+                <Feather name="chevron-right" size={18} color={colors.rose} />
+              </Pressable>
+            )}
 
             {shown.map((e) => (
               <EventCard key={e.id} event={e} now={now} isHost={isHost} onChanged={reload} />
@@ -280,6 +293,7 @@ const styles = StyleSheet.create({
   },
   dressActions: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm },
   calendar: { flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start', minHeight: 44, marginTop: 4, marginBottom: -8 },
+  outfits: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 4 },
   calendarText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.rose },
   foot: { textAlign: 'center', fontSize: 14.5, marginTop: space.sm },
 });

@@ -45,7 +45,8 @@ export default function AlbumScreen() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [working, setWorking] = useState<string | null>(null);
   const selecting = selected.size > 0;
-  const [onlyMine, setOnlyMine] = useState(false);
+  // Whose photos to show: the whole shared album, everyone else's, or just this guest's.
+  const [who, setWho] = useState<'all' | 'others' | 'mine'>('all');
   const [adding, setAdding] = useState<string | null>(null);
   const dayRef = useRef(day);
   dayRef.current = day;
@@ -131,7 +132,7 @@ export default function AlbumScreen() {
     });
   }
 
-  const shown = onlyMine ? photos.filter((p) => p.mine) : photos;
+  const shown = who === 'mine' ? photos.filter((p) => p.mine) : who === 'others' ? photos.filter((p) => !p.mine) : photos;
   const chosen = shown.filter((p) => selected.has(p.id));
 
   async function saveChosen() {
@@ -155,6 +156,42 @@ export default function AlbumScreen() {
     else tell("Couldn't share those photos", 'Check your signal and try again.');
   }
 
+  // Remove several at once. Guests can remove their own; the couple can remove any.
+  function removeChosen() {
+    if (working) return;
+    const mine = chosen.filter((p) => p.mine || isHost);
+    const skipped = chosen.length - mine.length;
+    if (mine.length === 0) {
+      tell('Those are not yours to remove', "You can remove photos you took or added. To flag someone else's, open it and tap the flag.");
+      return;
+    }
+    const what = mine.length === 1 ? 'this photo' : `these ${mine.length} photos`;
+    const note =
+      (mine.length === 1 ? 'It' : 'They') +
+      ' will disappear from the album for everyone.' +
+      (skipped > 0 ? ` ${skipped} of the ones you picked ${skipped === 1 ? "isn't" : "aren't"} yours and will stay.` : '');
+    confirm(`Remove ${what}?`, note, 'Remove', async () => {
+      let done = 0;
+      let failed = 0;
+      for (const p of mine) {
+        setWorking(`Removing ${done + failed + 1} of ${mine.length}…`);
+        try {
+          await api.deletePhoto(p.id);
+          void removePhotoFiles([p.path, `t/${p.path}`]);
+          patch(p.id, null);
+          done++;
+        } catch {
+          failed++;
+        }
+      }
+      setWorking(null);
+      setSelected(new Set());
+      void goal.reload();
+      void reload();
+      if (failed > 0) tell(done > 0 ? `${done} removed, ${failed} could not be` : "Couldn't remove those photos", 'Check your signal and try again.');
+    });
+  }
+
   const size = (width - GAP * (COLUMNS - 1)) / COLUMNS;
   const days = data?.days ?? [];
   const developing = days.filter((d) => d.developing > 0);
@@ -169,19 +206,31 @@ export default function AlbumScreen() {
         <Button label="Develop everything now" icon="sunrise" variant="ghost" onPress={developNow} style={{ alignSelf: 'center' }} />
       ) : null}
       {goal.data ? <PhotoGoal goal={goal.data} /> : null}
-      <View style={styles.filterRow}>
-        <Pressable
-          accessibilityRole="switch"
-          accessibilityState={{ checked: onlyMine }}
-          accessibilityLabel="Show only my photos"
-          onPress={() => setOnlyMine((v) => !v)}
-          style={[styles.chip, styles.filterChip, onlyMine && styles.chipOn]}>
-          <Feather name="user" size={15} color={onlyMine ? colors.white : colors.ink} />
-          <Text style={[styles.chipText, onlyMine && { color: colors.white }]}>{onlyMine ? 'Only mine' : "Everyone's"}</Text>
-        </Pressable>
-        <Body muted style={{ fontSize: 13.5, flex: 1 }}>
-          {onlyMine ? 'Showing photos you took or added.' : 'One shared album. Tap to see only yours.'}
-        </Body>
+      <View style={styles.filterRow} accessibilityRole="radiogroup" accessibilityLabel="Whose photos to show">
+        {(
+          [
+            { key: 'all', label: 'Everyone', icon: 'users' },
+            { key: 'others', label: 'Others', icon: 'user-plus' },
+            { key: 'mine', label: 'Mine', icon: 'user' },
+          ] as const
+        ).map((f) => {
+          const on = who === f.key;
+          return (
+            <Pressable
+              key={f.key}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={f.key === 'all' ? "Everyone's photos" : f.key === 'others' ? "Everyone else's photos, without mine" : 'Only my photos'}
+              onPress={() => {
+                setWho(f.key);
+                setSelected(new Set());
+              }}
+              style={[styles.chip, styles.filterChip, on && styles.chipOn]}>
+              <Feather name={f.icon} size={15} color={on ? colors.white : colors.ink} />
+              <Text style={[styles.chipText, on && { color: colors.white }]}>{f.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
       {days.some((d) => d.ready > 0) ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
@@ -237,6 +286,7 @@ export default function AlbumScreen() {
           <Text style={styles.selectText}>{working ?? `${selected.size} selected`}</Text>
           <IconButton icon="download" label="Save selected to your phone" onPress={() => void saveChosen()} />
           <IconButton icon="share" label="Share selected" onPress={() => void shareChosen()} />
+          <IconButton icon="trash-2" label="Remove selected photos" color={colors.rose} onPress={removeChosen} />
         </View>
       ) : null}
       {loading && !data ? (
@@ -261,9 +311,11 @@ export default function AlbumScreen() {
               icon="image"
               title={developing.length > 0 ? 'In the darkroom' : 'No photos yet'}
               body={
-                onlyMine
+                who === 'mine'
                   ? "You haven't added any to this day yet."
-                  : developing.length > 0
+                  : who === 'others'
+                    ? 'Nobody else has added any to this day yet.'
+                    : developing.length > 0
                     ? 'Camera photos stay hidden until they develop. Come back in the morning, or add some from your phone now.'
                     : 'Take the first one with the Camera tab, or tap Add to bring some in from your phone.'
               }
@@ -499,8 +551,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   addText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.white },
-  filterRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingBottom: space.sm },
-  filterChip: { minHeight: 38, paddingHorizontal: space.md, gap: 6 },
+  filterRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, paddingBottom: space.sm },
+  filterChip: { minHeight: 44, paddingHorizontal: space.md, gap: 6 },
   selectBar: {
     flexDirection: 'row',
     alignItems: 'center',

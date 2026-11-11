@@ -189,6 +189,27 @@ export default function Today() {
             {isVendor ? null : (
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Open the outfits guide"
+                onPress={() => router.push('/outfits')}
+                style={({ pressed }) => pressed && { opacity: 0.85 }}>
+                <Card style={styles.row}>
+                  <View style={[styles.badge, { backgroundColor: colors.rose }]}>
+                    <Feather name="scissors" size={19} color={colors.white} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowTitle}>What to wear</Text>
+                    <Body muted style={styles.rowBody}>
+                      {isHost ? 'Set the colours and dress code for each celebration.' : 'Colours and dress codes, celebration by celebration.'}
+                    </Body>
+                  </View>
+                  <Feather name="chevron-right" size={22} color={colors.muted} />
+                </Card>
+              </Pressable>
+            )}
+
+            {isVendor ? null : (
+              <Pressable
+                accessibilityRole="button"
                 accessibilityLabel="Open your table and room"
                 onPress={() => router.push('/places')}
                 style={({ pressed }) => pressed && { opacity: 0.85 }}>

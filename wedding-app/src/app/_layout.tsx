@@ -83,6 +83,7 @@ function Screens() {
         <Stack.Screen name="profile" options={{ title: 'Your introduction' }} />
         <Stack.Screen name="places" options={{ title: 'Your table & room' }} />
         <Stack.Screen name="info" options={{ title: 'Good to know' }} />
+        <Stack.Screen name="outfits" options={{ title: 'What to wear' }} />
         <Stack.Screen name="docs" options={{ title: 'Travel documents' }} />
         <Stack.Screen name="sos" options={{ title: 'SOS', presentation: 'modal' }} />
         <Stack.Screen name="me" options={{ title: 'You & the wedding', presentation: 'modal' }} />

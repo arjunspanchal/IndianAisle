@@ -142,6 +142,27 @@ export type WeddingEvent = {
   location: string;
   /** What to wear, set by the hosts. Empty until they decide. */
   dress: string;
+  // The outfits guide. All set by the hosts; empty means "not decided yet".
+  /** Listed in the outfits guide. */
+  in_outfits?: boolean;
+  /** Where it is held: open air or indoors. */
+  setting?: '' | 'open' | 'indoor';
+  /** Whether there is a colour code, or guests wear what they like. */
+  dress_code?: '' | 'coded' | 'free';
+  /** Colours suggested for guests, as palette keys (see lib/outfits). */
+  guest_colours?: string[];
+  bride_colour?: string;
+  groom_colour?: string;
+};
+
+export type Outfit = {
+  in_outfits: boolean;
+  setting: '' | 'open' | 'indoor';
+  dress_code: '' | 'coded' | 'free';
+  dress: string;
+  guest_colours: string[];
+  bride_colour: string;
+  groom_colour: string;
 };
 
 export type Update = { id: string; body: string; pinned: boolean; created_at: string; by: string };
@@ -314,6 +335,17 @@ export const api = {
   deleteUpdate: (id: string) => call<null>('ka_delete_update', { p_id: id }),
   pinUpdate: (id: string, pinned: boolean) => call<null>('ka_pin_update', { p_id: id, p_pinned: pinned }),
   setDress: (eventId: string, dress: string) => call<null>('ka_event_set_dress', { p_event_id: eventId, p_dress: dress }),
+  setOutfit: (eventId: string, o: Outfit) =>
+    call<null>('ka_event_set_outfit', {
+      p_event_id: eventId,
+      p_in_outfits: o.in_outfits,
+      p_setting: o.setting,
+      p_dress_code: o.dress_code,
+      p_dress: o.dress,
+      p_guest_colours: o.guest_colours,
+      p_bride_colour: o.bride_colour,
+      p_groom_colour: o.groom_colour,
+    }),
   registerPush: (pushToken: string, platform: string) =>
     call<null>('ka_register_push', { p_push_token: pushToken, p_platform: platform }),
 
