@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Accent, Body, Button, Card, Eyebrow, GoldRule, Loading, Title } from '@/components/ui';
-import { api, errorMessage, type Rsvp, type RsvpSummary } from '@/lib/api';
+import { api, errorMessage, type Companion, type Rsvp, type RsvpSummary } from '@/lib/api';
 import { tell } from '@/lib/dialog';
 import { useLive, useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
@@ -13,11 +13,16 @@ import { formatWhen } from '@/lib/time';
 // "Will you join us?" — the same questions as the website's form, answered
 // here instead. One reply per person who joined; it can be changed any time.
 export default function RsvpScreen() {
-  const { isHost } = useSession();
+  const { isHost, guest } = useSession();
   const mine = useLoad<Rsvp | null>(() => api.rsvpGet());
   const [attending, setAttending] = useState<boolean | null>(null);
-  const [people, setPeople] = useState(1);
-  const [others, setOthers] = useState('');
+  // Start the name from what was typed when joining: first word, then the rest.
+  const joined = (guest?.name ?? '').trim().split(/\s+/);
+  const [first, setFirst] = useState(joined[0] ?? '');
+  const [last, setLast] = useState(joined.slice(1).join(' '));
+  // Everyone coming along, one first + last name each.
+  const [companions, setCompanions] = useState<Companion[]>([]);
+  const people = 1 + companions.length;
   const [phone, setPhone] = useState('');
   const [food, setFood] = useState('');
   const [message, setMessage] = useState('');
@@ -32,18 +37,44 @@ export default function RsvpScreen() {
     const r = mine.data;
     if (!r) return;
     setAttending(r.attending);
-    setPeople(r.people);
-    setOthers(r.other_names);
+    if (r.first_name || r.last_name) {
+      setFirst(r.first_name);
+      setLast(r.last_name);
+    }
+    // Replies sent before names were split have a head count but no name rows: make empty rows to fill in.
+    setCompanions(r.companions?.length ? r.companions : Array.from({ length: Math.max(r.people - 1, 0) }, () => ({ first: '', last: '' })));
     setPhone(r.phone);
     setFood(r.food);
     setMessage(r.message);
   }, [mine.data, mine.loading, filled]);
 
+  const namesMissing =
+    !first.trim() || !last.trim() || (attending === true && companions.some((c) => !c.first.trim() || !c.last.trim()));
+
+  function setCompanion(i: number, change: Partial<Companion>) {
+    setCompanions((all) => all.map((c, j) => (j === i ? { ...c, ...change } : c)));
+  }
+
   async function send() {
     if (attending === null || busy) return;
+    if (namesMissing) {
+      tell('A name is missing', 'Please give a first and last name for yourself and everyone coming with you.');
+      return;
+    }
     setBusy(true);
     try {
-      await api.rsvpSet({ attending, people: attending ? people : 1, other_names: attending ? others : '', phone, food: attending ? food : '', message });
+      const coming = attending ? companions.map((c) => ({ first: c.first.trim(), last: c.last.trim() })) : [];
+      await api.rsvpSet({
+        attending,
+        people: 1 + coming.length,
+        other_names: coming.map((c) => `${c.first} ${c.last}`).join(', '),
+        first_name: first.trim(),
+        last_name: last.trim(),
+        companions: coming,
+        phone,
+        food: attending ? food : '',
+        message,
+      });
       setSaved(true);
       await mine.reload();
     } catch (e) {
@@ -78,6 +109,32 @@ export default function RsvpScreen() {
           </Card>
         ) : null}
 
+        <Text style={styles.label}>Your name</Text>
+        <View style={styles.nameRow}>
+          <TextInput
+            value={first}
+            onChangeText={setFirst}
+            placeholder="First name"
+            placeholderTextColor="#9A9C8E"
+            autoCapitalize="words"
+            autoCorrect={false}
+            maxLength={40}
+            style={[styles.input, styles.half]}
+            accessibilityLabel="Your first name"
+          />
+          <TextInput
+            value={last}
+            onChangeText={setLast}
+            placeholder="Last name"
+            placeholderTextColor="#9A9C8E"
+            autoCapitalize="words"
+            autoCorrect={false}
+            maxLength={40}
+            style={[styles.input, styles.half]}
+            accessibilityLabel="Your last name"
+          />
+        </View>
+
         <Text style={styles.label}>Will you be coming?</Text>
         <View style={styles.choices}>
           <Choice label="Yes, we'll be there" on={attending === true} onPress={() => setAttending(true)} />
@@ -88,19 +145,46 @@ export default function RsvpScreen() {
           <>
             <Text style={styles.label}>How many people, including you?</Text>
             <View style={styles.stepper}>
-              <Step icon="minus" label="One fewer" onPress={() => setPeople((n) => Math.max(1, n - 1))} />
+              <Step icon="minus" label="One fewer" onPress={() => setCompanions((all) => all.slice(0, -1))} />
               <Text style={styles.count} accessibilityLabel={`${people} people`}>
                 {people}
               </Text>
-              <Step icon="plus" label="One more" onPress={() => setPeople((n) => Math.min(12, n + 1))} />
+              <Step
+                icon="plus"
+                label="One more"
+                onPress={() => setCompanions((all) => (all.length >= 11 ? all : [...all, { first: '', last: '' }]))}
+              />
             </View>
 
-            {people > 1 ? (
-              <>
-                <Text style={styles.label}>Full names of everyone coming with you</Text>
-                <TextInput value={others} onChangeText={setOthers} multiline maxLength={400} style={[styles.input, styles.multi]} accessibilityLabel="Full names of everyone coming with you" />
-              </>
-            ) : null}
+            {companions.map((c, i) => (
+              <View key={i}>
+                <Text style={styles.label}>Guest {i + 2}</Text>
+                <View style={styles.nameRow}>
+                  <TextInput
+                    value={c.first}
+                    onChangeText={(t) => setCompanion(i, { first: t })}
+                    placeholder="First name"
+                    placeholderTextColor="#9A9C8E"
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    maxLength={40}
+                    style={[styles.input, styles.half]}
+                    accessibilityLabel={`Guest ${i + 2} first name`}
+                  />
+                  <TextInput
+                    value={c.last}
+                    onChangeText={(t) => setCompanion(i, { last: t })}
+                    placeholder="Last name"
+                    placeholderTextColor="#9A9C8E"
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    maxLength={40}
+                    style={[styles.input, styles.half]}
+                    accessibilityLabel={`Guest ${i + 2} last name`}
+                  />
+                </View>
+              </View>
+            ))}
 
             <Text style={styles.label}>
               Any food needs? <Text style={styles.optional}>(optional)</Text>
@@ -185,7 +269,13 @@ function Summary() {
             <Text style={styles.replyName}>{r.name}</Text>
             <Text style={[styles.pill, !r.attending && styles.pillNo]}>{r.attending ? `Coming · ${r.people}` : "Can't come"}</Text>
           </View>
-          {r.other_names ? <Body muted style={styles.small}>With {r.other_names}</Body> : null}
+          {r.companions?.length ? (
+            <Body muted style={styles.small}>
+              With {r.companions.map((c) => `${c.first} ${c.last}`.trim()).join(', ')}
+            </Body>
+          ) : r.other_names ? (
+            <Body muted style={styles.small}>With {r.other_names}</Body>
+          ) : null}
           {r.food ? <Body style={styles.small}>Food: {r.food}</Body> : null}
           {r.phone ? <Body muted style={styles.small}>{r.phone}</Body> : null}
           {r.message ? <Body style={[styles.small, { marginTop: 4 }]}>“{r.message}”</Body> : null}
@@ -251,6 +341,8 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: colors.ink,
   },
+  nameRow: { flexDirection: 'row', gap: space.sm },
+  half: { flex: 1, paddingHorizontal: space.md },
   multi: { minHeight: 88, paddingTop: space.md, textAlignVertical: 'top' },
   section: { flexDirection: 'row', alignItems: 'center', marginTop: space.xxl, marginBottom: space.md },
   stats: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },

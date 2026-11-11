@@ -22,6 +22,7 @@ export async function sendImage(
   picked: { uri: string; width: number; height: number },
   caption: string,
   replyTo?: string | null,
+  clientId: string = uuid(), // pass the same id again to retry without sending twice
 ) {
   const landscape = picked.width >= picked.height;
   const img = await manipulateAsync(
@@ -29,19 +30,21 @@ export async function sendImage(
     [{ resize: landscape ? { width: Math.min(IMAGE_EDGE, picked.width) } : { height: Math.min(IMAGE_EDGE, picked.height) } }],
     { compress: 0.72, format: SaveFormat.JPEG },
   );
-  const r = await api.mediaReserve(channel, 'image', uuid(), 'jpg', { width: img.width, height: img.height }, caption, replyTo);
+  const r = await api.mediaReserve(channel, 'image', clientId, 'jpg', { width: img.width, height: img.height }, caption, replyTo);
   if (!r.uploaded) {
     await upload(r.path, img.uri, 'image/jpeg');
     await api.mediaConfirm(r.message_id);
   }
+  return { id: r.message_id, path: r.path, width: img.width, height: img.height };
 }
 
-export async function sendVoice(channel: string, uri: string, seconds: number, replyTo?: string | null) {
+export async function sendVoice(channel: string, uri: string, seconds: number, replyTo?: string | null, clientId: string = uuid()) {
   // Phones record AAC in an .m4a file; browsers record WebM.
   const web = Platform.OS === 'web';
-  const r = await api.mediaReserve(channel, 'voice', uuid(), web ? 'webm' : 'm4a', { seconds: Math.max(1, Math.round(seconds)) }, '', replyTo);
+  const r = await api.mediaReserve(channel, 'voice', clientId, web ? 'webm' : 'm4a', { seconds: Math.max(1, Math.round(seconds)) }, '', replyTo);
   if (!r.uploaded) {
     await upload(r.path, uri, web ? 'audio/webm' : 'audio/mp4');
     await api.mediaConfirm(r.message_id);
   }
+  return { id: r.message_id, path: r.path };
 }

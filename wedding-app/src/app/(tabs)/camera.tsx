@@ -19,6 +19,11 @@ const ROLL = 27;
 const LONG_EDGE = 1600; // enough for a phone screen and a 6x4 print, small enough for hill signal
 const THUMB_EDGE = 420;
 
+// iPhone back lenses. Naming the lens outright keeps the camera from opening on
+// the ultra-wide, and gives guests the same 0.5× / 1× switch as the phone's own camera.
+const LENS_WIDE = 'AVCaptureDeviceTypeBuiltInWideAngleCamera';
+const LENS_ULTRA = 'AVCaptureDeviceTypeBuiltInUltraWideCamera';
+
 // A disposable camera: a small viewfinder, a frame counter, a flash switch and
 // a shutter. No preview after the click and no retakes — the roll develops
 // overnight and shows up in the album the next morning.
@@ -30,6 +35,8 @@ export default function Camera() {
 
   const [facing, setFacing] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
+  const [ultra, setUltra] = useState(false); // false = the normal 1× lens
+  const [hasUltra, setHasUltra] = useState(false);
   const [ready, setReady] = useState(false);
   const [winding, setWinding] = useState(false);
   const [localTaken, setLocalTaken] = useState(0);
@@ -140,12 +147,35 @@ export default function Camera() {
               facing={facing}
               flash={flash}
               mirror={facing === 'front'}
+              selectedLens={Platform.OS === 'ios' && facing === 'back' ? (ultra ? LENS_ULTRA : LENS_WIDE) : undefined}
+              onAvailableLensesChanged={({ lenses }) => {
+                if (facing === 'back') setHasUltra(lenses.some((l) => l.deviceType === LENS_ULTRA));
+              }}
               animateShutter={false}
               onCameraReady={() => setReady(true)}
               onMountError={() => setProblem("The camera couldn't start. Close other camera apps and try again.")}
             />
           ) : null}
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.blink, { opacity: blink }]} />
+          {facing === 'back' && hasUltra && left > 0 ? (
+            <View style={styles.lenses} accessibilityRole="radiogroup" accessibilityLabel="Lens">
+              {[true, false].map((wide) => {
+                const on = ultra === wide;
+                return (
+                  <Pressable
+                    key={wide ? 'ultra' : 'normal'}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    accessibilityLabel={wide ? 'Wide angle, 0.5 times' : 'Normal, 1 times'}
+                    hitSlop={6}
+                    onPress={() => setUltra(wide)}
+                    style={[styles.lens, on && styles.lensOn]}>
+                    <Text style={[styles.lensText, on && styles.lensTextOn]}>{wide ? '0.5×' : '1×'}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
           {left === 0 ? (
             <View style={[StyleSheet.absoluteFill, styles.finished]}>
               <Title size={28} style={{ color: colors.white, textAlign: 'center' }}>
@@ -161,10 +191,16 @@ export default function Camera() {
             accessibilityRole="switch"
             accessibilityState={{ checked: flash === 'on' }}
             accessibilityLabel="Flash"
-            onPress={() => setFlash((f) => (f === 'on' ? 'off' : 'on'))}
+            hitSlop={8}
+            onPress={() => {
+              if (Platform.OS !== 'web') void Haptics.selectionAsync().catch(() => {});
+              setFlash((f) => (f === 'on' ? 'off' : 'on'));
+            }}
             style={({ pressed }) => [styles.side, pressed && { opacity: 0.7 }]}>
-            <Feather name={flash === 'on' ? 'zap' : 'zap-off'} size={22} color={flash === 'on' ? colors.gold : '#C9CDBD'} />
-            <Text style={styles.sideLabel}>{flash === 'on' ? 'Flash on' : 'Flash off'}</Text>
+            <View style={[styles.flashDisc, flash === 'on' && styles.flashDiscOn]}>
+              <Feather name={flash === 'on' ? 'zap' : 'zap-off'} size={20} color={flash === 'on' ? colors.camera : '#C9CDBD'} />
+            </View>
+            <Text style={[styles.sideLabel, flash === 'on' && { color: colors.gold }]}>{flash === 'on' ? 'Flash on' : 'Flash off'}</Text>
           </Pressable>
 
           <Pressable
@@ -233,9 +269,25 @@ const styles = StyleSheet.create({
   },
   viewfinder: { flex: 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: '#1B2016' },
   blink: { backgroundColor: colors.white },
+  lenses: {
+    position: 'absolute',
+    bottom: space.md,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    padding: 5,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(18,21,15,0.55)',
+  },
+  lens: { minWidth: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  lensOn: { backgroundColor: 'rgba(252,250,245,0.94)' },
+  lensText: { fontFamily: fonts.bodyBold, fontSize: 14, color: '#E8E9DF' },
+  lensTextOn: { color: colors.ink },
   finished: { backgroundColor: 'rgba(27,32,22,0.86)', alignItems: 'center', justifyContent: 'center', gap: 6, padding: space.xl },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space.md, paddingHorizontal: space.sm },
   side: { width: 84, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  flashDisc: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#6F745F' },
+  flashDiscOn: { backgroundColor: colors.gold, borderColor: colors.gold },
   sideLabel: { fontFamily: fonts.bodyMedium, fontSize: 12, color: '#C9CDBD' },
   shutter: {
     width: 78,

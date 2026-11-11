@@ -76,7 +76,8 @@ function Screens() {
       }}>
       <Stack.Protected guard={!!guest}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="chat/[channel]" options={{ title: '' }} />
+        {/* No swipe-back here: on iPhone it would swallow the left-to-right swipe that replies to a message. */}
+        <Stack.Screen name="chat/[channel]" options={{ title: '', gestureEnabled: false }} />
         <Stack.Screen name="quiz" options={{ title: 'The couple quiz' }} />
         <Stack.Screen name="rsvp" options={{ title: 'RSVP' }} />
         <Stack.Screen name="profile" options={{ title: 'Your introduction' }} />

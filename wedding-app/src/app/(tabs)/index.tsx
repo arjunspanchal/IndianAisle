@@ -418,6 +418,14 @@ function UpdateCard({ update, now, canDelete, onChanged }: { update: Update; now
       }
     });
   }
+  async function togglePin() {
+    try {
+      await api.pinUpdate(update.id, !update.pinned);
+      onChanged();
+    } catch (e) {
+      tell(errorMessage(e));
+    }
+  }
   return (
     <Card style={update.pinned ? styles.pinned : undefined}>
       {update.pinned ? (
@@ -431,7 +439,18 @@ function UpdateCard({ update, now, canDelete, onChanged }: { update: Update; now
         <Body muted style={{ fontSize: 13.5, flex: 1 }}>
           {update.by} · {formatWhen(update.created_at, new Date(now))}
         </Body>
-        {canDelete ? <IconButton icon="trash-2" label="Remove this update" size={18} color={colors.muted} onPress={remove} /> : null}
+        {canDelete ? (
+          <>
+            <Button
+              label={update.pinned ? 'Unpin' : 'Pin'}
+              icon="bookmark"
+              variant="ghost"
+              onPress={() => void togglePin()}
+              style={{ minHeight: 44, paddingHorizontal: space.sm }}
+            />
+            <IconButton icon="trash-2" label="Remove this update" size={18} color={colors.muted} onPress={remove} />
+          </>
+        ) : null}
       </View>
     </Card>
   );

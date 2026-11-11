@@ -43,12 +43,13 @@ export function useLive(event: LiveEvent, onPoke: Listener) {
 /**
  * Load something from the server and keep it fresh: on screen focus, when the
  * app comes back to the foreground, and (optionally) every `pollMs` while the
- * screen is open, as a safety net for patchy hill signal.
+ * screen is open, as a safety net for patchy hill signal. Pass `initial` (what
+ * was on screen last time) to show something at once while the fresh copy loads.
  */
-export function useLoad<T>(loader: () => Promise<T>, pollMs?: number) {
-  const [data, setData] = useState<T | null>(null);
+export function useLoad<T>(loader: () => Promise<T>, pollMs?: number, initial?: T | null) {
+  const [data, setData] = useState<T | null>(initial ?? null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initial == null);
   const loaderRef = useRef(loader);
   loaderRef.current = loader;
   const seq = useRef(0);

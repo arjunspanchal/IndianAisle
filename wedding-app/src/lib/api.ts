@@ -224,10 +224,16 @@ export type SosState = {
 
 export type PhotoGoal = { goal: number; prize: string | null; mine: number; reached: number; top: { name: string; count: number; me: boolean }[] };
 
+export type Companion = { first: string; last: string };
+
 export type Rsvp = {
   attending: boolean;
   people: number;
   other_names: string;
+  first_name: string;
+  last_name: string;
+  /** Everyone coming with the person replying, each with a first and last name. */
+  companions: Companion[];
   phone: string;
   food: string;
   message: string;
@@ -304,6 +310,7 @@ export const api = {
   home: () => call<Home>('ka_home'),
   postUpdate: (body: string, pinned: boolean) => call<{ id: string }>('ka_post_update', { p_body: body, p_pinned: pinned }),
   deleteUpdate: (id: string) => call<null>('ka_delete_update', { p_id: id }),
+  pinUpdate: (id: string, pinned: boolean) => call<null>('ka_pin_update', { p_id: id, p_pinned: pinned }),
   setDress: (eventId: string, dress: string) => call<null>('ka_event_set_dress', { p_event_id: eventId, p_dress: dress }),
   registerPush: (pushToken: string, platform: string) =>
     call<null>('ka_register_push', { p_push_token: pushToken, p_platform: platform }),
@@ -378,6 +385,9 @@ export const api = {
       p_phone: r.phone,
       p_food: r.food,
       p_message: r.message,
+      p_first_name: r.first_name,
+      p_last_name: r.last_name,
+      p_companions: r.companions,
     }),
   rsvpList: () => call<RsvpSummary>('ka_rsvp_list'),
 

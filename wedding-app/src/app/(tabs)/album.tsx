@@ -15,6 +15,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PhotoGoal } from '@/components/PhotoGoal';
+import { SwipeDown } from '@/components/SwipeDown';
+import { ZoomImage } from '@/components/ZoomImage';
 import { WeatherChip } from '@/components/Weather';
 import { Body, Button, Card, IconButton, Loading, Notice, ScreenHeader } from '@/components/ui';
 import { api, errorMessage, photoUrl, removePhotoFiles, type Album, type AlbumDay, type Photo, type PhotoGoal as Goal } from '@/lib/api';
@@ -344,6 +346,7 @@ function Viewer({
 }) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const [zoomed, setZoomed] = useState(false);
   const [index, setIndex] = useState(start);
   const [saving, setSaving] = useState(false);
   const photo = photos[Math.min(index, photos.length - 1)];
@@ -411,10 +414,11 @@ function Viewer({
   if (!photo) return null;
 
   return (
-    <Modal visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.viewer}>
+    <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <SwipeDown onClose={onClose} enabled={!zoomed}>
         <FlatList
           data={photos}
+          scrollEnabled={!zoomed}
           keyExtractor={(p) => p.id}
           horizontal
           pagingEnabled
@@ -423,26 +427,27 @@ function Viewer({
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
           renderItem={({ item }) => (
-            <Image
-              source={{ uri: photoUrl(item.path) }}
+            <ZoomImage
+              uri={photoUrl(item.path)}
               placeholder={{ uri: photoUrl(item.path, true) }}
               placeholderContentFit="contain"
-              style={{ width, height }}
-              contentFit="contain"
+              width={width}
+              height={height}
               transition={120}
+              onZoom={setZoomed}
             />
           )}
         />
         <View style={[styles.viewerTop, { paddingTop: insets.top + 4 }]}>
-          <IconButton icon="x" label="Close" color={colors.white} size={26} onPress={onClose} />
+          <IconButton icon="x" label="Close" color={colors.white} size={26} onPress={onClose} style={styles.viewerChip} />
           <View style={{ flex: 1 }} />
           {!photo.mine ? (
             <>
-              <IconButton icon="flag" label="Report this photo" color={colors.white} size={20} onPress={report} />
-              <IconButton icon="slash" label={`Block ${photo.by}`} color={colors.white} size={20} onPress={block} />
+              <IconButton icon="flag" label="Report this photo" color={colors.white} size={20} onPress={report} style={styles.viewerChip} />
+              <IconButton icon="slash" label={`Block ${photo.by}`} color={colors.white} size={20} onPress={block} style={styles.viewerChip} />
             </>
           ) : null}
-          {photo.mine || isHost ? <IconButton icon="trash-2" label="Remove photo" color={colors.white} onPress={remove} /> : null}
+          {photo.mine || isHost ? <IconButton icon="trash-2" label="Remove photo" color={colors.white} onPress={remove} style={styles.viewerChip} /> : null}
         </View>
         <View style={[styles.viewerBottom, { paddingBottom: insets.bottom + space.md }]}>
           <View style={{ flex: 1 }}>
@@ -462,7 +467,7 @@ function Viewer({
           <IconButton icon={saving ? 'loader' : 'download'} label="Save to your phone" color={colors.white} size={24} onPress={() => void save()} />
           <IconButton icon="share" label="Share this photo" color={colors.white} size={24} onPress={() => void share()} />
         </View>
-      </View>
+      </SwipeDown>
     </Modal>
   );
 }
@@ -534,7 +539,21 @@ const styles = StyleSheet.create({
   },
   likePipText: { fontFamily: fonts.bodyMedium, fontSize: 11, color: colors.white },
   viewer: { flex: 1, backgroundColor: '#12150F' },
-  viewerTop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', paddingHorizontal: space.sm },
+  // Dark strip behind the top controls so they stay visible over any photo.
+  viewerTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: space.sm,
+    paddingBottom: space.sm,
+    backgroundColor: 'rgba(18,21,15,0.62)',
+  },
+  // Each control also gets its own dark disc.
+  viewerChip: { backgroundColor: 'rgba(18,21,15,0.72)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)' },
   viewerBottom: {
     position: 'absolute',
     left: 0,

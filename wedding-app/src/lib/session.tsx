@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { api, setToken, setUnauthorizedHandler, type Guest } from './api';
+import { forgetRooms } from './chatCache';
+import { forgetOutbox } from './outbox';
 
 const KEY = 'ka.session';
 
@@ -26,6 +28,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const leave = useCallback(async () => {
     setToken(null);
     setSession(null);
+    forgetOutbox();
+    await forgetRooms();
     await AsyncStorage.removeItem(KEY).catch(() => {});
   }, []);
 

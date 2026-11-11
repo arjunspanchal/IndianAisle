@@ -1,6 +1,5 @@
 import { Feather } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { Image } from 'expo-image';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -19,6 +18,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SwipeDown } from '@/components/SwipeDown';
+import { ZoomImage } from '@/components/ZoomImage';
 import { Body, Button, Card, Eyebrow, GoldRule, IconButton, Loading, Notice, Title } from '@/components/ui';
 import { docsApi, errorMessage, KaError, type TravelDoc } from '@/lib/api';
 import { confirm, tell } from '@/lib/dialog';
@@ -318,17 +319,18 @@ function SourceRow({ icon, label, onPress }: { icon: 'camera' | 'image' | 'file-
 function DocViewer({ url, doc, onClose }: { url: string; doc: TravelDoc; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const [zoomed, setZoomed] = useState(false);
   return (
-    <Modal visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.viewer}>
-        <Image source={{ uri: url }} style={{ width, height }} contentFit="contain" cachePolicy="none" />
+    <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <SwipeDown onClose={onClose} enabled={!zoomed}>
+        <ZoomImage uri={url} width={width} height={height} cachePolicy="none" onZoom={setZoomed} />
         <View style={[styles.viewerTop, { paddingTop: insets.top + 4 }]}>
           <IconButton icon="x" label="Close" color={colors.white} size={26} onPress={onClose} />
           <Text style={styles.viewerTitle} numberOfLines={1}>
             {doc.mine ? doc.label : `${doc.by} · ${doc.label}`}
           </Text>
         </View>
-      </View>
+      </SwipeDown>
     </Modal>
   );
 }
