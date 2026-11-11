@@ -62,6 +62,12 @@ export default function Info() {
       <Card tone="sage" style={styles.gap}>
         <Text style={styles.kicker}>Right now</Text>
         <WeatherLine />
+        <Text
+          style={styles.credit}
+          accessibilityRole="link"
+          onPress={() => void Linking.openURL('https://open-meteo.com/')}>
+          Weather data by Open-Meteo.com
+        </Text>
         <GoldRule style={{ marginVertical: space.md }} />
         <Text style={styles.kicker}>Typical mid-January</Text>
         {typicalWeather.map((w) => (
@@ -169,6 +175,7 @@ const styles = StyleSheet.create({
   content: { padding: space.xl, paddingBottom: space.xxl * 2 },
   section: { flexDirection: 'row', alignItems: 'center', marginTop: space.xl, marginBottom: space.sm },
   gap: { marginBottom: space.sm },
+  credit: { fontFamily: fonts.body, fontSize: 12.5, color: colors.muted, marginTop: 4, textDecorationLine: 'underline' },
   kicker: { fontFamily: fonts.bodyBold, fontSize: 13.5, letterSpacing: 0.8, textTransform: 'uppercase', color: colors.olive },
   cardTitle: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.ink, marginBottom: 2 },
   small: { fontSize: 14.5, lineHeight: 21 },
