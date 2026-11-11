@@ -17,10 +17,11 @@ unticked, App Privacy answers for the six data types below (saved, **not yet
 published** — the blue Publish button on the App Privacy page), price **Free**
 and availability in **all 175 countries or regions**.
 
-Still open: review contact (name, phone with country code, email — the page
-will not save a contact without a phone number), Publish on App Privacy, then
-Add for Review / Submit. The weather credit line is in the code but not in
-build 8; it reaches phones with the next instant update or build.
+The review contact (name, phone, email) is entered and saved too.
+
+Still open: Publish on App Privacy, then Add for Review / Submit. The weather
+credit line and Add to calendar are in the code but not in build 8; they reach
+phones with the next instant update or build.
 
 ## Screenshots
 
