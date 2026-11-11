@@ -595,7 +595,7 @@ const Row = memo(function Row({
 }) {
   void minute; // only here so the "5 min ago" label refreshes once a minute
   return (
-    <SwipeToReply disabled={!!message.local} onReply={() => actions.current.reply(message)}>
+    <SwipeToReply disabled={!!message.local} leftToo={message.mine} onReply={() => actions.current.reply(message)}>
       <Bubble message={message} showName={showName} actions={actions} />
     </SwipeToReply>
   );
@@ -663,28 +663,50 @@ function PhotoViewer({ message, onClose }: { message: Message; onClose: () => vo
 
 const REPLY_AT = 48;
 
-/** Drag a message to the right to reply to it; it springs back when let go. */
-function SwipeToReply({ children, onReply, disabled }: { children: ReactNode; onReply: () => void; disabled?: boolean }) {
+// Claim a drag as soon as it is clearly sideways, ahead of the bubble's own press
+// handling, while leaving up-and-down scrolling to the list.
+function wantsSwipe(g: { dx: number; dy: number }, leftToo: boolean): boolean {
+  const sideways = Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5;
+  return sideways && (g.dx > 0 || leftToo);
+}
+
+/**
+ * Drag a message sideways to reply to it; it springs back when let go.
+ * Any message can be dragged to the right. Your own messages, which sit on the
+ * right of the screen, can also be dragged to the left (`leftToo`).
+ */
+function SwipeToReply({
+  children,
+  onReply,
+  disabled,
+  leftToo,
+}: {
+  children: ReactNode;
+  onReply: () => void;
+  disabled?: boolean;
+  leftToo?: boolean;
+}) {
   const x = useRef(new Animated.Value(0)).current;
   const armed = useRef(false);
   const onReplyRef = useRef(onReply);
   onReplyRef.current = onReply;
+  const leftRef = useRef(!!leftToo);
+  leftRef.current = !!leftToo;
 
   const pan = useMemo(
     () =>
       PanResponder.create({
-        // Claim a left-to-right drag as soon as it is clearly sideways, ahead of the
-        // bubble's own press handling, while leaving up-and-down scrolling to the list.
-        onMoveShouldSetPanResponder: (_, g) => g.dx > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
-        onMoveShouldSetPanResponderCapture: (_, g) => g.dx > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+        onMoveShouldSetPanResponder: (_, g) => wantsSwipe(g, leftRef.current),
+        onMoveShouldSetPanResponderCapture: (_, g) => wantsSwipe(g, leftRef.current),
         onPanResponderTerminationRequest: () => false,
         onPanResponderMove: (_, g) => {
-          const dx = Math.max(0, Math.min(g.dx, 84));
+          const dx = Math.max(leftRef.current ? -84 : 0, Math.min(g.dx, 84));
           x.setValue(dx);
-          if (dx >= REPLY_AT && !armed.current) {
+          const far = Math.abs(dx) >= REPLY_AT;
+          if (far && !armed.current) {
             armed.current = true;
             if (Platform.OS !== 'web') void Haptics.selectionAsync().catch(() => {});
-          } else if (dx < REPLY_AT) {
+          } else if (!far) {
             armed.current = false;
           }
         },
@@ -702,12 +724,18 @@ function SwipeToReply({ children, onReply, disabled }: { children: ReactNode; on
   );
 
   const hint = x.interpolate({ inputRange: [0, 24, REPLY_AT], outputRange: [0, 0.3, 1], extrapolate: 'clamp' });
+  const hintLeft = x.interpolate({ inputRange: [-REPLY_AT, -24, 0], outputRange: [1, 0.3, 0], extrapolate: 'clamp' });
 
   return (
     <View>
       <Animated.View pointerEvents="none" style={[styles.replyHint, { opacity: hint }]}>
         <Feather name="corner-up-left" size={18} color={colors.olive} />
       </Animated.View>
+      {leftToo ? (
+        <Animated.View pointerEvents="none" style={[styles.replyHint, styles.replyHintRight, { opacity: hintLeft }]}>
+          <Feather name="corner-up-left" size={18} color={colors.olive} />
+        </Animated.View>
+      ) : null}
       <Animated.View style={{ transform: [{ translateX: x }] }} {...(disabled ? null : pan.panHandlers)}>
         {children}
       </Animated.View>
@@ -739,7 +767,7 @@ function Bubble({ message, showName, actions }: { message: Shown; showName: bool
       <Pressable
         accessibilityRole={isImage ? 'imagebutton' : 'text'}
         accessibilityLabel={isImage ? `Photo from ${mine ? 'you' : message.by}${message.body ? `: ${message.body}` : ''}` : undefined}
-        accessibilityHint={local ? undefined : 'Swipe right to reply. Hold for reactions and more.'}
+        accessibilityHint={local ? undefined : mine ? 'Swipe left or right to reply. Hold for reactions and more.' : 'Swipe right to reply. Hold for reactions and more.'}
         onPress={isImage && !local ? () => actions.current.open(message) : undefined}
         onLongPress={() => actions.current.pick(message)}
         delayLongPress={280}
@@ -890,6 +918,7 @@ const styles = StyleSheet.create({
   reactionMine: { backgroundColor: colors.blush, borderColor: colors.rose },
   reactionCount: { fontFamily: fonts.bodyMedium, fontSize: 12.5, color: colors.ink },
   replyHint: { position: 'absolute', left: 4, top: 0, bottom: 0, justifyContent: 'center' },
+  replyHintRight: { left: undefined, right: 4 },
   replyBar: {
     flexDirection: 'row',
     alignItems: 'center',
