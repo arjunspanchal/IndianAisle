@@ -11,8 +11,9 @@ App Store Connect.
 
 ## Screenshots
 
-`store/screenshots/ios-6.9/` — five images, 1290 × 2796 (the 6.9-inch iPhone
-slot; Apple scales them for smaller iPhones). Upload in this order:
+`store/screenshots/ios-6.3/` — five images, 1206 × 2622. This is the size App
+Store Connect asks for in its main iPhone slot (6.1" / 6.3" displays) and it
+uses them for every iPhone size. **Uploaded on 12 November 2026**, in this order:
 
 1. `01-today.png` — Everything in one place.
 2. `02-programme.png` — Three days, hour by hour.
@@ -21,7 +22,8 @@ slot; Apple scales them for smaller iPhones). Upload in this order:
 5. `05-info.png` — Less wondering. More celebrating.
 
 They are captured from the app's own screens with demo chat messages, then
-framed by `scripts/frame-screenshots.py`. The app is iPhone-only, so no iPad
+framed by `scripts/frame-screenshots.py`, which writes a larger master set to
+`ios-6.9/` (1290 × 2796) and the uploaded set to `ios-6.3/`. The app is iPhone-only, so no iPad
 screenshots are needed.
 
 ## App Review notes (paste into "App Review Information → Notes")

@@ -65,3 +65,16 @@ for i, (name, eyebrow, head, accent) in enumerate(SHOTS, 1):
     out = OUT / f"{i:02d}-{name}.png"
     img.save(out, optimize=True)
     print(out.name, img.size)
+
+# App Store Connect's main iPhone slot (6.1" / 6.3" displays) takes 1206 x 2622.
+# Same artwork, scaled to that width; the few spare pixels go at the top, where it is plain paper.
+SMALL = ROOT / "store/screenshots/ios-6.3"
+SMALL.mkdir(parents=True, exist_ok=True)
+SW, SH = 1206, 2622
+for big in sorted(OUT.glob("*.png")):
+    src = Image.open(big)
+    scaled = src.resize((SW, round(src.height * SW / src.width)), Image.LANCZOS)
+    canvas = Image.new("RGB", (SW, SH), PAPER)
+    canvas.paste(scaled, (0, SH - scaled.height))
+    canvas.save(SMALL / big.name, optimize=True)
+    print("6.3-inch", big.name, canvas.size)
