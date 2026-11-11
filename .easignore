@@ -1,0 +1,16 @@
+# What Expo's build servers receive when the mobile app in wedding-app/ is built.
+# Expo uploads from the top of the repository, so without this file it takes
+# everything here: the website, and any photos or other folders sitting beside it.
+# Rule: nothing but wedding-app, and inside it no installed packages or local secrets.
+/*
+!/wedding-app
+node_modules
+.expo
+dist
+web-build
+.env
+.env.local
+.env.*.local
+*.p8
+*.jks
+.claude

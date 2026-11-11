@@ -3,3 +3,5 @@
 .~lock.*
 # Local env (Vercel uses dashboard-configured env vars, not this file).
 .env.local
+# The guest mobile app (Expo) is built by EAS, not Vercel.
+wedding-app/

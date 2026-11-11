@@ -1,0 +1,554 @@
+import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  FlatList,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { PhotoGoal } from '@/components/PhotoGoal';
+import { WeatherChip } from '@/components/Weather';
+import { Body, Button, Card, IconButton, Loading, Notice, ScreenHeader } from '@/components/ui';
+import { api, errorMessage, photoUrl, removePhotoFiles, type Album, type AlbumDay, type Photo, type PhotoGoal as Goal } from '@/lib/api';
+import { confirm, tell } from '@/lib/dialog';
+import { addToAlbum, pickFromPhone } from '@/lib/galleryUpload';
+import { useLive, useLoad } from '@/lib/live';
+import { saveToPhone, sharePhotos } from '@/lib/photos';
+import { useSession } from '@/lib/session';
+import { colors, fonts, radius, space } from '@/lib/theme';
+import { formatDayShort, formatReveal, formatTime } from '@/lib/time';
+
+const COLUMNS = 3;
+const GAP = 3;
+const PAGE = 90;
+
+export default function AlbumScreen() {
+  const { width } = useWindowDimensions();
+  const { isHost } = useSession();
+  const [day, setDay] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [more, setMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [open, setOpen] = useState<number | null>(null);
+  // Hold a photo to start selecting; then tap others to add them.
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [working, setWorking] = useState<string | null>(null);
+  const selecting = selected.size > 0;
+  const [onlyMine, setOnlyMine] = useState(false);
+  const [adding, setAdding] = useState<string | null>(null);
+  const dayRef = useRef(day);
+  dayRef.current = day;
+
+  const { data, error, loading, reload } = useLoad<Album>(async () => {
+    const a = await api.album(dayRef.current);
+    setPhotos(a.photos);
+    setMore(a.photos.length === PAGE);
+    return a;
+  }, 120000);
+
+  const goal = useLoad<Goal>(() => api.photoGoal(), 120000);
+
+  useLive('album', () => {
+    void reload();
+    void goal.reload();
+  });
+
+  useEffect(() => {
+    void reload();
+  }, [day, reload]);
+
+  async function loadMore() {
+    if (!more || loadingMore || !data?.day) return;
+    setLoadingMore(true);
+    try {
+      const a = await api.album(data.day, photos.length);
+      setPhotos((p) => [...p, ...a.photos.filter((n) => !p.some((x) => x.id === n.id))]);
+      setMore(a.photos.length === PAGE);
+    } catch {
+      // try again on the next scroll
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  async function refresh() {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  }
+
+  const patch = useCallback((id: string, change: Partial<Photo> | null) => {
+    setPhotos((list) => (change === null ? list.filter((p) => p.id !== id) : list.map((p) => (p.id === id ? { ...p, ...change } : p))));
+  }, []);
+
+  function developNow() {
+    confirm('Develop everything now?', 'All photos taken so far will appear in the album for every guest straight away.', 'Develop', async () => {
+      try {
+        await api.developNow();
+        await reload();
+      } catch (e) {
+        tell(errorMessage(e));
+      }
+    });
+  }
+
+  // Add photos from the phone's own gallery. They join the shared pool straight away.
+  async function addFromPhone() {
+    if (adding) return;
+    try {
+      const assets = await pickFromPhone();
+      if (assets.length === 0) return;
+      setAdding(`Adding 0 of ${assets.length}…`);
+      const { added, error: failed } = await addToAlbum(assets, (n, total) => setAdding(`Adding ${n} of ${total}…`));
+      setDay(null);
+      await reload();
+      void goal.reload();
+      if (failed) tell(added > 0 ? `${added} added, then it stopped` : "Those photos didn't upload", errorMessage(failed));
+    } catch (e) {
+      tell("Those photos didn't upload", errorMessage(e));
+    } finally {
+      setAdding(null);
+    }
+  }
+
+  function toggle(id: string) {
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const shown = onlyMine ? photos.filter((p) => p.mine) : photos;
+  const chosen = shown.filter((p) => selected.has(p.id));
+
+  async function saveChosen() {
+    if (working) return;
+    setWorking(`Saving 0 of ${chosen.length}…`);
+    const result = await saveToPhone(chosen, (n) => setWorking(`Saving ${n} of ${chosen.length}…`));
+    setWorking(null);
+    if (result === 'saved') {
+      tell(chosen.length === 1 ? 'Saved to your photos' : `${chosen.length} photos saved to your phone`);
+      setSelected(new Set());
+    } else if (result === 'denied') tell('Photos access is off', 'Allow access to Photos in Settings to save pictures to your phone.');
+    else tell("Couldn't save those photos", 'Check your signal and try again.');
+  }
+
+  async function shareChosen() {
+    if (working) return;
+    setWorking('Getting ready to share…');
+    const ok = await sharePhotos(chosen);
+    setWorking(null);
+    if (ok) setSelected(new Set());
+    else tell("Couldn't share those photos", 'Check your signal and try again.');
+  }
+
+  const size = (width - GAP * (COLUMNS - 1)) / COLUMNS;
+  const days = data?.days ?? [];
+  const developing = days.filter((d) => d.developing > 0);
+  const shownDay = data?.day ?? null;
+
+  const header = (
+    <View>
+      {developing.map((d) => (
+        <DevelopingBanner key={d.day} day={d} now={data ? new Date(data.now) : new Date()} />
+      ))}
+      {isHost && developing.length > 0 ? (
+        <Button label="Develop everything now" icon="sunrise" variant="ghost" onPress={developNow} style={{ alignSelf: 'center' }} />
+      ) : null}
+      {goal.data ? <PhotoGoal goal={goal.data} /> : null}
+      <View style={styles.filterRow}>
+        <Pressable
+          accessibilityRole="switch"
+          accessibilityState={{ checked: onlyMine }}
+          accessibilityLabel="Show only my photos"
+          onPress={() => setOnlyMine((v) => !v)}
+          style={[styles.chip, styles.filterChip, onlyMine && styles.chipOn]}>
+          <Feather name="user" size={15} color={onlyMine ? colors.white : colors.ink} />
+          <Text style={[styles.chipText, onlyMine && { color: colors.white }]}>{onlyMine ? 'Only mine' : "Everyone's"}</Text>
+        </Pressable>
+        <Body muted style={{ fontSize: 13.5, flex: 1 }}>
+          {onlyMine ? 'Showing photos you took or added.' : 'One shared album. Tap to see only yours.'}
+        </Body>
+      </View>
+      {days.some((d) => d.ready > 0) ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          {days
+            .filter((d) => d.ready > 0)
+            .map((d) => {
+              const on = d.day === shownDay;
+              return (
+                <Pressable
+                  key={d.day}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  onPress={() => setDay(d.day)}
+                  style={[styles.chip, on && styles.chipOn]}>
+                  <Text style={[styles.chipText, on && { color: colors.white }]}>{formatDayShort(d.day)}</Text>
+                  <Text style={[styles.chipCount, on && { color: '#F3DDE4' }]}>{d.ready}</Text>
+                </Pressable>
+              );
+            })}
+        </ScrollView>
+      ) : null}
+    </View>
+  );
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.paper }}>
+      <ScreenHeader
+        eyebrow="Everyone's photos"
+        title="The album"
+        right={
+          <View style={{ alignItems: 'flex-end' }}>
+          <WeatherChip />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add photos from your phone"
+            disabled={!!adding}
+            onPress={() => void addFromPhone()}
+            style={({ pressed }) => [styles.addButton, (pressed || !!adding) && { opacity: 0.6 }]}>
+            <Feather name="plus" size={18} color={colors.white} />
+            <Text style={styles.addText}>Add</Text>
+          </Pressable>
+          </View>
+        }
+      />
+      {adding ? (
+        <View style={styles.selectBar}>
+          <Text style={[styles.selectText, { marginLeft: space.md }]}>{adding}</Text>
+        </View>
+      ) : null}
+      {selecting ? (
+        <View style={styles.selectBar}>
+          <IconButton icon="x" label="Cancel selection" onPress={() => setSelected(new Set())} />
+          <Text style={styles.selectText}>{working ?? `${selected.size} selected`}</Text>
+          <IconButton icon="download" label="Save selected to your phone" onPress={() => void saveChosen()} />
+          <IconButton icon="share" label="Share selected" onPress={() => void shareChosen()} />
+        </View>
+      ) : null}
+      {loading && !data ? (
+        <Loading />
+      ) : !data ? (
+        <Notice
+          icon="cloud-off"
+          title="Can't open the album"
+          body={error ?? undefined}
+          action={<Button label="Try again" variant="quiet" onPress={() => void reload()} />}
+        />
+      ) : (
+        <FlatList
+          data={shown}
+          keyExtractor={(p) => p.id}
+          numColumns={COLUMNS}
+          columnWrapperStyle={{ gap: GAP }}
+          contentContainerStyle={{ gap: GAP, paddingBottom: space.xxl, flexGrow: 1 }}
+          ListHeaderComponent={header}
+          ListEmptyComponent={
+            <Notice
+              icon="image"
+              title={developing.length > 0 ? 'In the darkroom' : 'No photos yet'}
+              body={
+                onlyMine
+                  ? "You haven't added any to this day yet."
+                  : developing.length > 0
+                    ? 'Camera photos stay hidden until they develop. Come back in the morning, or add some from your phone now.'
+                    : 'Take the first one with the Camera tab, or tap Add to bring some in from your phone.'
+              }
+            />
+          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.olive} />}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.6}
+          renderItem={({ item, index }) => (
+            <Pressable
+              accessibilityRole="imagebutton"
+              accessibilityLabel={`Photo by ${item.by}, ${formatTime(item.taken_at)}`}
+              accessibilityHint="Hold to select several"
+              accessibilityState={{ selected: selected.has(item.id) }}
+              delayLongPress={250}
+              onLongPress={() => toggle(item.id)}
+              onPress={() => (selecting ? toggle(item.id) : setOpen(index))}>
+              <Image
+                source={{ uri: photoUrl(item.path, true) }}
+                style={{ width: size, height: size, backgroundColor: colors.moss }}
+                contentFit="cover"
+                transition={150}
+                recyclingKey={item.id}
+              />
+              {selecting ? (
+                <View style={[StyleSheet.absoluteFill, selected.has(item.id) && styles.picked]}>
+                  <View style={[styles.tick, selected.has(item.id) && styles.tickOn]}>
+                    {selected.has(item.id) ? <Feather name="check" size={14} color={colors.white} /> : null}
+                  </View>
+                </View>
+              ) : null}
+              {item.likes > 0 ? (
+                <View style={styles.likePip}>
+                  <Feather name="heart" size={10} color={colors.white} />
+                  <Text style={styles.likePipText}>{item.likes}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          )}
+        />
+      )}
+      {open !== null && shown.length > 0 ? (
+        <Viewer photos={shown} start={Math.min(open, shown.length - 1)} isHost={isHost} onClose={() => setOpen(null)} onPatch={patch} onBlocked={() => void reload()} />
+      ) : null}
+    </View>
+  );
+}
+
+function DevelopingBanner({ day, now }: { day: AlbumDay; now: Date }) {
+  return (
+    <Card tone="blush" style={styles.banner}>
+      <Feather name="moon" size={20} color={colors.rose} />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.bannerTitle}>
+          {day.developing} {day.developing === 1 ? 'photo is' : 'photos are'} developing
+        </Text>
+        <Body muted style={{ fontSize: 14.5, lineHeight: 20 }}>
+          From {formatDayShort(day.day)}. Ready at {formatReveal(day.reveal_at, now)}.
+        </Body>
+      </View>
+    </Card>
+  );
+}
+
+/** Full-screen, swipeable photo viewer with like, save and remove. */
+function Viewer({
+  photos,
+  start,
+  isHost,
+  onClose,
+  onPatch,
+  onBlocked,
+}: {
+  photos: Photo[];
+  start: number;
+  isHost: boolean;
+  onClose: () => void;
+  onPatch: (id: string, change: Partial<Photo> | null) => void;
+  onBlocked: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const [index, setIndex] = useState(start);
+  const [saving, setSaving] = useState(false);
+  const photo = photos[Math.min(index, photos.length - 1)];
+
+  async function like() {
+    const was = { liked: photo.liked, likes: photo.likes };
+    onPatch(photo.id, { liked: !was.liked, likes: was.likes + (was.liked ? -1 : 1) });
+    try {
+      onPatch(photo.id, await api.toggleLike(photo.id));
+    } catch {
+      onPatch(photo.id, was);
+    }
+  }
+
+  async function save() {
+    if (saving) return;
+    setSaving(true);
+    const result = await saveToPhone([photo]);
+    setSaving(false);
+    if (result === 'saved') tell('Saved to your photos');
+    else if (result === 'denied') tell('Photos access is off', 'Allow access to Photos in Settings to save pictures to your phone.');
+    else tell("Couldn't save that photo", 'Check your signal and try again.');
+  }
+
+  async function share() {
+    if (!(await sharePhotos([photo]))) tell("Couldn't share that photo", 'Check your signal and try again.');
+  }
+
+  function remove() {
+    confirm('Remove this photo?', 'It will disappear from the album for everyone.', 'Remove', async () => {
+      try {
+        await api.deletePhoto(photo.id);
+        void removePhotoFiles([photo.path, `t/${photo.path}`]);
+        onPatch(photo.id, null);
+        if (photos.length <= 1) onClose();
+      } catch (e) {
+        tell(errorMessage(e));
+      }
+    });
+  }
+
+  function report() {
+    confirm('Report this photo?', 'The couple will take a look and can remove it.', 'Report', async () => {
+      try {
+        await api.report('photo', photo.id);
+        tell('Thank you', 'The couple will take a look.');
+      } catch (e) {
+        tell(errorMessage(e));
+      }
+    });
+  }
+
+  function block() {
+    confirm(`Block ${photo.by}?`, "You won't see their photos or messages any more. They won't be told.", 'Block', async () => {
+      try {
+        await api.blockAuthor('photo', photo.id);
+        onClose();
+        onBlocked();
+      } catch (e) {
+        tell(errorMessage(e));
+      }
+    });
+  }
+
+  if (!photo) return null;
+
+  return (
+    <Modal visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={styles.viewer}>
+        <FlatList
+          data={photos}
+          keyExtractor={(p) => p.id}
+          horizontal
+          pagingEnabled
+          initialScrollIndex={start}
+          getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
+          renderItem={({ item }) => (
+            <Image
+              source={{ uri: photoUrl(item.path) }}
+              placeholder={{ uri: photoUrl(item.path, true) }}
+              placeholderContentFit="contain"
+              style={{ width, height }}
+              contentFit="contain"
+              transition={120}
+            />
+          )}
+        />
+        <View style={[styles.viewerTop, { paddingTop: insets.top + 4 }]}>
+          <IconButton icon="x" label="Close" color={colors.white} size={26} onPress={onClose} />
+          <View style={{ flex: 1 }} />
+          {!photo.mine ? (
+            <>
+              <IconButton icon="flag" label="Report this photo" color={colors.white} size={20} onPress={report} />
+              <IconButton icon="slash" label={`Block ${photo.by}`} color={colors.white} size={20} onPress={block} />
+            </>
+          ) : null}
+          {photo.mine || isHost ? <IconButton icon="trash-2" label="Remove photo" color={colors.white} onPress={remove} /> : null}
+        </View>
+        <View style={[styles.viewerBottom, { paddingBottom: insets.bottom + space.md }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.viewerBy}>{photo.mine ? 'You' : photo.by}</Text>
+            <Text style={styles.viewerWhen}>{formatTime(photo.taken_at)}</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={photo.liked ? 'Unlike' : 'Like'}
+            accessibilityState={{ selected: photo.liked }}
+            onPress={like}
+            hitSlop={8}
+            style={styles.viewerAction}>
+            <Feather name="heart" size={24} color={photo.liked ? '#F08AA8' : colors.white} />
+            <Text style={styles.viewerCount}>{photo.likes > 0 ? photo.likes : ''}</Text>
+          </Pressable>
+          <IconButton icon={saving ? 'loader' : 'download'} label="Save to your phone" color={colors.white} size={24} onPress={() => void save()} />
+          <IconButton icon="share" label="Share this photo" color={colors.white} size={24} onPress={() => void share()} />
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  chips: { paddingHorizontal: space.lg, gap: space.sm, paddingVertical: space.sm },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 44,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.pill,
+    backgroundColor: colors.moss,
+  },
+  chipOn: { backgroundColor: colors.rose },
+  chipText: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.ink },
+  chipCount: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginHorizontal: space.lg, marginBottom: space.sm },
+  bannerTitle: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.ink },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    minHeight: 40,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    backgroundColor: colors.rose,
+    marginBottom: 4,
+  },
+  addText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.white },
+  filterRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingBottom: space.sm },
+  filterChip: { minHeight: 38, paddingHorizontal: space.md, gap: 6 },
+  selectBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: space.sm,
+    backgroundColor: colors.moss,
+    minHeight: 52,
+  },
+  selectText: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 16, color: colors.ink, marginLeft: 4 },
+  picked: { backgroundColor: 'rgba(170,78,109,0.28)' },
+  tick: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.white,
+    backgroundColor: 'rgba(30,34,24,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tickOn: { backgroundColor: colors.rose },
+  likePip: {
+    position: 'absolute',
+    left: 5,
+    bottom: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(30,34,24,0.6)',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  likePipText: { fontFamily: fonts.bodyMedium, fontSize: 11, color: colors.white },
+  viewer: { flex: 1, backgroundColor: '#12150F' },
+  viewerTop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', paddingHorizontal: space.sm },
+  viewerBottom: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+    backgroundColor: 'rgba(18,21,15,0.55)',
+  },
+  viewerBy: { fontFamily: fonts.displayMedium, fontSize: 22, color: colors.white },
+  viewerWhen: { fontFamily: fonts.body, fontSize: 13.5, color: '#C9CDBD' },
+  viewerAction: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, minWidth: 44, justifyContent: 'center' },
+  viewerCount: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.white, minWidth: 10 },
+});

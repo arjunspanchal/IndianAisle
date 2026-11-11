@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development",
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "environment": "preview",
+      "channel": "preview"
+    },
+    "production": {
+      "autoIncrement": true,
+      "environment": "production",
+      "channel": "production"
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6833644922",
+        "appleTeamId": "5PF8XCS2Q4",
+        "ascApiKeyPath": "/Users/arjunpanchal/Downloads/AuthKey_KQH96XY92X.p8",
+        "ascApiKeyId": "KQH96XY92X",
+        "ascApiKeyIssuerId": "7bc5c85b-11ed-4ef9-b5ba-81b1b0980b61"
+      }
+    }
+  }
+}
