@@ -2,6 +2,8 @@ import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+/** The project's address, for links a phone opens outside the app (calendar files). */
+export const supabaseUrl = url;
 const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 export const configured = Boolean(url && key);

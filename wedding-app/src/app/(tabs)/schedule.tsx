@@ -4,6 +4,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, Vie
 
 import { Accent, Body, Button, Card, Eyebrow, Loading, Notice, ScreenHeader, Title } from '@/components/ui';
 import { api, errorMessage, type Home, type WeddingEvent } from '@/lib/api';
+import { addToCalendar } from '@/lib/calendar';
 import { tell } from '@/lib/dialog';
 import { useLive, useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
@@ -209,6 +210,17 @@ function EventCard({ event, now, isHost, onChanged }: { event: WeddingEvent; now
           style={{ alignSelf: 'flex-start', marginLeft: -space.md, marginTop: 2 }}
         />
       ) : null}
+
+      {!done && !editing ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Add ${event.title} to your calendar`}
+          onPress={() => void addToCalendar(event).catch(() => tell("Couldn't open your calendar", 'Please try again in a moment.'))}
+          style={({ pressed }) => [styles.calendar, pressed && { opacity: 0.6 }]}>
+          <Feather name="calendar" size={16} color={colors.rose} />
+          <Text style={styles.calendarText}>Add to calendar</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -267,5 +279,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   dressActions: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm },
+  calendar: { flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start', minHeight: 44, marginTop: 4, marginBottom: -8 },
+  calendarText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.rose },
   foot: { textAlign: 'center', fontSize: 14.5, marginTop: space.sm },
 });
