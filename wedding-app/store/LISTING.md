@@ -14,12 +14,12 @@ App Store Connect.
 Done: listing text, categories, five screenshots, build 8 attached to version
 1.0, age rating (comes out as 4+), App Review notes with "Sign-in required"
 unticked, App Privacy answers for the six data types below (saved, **not yet
-published** — the blue Publish button on the App Privacy page).
+published** — the blue Publish button on the App Privacy page), price **Free**
+and availability in **all 175 countries or regions**.
 
 Still open: review contact (name, phone with country code, email — the page
-will not save a contact without a phone number), content rights, price and
-countries (Pricing and Availability is not set up at all), Publish on App
-Privacy, then Add for Review / Submit.
+will not save a contact without a phone number), content rights, Publish on
+App Privacy, then Add for Review / Submit.
 
 ## Screenshots
 
@@ -105,8 +105,7 @@ or "No", except **Messaging and chat: Yes** and **User-generated content: Yes**;
   (free to use with credit, CC BY 4.0). The app should carry a "Weather data by
   Open-Meteo.com" line before this is answered.
 - **Advertising identifier (IDFA):** not used.
-- **Price:** Free. **Availability:** India at least; add other countries for
-  guests travelling from abroad.
+- **Price:** Free. **Availability:** every country or region (set 12 November 2026).
 - **Release:** automatic after approval (current setting).
 
 ## If Apple says the audience is too small
