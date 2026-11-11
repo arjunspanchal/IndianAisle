@@ -105,9 +105,8 @@ only by the link you share). TestFlight by public link is the fallback.
 
 ## Before pressing Submit
 
-- The privacy page must be live at https://kashika-arjun.com/privacy
-  (`store/privacy.html` is the page; it needs a contact address and the two
-  deletion dates filled in).
+- The privacy page is live at https://kashika-arjun.com/privacy (published 12 November 2026
+  from `store/privacy.html`; the copy on the site is `site/privacy/index.html` in the website repository).
 - iPhone notifications still need a push key uploaded to Expo (see
   `SUBMISSION.md`). Without it, "live updates" arrive in the app but do not
   buzz the phone.

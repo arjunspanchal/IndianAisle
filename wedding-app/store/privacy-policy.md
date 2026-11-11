@@ -1,6 +1,6 @@
-# KA Wedding — Privacy Policy (draft)
+# KA Wedding — Privacy Policy
 
-_Draft for Kashika & Arjun to review before publishing. Replace the contact line._
+_Published at https://kashika-arjun.com/privacy on 12 November 2026. `privacy.html` is the page itself; keep the two in step._
 
 KA Wedding is a private app for guests and vendors of Kashika & Arjun's wedding
 (17–19 January 2027). You need an invite code to use it.
@@ -39,8 +39,8 @@ Supabase (database and file storage). Notifications are delivered through Expo, 
 
 **How long**
 
-Travel documents are erased by the couple's team once travel is complete, and no later than [date — suggest 31 January 2027]. We plan to delete all other app data by [date — suggest 30 April 2027], after guests have had time to save their photos.
+Travel documents are erased by the couple's team once travel is complete, and no later than 31 January 2027. We plan to delete all other app data by 30 April 2027, after guests have had time to save their photos.
 
 **Contact**
 
-[name and email]
+Kashika & Arjun · arjunspanchal@icloud.com
