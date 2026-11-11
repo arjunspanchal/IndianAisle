@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { Accent, Body, Button, Eyebrow } from '@/components/ui';
 import { configured, errorMessage } from '@/lib/api';
-import { t } from '@/lib/i18n';
+import { closeUp, t } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space, wedding } from '@/lib/theme';
 
@@ -57,7 +57,7 @@ export default function Join() {
               {t(wedding.first)} <Accent style={styles.amp}>{t('&')}</Accent> {t(wedding.second)}
             </Text>
             <View style={styles.rule} />
-            <Text style={styles.dates}>{t(wedding.dates)}</Text>
+            <Text style={[styles.dates, closeUp()]}>{t(wedding.dates)}</Text>
             <Accent style={styles.tagline}>{t(wedding.tagline)}</Accent>
 
             <View style={{ alignItems: 'center', marginTop: 18 }}>
@@ -89,7 +89,7 @@ export default function Join() {
                 maxLength={24}
                 returnKeyType="go"
                 onSubmitEditing={submit}
-                style={[styles.input, styles.code]}
+                style={[styles.input, styles.code, closeUp()]}
                 accessibilityLabel={t('Invite code')}
               />
               {error ? (

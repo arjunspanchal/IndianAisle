@@ -14,7 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import '@/lib/arrival'; // registers the arrival-welcome background task at startup
 import { flush } from '@/lib/roll';
-import { loadLang, useLang } from '@/lib/i18n';
+import { loadLang, t, useLang } from '@/lib/i18n';
 import { SessionProvider, useSession } from '@/lib/session';
 import { colors, fonts } from '@/lib/theme';
 
@@ -88,12 +88,12 @@ function Screens() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         {/* No swipe-back here: on iPhone it would swallow the left-to-right swipe that replies to a message. */}
         <Stack.Screen name="chat/[channel]" options={{ title: '', gestureEnabled: false }} />
-        <Stack.Screen name="quiz" options={{ title: 'The couple quiz' }} />
-        <Stack.Screen name="rsvp" options={{ title: 'RSVP' }} />
-        <Stack.Screen name="profile" options={{ title: 'Your introduction' }} />
-        <Stack.Screen name="places" options={{ title: 'Your table & room' }} />
-        <Stack.Screen name="info" options={{ title: 'Good to know' }} />
-        <Stack.Screen name="outfits" options={{ title: 'What to wear' }} />
+        <Stack.Screen name="quiz" options={{ title: t('The couple quiz') }} />
+        <Stack.Screen name="rsvp" options={{ title: t('RSVP') }} />
+        <Stack.Screen name="profile" options={{ title: t('Your introduction') }} />
+        <Stack.Screen name="places" options={{ title: t('Your table & room') }} />
+        <Stack.Screen name="info" options={{ title: t('Good to know') }} />
+        <Stack.Screen name="outfits" options={{ title: t('What to wear') }} />
         {/* Every screen a guest reaches after joining must be listed inside this guard.
             A screen file that is not listed here is open to people who have not joined,
             and the app can even start on it. Each of these sets its own title. */}
@@ -103,9 +103,9 @@ function Screens() {
         <Stack.Screen name="challenges" />
         <Stack.Screen name="menus" />
         <Stack.Screen name="map" />
-        <Stack.Screen name="docs" options={{ title: 'Travel documents' }} />
-        <Stack.Screen name="sos" options={{ title: 'SOS', presentation: 'modal' }} />
-        <Stack.Screen name="me" options={{ title: 'You & the wedding', presentation: 'modal' }} />
+        <Stack.Screen name="docs" options={{ title: t('Travel documents') }} />
+        <Stack.Screen name="sos" options={{ title: t('SOS'), presentation: 'modal' }} />
+        <Stack.Screen name="me" options={{ title: t('You & the wedding'), presentation: 'modal' }} />
       </Stack.Protected>
       <Stack.Protected guard={!guest}>
         <Stack.Screen name="join" options={{ headerShown: false }} />

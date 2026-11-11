@@ -27,7 +27,7 @@ import { ZoomImage } from '@/components/ZoomImage';
 import { api, errorMessage, photoUrl, type Challenge, type ChallengePhoto, type Challenges, type MyPhoto } from '@/lib/api';
 import { confirm, tell } from '@/lib/dialog';
 import { addToAlbum, pickFromPhone } from '@/lib/galleryUpload';
-import { t } from '@/lib/i18n';
+import { closeUp, t } from '@/lib/i18n';
 import { useLive, useLoad } from '@/lib/live';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, space } from '@/lib/theme';
@@ -148,7 +148,7 @@ function Board({ board }: { board: Challenges['board'] }) {
   const places = [t('1st place'), t('2nd place'), t('3rd place')];
   return (
     <View style={styles.board}>
-      <Text style={styles.boardTitle}>{t('Most challenges done')}</Text>
+      <Text style={[styles.boardTitle, closeUp()]}>{t('Most challenges done')}</Text>
       {board.map((b, i) => (
         <View key={`${b.name}-${i}`} style={styles.boardRow}>
           {i < 3 ? (

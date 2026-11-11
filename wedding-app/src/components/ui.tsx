@@ -20,7 +20,9 @@ type TextProps = { children: ReactNode; style?: StyleProp<TextStyle>; numberOfLi
 
 /** UPPERCASE wide-tracked label. */
 export function Eyebrow({ children, style, color }: TextProps & { color?: string }) {
-  return <Text style={[styles.eyebrow, color ? { color } : null, style]}>{children}</Text>;
+  // Wide spacing suits Latin capitals but pulls Gujarati letters and their marks apart.
+  const plain = getLang() === 'gu' ? styles.eyebrowPlain : null;
+  return <Text style={[styles.eyebrow, plain, color ? { color } : null, style]}>{children}</Text>;
 }
 
 /** Cormorant headline. */
@@ -177,6 +179,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.olive,
   },
+  eyebrowPlain: { letterSpacing: 0.2, fontSize: 13.5, textTransform: 'none' },
   title: { fontFamily: fonts.displayMedium, color: colors.ink, letterSpacing: -0.3 },
   accent: { fontFamily: fonts.displayItalic, color: colors.rose },
   body: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, color: colors.ink },

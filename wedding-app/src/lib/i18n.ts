@@ -35,6 +35,12 @@ export function t(text: string, vars?: Record<string, string | number>): string 
 
 export const getLang = (): Lang => lang;
 
+/**
+ * Add to a text style that uses wide letter-spacing: `style={[styles.label, closeUp()]}`.
+ * Wide spacing suits Latin capitals but pulls Gujarati letters and their marks apart.
+ */
+export const closeUp = (): { letterSpacing: number } | null => (lang === 'gu' ? { letterSpacing: 0.2 } : null);
+
 export function setLang(next: Lang) {
   if (next === lang) return;
   lang = next;

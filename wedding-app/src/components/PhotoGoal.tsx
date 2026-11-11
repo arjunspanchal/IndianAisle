@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Body } from '@/components/ui';
 import { type PhotoGoal as Goal } from '@/lib/api';
-import { t } from '@/lib/i18n';
+import { closeUp, t } from '@/lib/i18n';
 import { colors, fonts, radius, space } from '@/lib/theme';
 
 // Gold, silver, bronze for 1st, 2nd and 3rd.
@@ -55,7 +55,7 @@ export function PhotoGoal({ goal }: { goal: Goal }) {
 
       {open ? (
         <View style={{ marginTop: space.md }}>
-          <Text style={styles.boardTitle}>{t('Most photos so far')}</Text>
+          <Text style={[styles.boardTitle, closeUp()]}>{t('Most photos so far')}</Text>
           {goal.top.length === 0 ? (
             <Body muted style={styles.small}>
               {t('No photos yet. Be the first on the board.')}

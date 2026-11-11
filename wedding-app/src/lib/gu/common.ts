@@ -40,6 +40,11 @@ const common: Record<string, string> = {
   'What to wear': 'શું પહેરવું',
   RSVP: 'હાજરીનો જવાબ',
 
+  // screen titles (app/_layout.tsx)
+  'The couple quiz': 'વર-વધૂ વિશે ક્વિઝ',
+  'Your introduction': 'તમારો પરિચય',
+  'You & the wedding': 'તમે અને લગ્ન',
+
   // words that come up everywhere
   guest: 'મહેમાન',
   guests: 'મહેમાનો',
