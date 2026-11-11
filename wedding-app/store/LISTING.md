@@ -13,13 +13,13 @@ App Store Connect.
 
 Done: listing text, categories, five screenshots, build 8 attached to version
 1.0, age rating (comes out as 4+), App Review notes with "Sign-in required"
-unticked, App Privacy answers for the six data types below (saved, **not yet
-published** — the blue Publish button on the App Privacy page), price **Free**
+unticked, App Privacy answers for the six data types below (**published**
+12 November 2026), price **Free**
 and availability in **all 175 countries or regions**.
 
 The review contact (name, phone, email) is entered and saved too.
 
-Still open: Publish on App Privacy, then Add for Review / Submit. The weather
+Still open: Add for Review / Submit, which the couple press themselves. The weather
 credit line and Add to calendar are in the code but not in build 8; they reach
 phones with the next instant update or build.
 
