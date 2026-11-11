@@ -18,8 +18,9 @@ published** — the blue Publish button on the App Privacy page), price **Free**
 and availability in **all 175 countries or regions**.
 
 Still open: review contact (name, phone with country code, email — the page
-will not save a contact without a phone number), content rights, Publish on
-App Privacy, then Add for Review / Submit.
+will not save a contact without a phone number), Publish on App Privacy, then
+Add for Review / Submit. The weather credit line is in the code but not in
+build 8; it reaches phones with the next instant update or build.
 
 ## Screenshots
 
@@ -100,10 +101,9 @@ or "No", except **Messaging and chat: Yes** and **User-generated content: Yes**;
 
 - **Export compliance / encryption:** already answered in the app
   (`ITSAppUsesNonExemptEncryption: false`), so no question appears per build.
-- **Content rights:** not answered yet. The honest answer is **Yes, it shows third-party
-  content and we have the rights**: the weather on every screen comes from Open-Meteo
-  (free to use with credit, CC BY 4.0). The app should carry a "Weather data by
-  Open-Meteo.com" line before this is answered.
+- **Content rights:** answered **Yes, the app has the necessary rights to its third-party
+  content** (12 November 2026). The third-party content is the weather, from Open-Meteo
+  (free with credit, CC BY 4.0); the credit line is on the Good to know screen.
 - **Advertising identifier (IDFA):** not used.
 - **Price:** Free. **Availability:** every country or region (set 12 November 2026).
 - **Release:** automatic after approval (current setting).
