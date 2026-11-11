@@ -1,6 +1,6 @@
 -- Invite codes are now plain words, and typing them is forgiving: capitals,
 -- spaces, dashes and other punctuation are ignored on both sides, so
--- "jasmine-amber breeze" and "JASMINEAMBERBREEZE" are the same code.
+-- "blue-river stone" and "BLUE RIVER STONE" are the same code (made-up example).
 -- (The codes themselves live in ka_config, not in this file.)
 
 create or replace function public.ka_join(p_code text, p_name text)

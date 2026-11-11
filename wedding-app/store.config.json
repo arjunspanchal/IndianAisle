@@ -1,0 +1,66 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "version": "1.0",
+    "release": {
+      "automaticRelease": true
+    },
+    "info": {
+      "en-GB": {
+        "title": "KA Wedding",
+        "subtitle": "A wedding in the hills",
+        "description": "KA Wedding is the guest app for Kashika & Arjun's wedding in the hills, 17–19 January 2027, at Storii by ITC Hotels, Akanni Naina Tikkar, Himachal Pradesh.\n\nIt is for invited guests. You will need the invite code from the couple to get in.\n\nWHAT'S INSIDE\n\n• The programme: three days, hour by hour, with what to wear and a button to add each event to your calendar.\n• Live updates: the couple post what is happening right now (\"Tea is being served\"), with a notification on your phone.\n• The wedding camera: 27 photos a day, like a disposable camera. No previews and no retakes. Everyone's photos develop together the next morning.\n• The shared album: every guest's photos in one place. Add your own from your phone, like your favourites, save and share them.\n• Guest chat: rooms for everyone, for getting there, for the Sangeet and for lost and found. Reply, react, and send photos and voice notes.\n• RSVP: tell the couple who is coming and about any food needs.\n• Your table and room: see your Sangeet table and your room number once they are assigned.\n• Good to know: getting there, the weather at the resort, what to pack, and answers to the usual questions.\n• Get to know everyone: a short introduction from each guest, so faces are familiar before you arrive.\n• Help when you need it: an SOS button that alerts the couple's team, and one-tap calling for the hotel reception.\n• Travel documents (optional): share your ID and tickets privately with the wedding team for check-in and transfers.\n\nYOUR PRIVACY\n\nYou join with an invite code and your name. No email, no password. You can report or block anything in chat or the album, and you can delete your account and everything you posted from inside the app at any time.",
+        "keywords": [
+          "wedding",
+          "guest",
+          "RSVP",
+          "programme",
+          "disposable camera",
+          "album",
+          "chat",
+          "Kashika",
+          "Arjun",
+          "Himachal"
+        ],
+        "promoText": "The guest app for Kashika & Arjun's wedding, 17–19 January 2027: the programme, live updates, a 27-shot wedding camera, a shared album and guest chat.",
+        "marketingUrl": "https://kashika-arjun.com",
+        "supportUrl": "https://kashika-arjun.com",
+        "privacyPolicyUrl": "https://kashika-arjun.com/privacy"
+      }
+    },
+    "advisory": {
+      "ageRatingOverride": "NONE",
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "contests": "NONE",
+      "gambling": false,
+      "gamblingSimulated": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "kidsAgeBand": null,
+      "koreaAgeRatingOverride": "NONE",
+      "lootBox": false,
+      "matureOrSuggestiveThemes": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "unrestrictedWebAccess": false,
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "advertising": false,
+      "ageAssurance": false,
+      "ageRatingOverrideV2": "NONE",
+      "developerAgeRatingInfoUrl": null,
+      "gunsOrOtherWeapons": "NONE",
+      "healthOrWellnessTopics": false,
+      "messagingAndChat": true,
+      "parentalControls": false,
+      "userGeneratedContent": true
+    },
+    "categories": [
+      "LIFESTYLE",
+      "SOCIAL_NETWORKING"
+    ],
+    "copyright": "2026 Kashika & Arjun"
+  }
+}

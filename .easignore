@@ -14,3 +14,5 @@ web-build
 *.p8
 *.jks
 .claude
+# App Store screenshots live in the repository, not in the build upload
+store/screenshots

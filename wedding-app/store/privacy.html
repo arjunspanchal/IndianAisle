@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KA Wedding app · Privacy | Kashika &amp; Arjun</title>
+<meta name="description" content="What the KA Wedding guest app stores, who can see it, and how to delete it.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#FCFAF5; --card:#FFFEFA; --ink:#424D35; --muted:#6D705F; --olive:#889B60; --rose:#AA4E6D; --gold:#B89451; --moss:#E7EBDC; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "DM Sans", system-ui, sans-serif; font-size: 18px; line-height: 1.6; }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 20px 72px; }
+  .eyebrow { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--olive); font-weight: 500; margin: 0 0 8px; }
+  h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-size: clamp(40px, 9vw, 56px); line-height: 1.08; letter-spacing: -.01em; margin: 0; }
+  h1 em { color: var(--rose); font-weight: 500; }
+  .lead { color: var(--muted); margin: 16px 0 0; }
+  hr { border: 0; height: 1px; background: var(--gold); opacity: .55; margin: 32px 0; }
+  h2 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-size: 30px; line-height: 1.15; margin: 36px 0 10px; }
+  ul { padding-left: 22px; margin: 0; }
+  li { margin: 8px 0; }
+  p { margin: 10px 0; }
+  .note { background: var(--moss); border-radius: 14px; padding: 16px 18px; margin-top: 14px; }
+  a { color: var(--rose); }
+  footer { margin-top: 44px; color: var(--muted); font-size: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">KA Wedding · the guest app</p>
+  <h1>Your privacy, <em>plainly.</em></h1>
+  <p class="lead">KA Wedding is a private app for the guests and vendors of Kashika &amp; Arjun's wedding, 17–19 January 2027. You need an invite code to use it. This page says what the app stores, who can see it, and how to delete it.</p>
+  <hr>
+
+  <h2>What the app stores</h2>
+  <ul>
+    <li>The name you type when you join.</li>
+    <li>Photos you take with the in-app camera or add from your phone, and the messages, photos, voice notes, reactions and quiz answers you post.</li>
+    <li>Your RSVP: whether you are coming, how many people and their names, any food needs, a note, and a phone number if you give one.</li>
+    <li>An optional introduction other guests can see: a photo, which side you are on, your city, and a line about how you know the couple.</li>
+    <li>Travel documents (an ID and tickets), only if you choose to add them, so the wedding team can arrange travel and check-in.</li>
+    <li>A notification token for your phone, if you turn notifications on.</li>
+    <li>SOS alerts you send, with your name and any note you add.</li>
+  </ul>
+
+  <h2>What the app does not collect</h2>
+  <ul>
+    <li>Your location. The optional arrival welcome is worked out entirely on your phone. Your location is never sent to us or to anyone else.</li>
+    <li>Your contacts, email address or payment details. A phone number is stored only if you type one into your RSVP.</li>
+    <li>Nothing is used for advertising, and nothing is sold or shared with advertisers. The app has no ads and no tracking.</li>
+  </ul>
+
+  <h2>Who can see what</h2>
+  <ul>
+    <li>RSVP replies and phone numbers are seen only by the couple and their wedding planner.</li>
+    <li>Room numbers: you see only your own. Sangeet tables: guests can see the seating chart.</li>
+    <li>Guests see the guest chat rooms, the shared album and each other's introductions. Vendors see only their own team's room. The couple and their wedding planner can see everything and can remove content.</li>
+    <li>Album and chat photos and voice notes are stored at unguessable links that the app shows only to people allowed to see them.</li>
+  </ul>
+  <p class="note">Travel documents are kept differently. They sit in a private vault. Only you and the couple's team can open them, through links that stop working after two minutes, and each opening is logged. Other guests and vendors can never see them.</p>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li><strong>Report or block:</strong> hold any message, or open any photo, and choose Report or Block.</li>
+    <li><strong>Delete everything:</strong> in the app, tap your initial at the top of the Today screen, then “Delete my account and everything I posted”. Your name, messages, photos, voice notes, travel documents, reactions and quiz answers are removed straight away.</li>
+    <li><strong>Delete one document:</strong> you can remove any travel document at any time.</li>
+    <li>If you cannot open the app, write to us at the address below and we will delete your data for you.</li>
+  </ul>
+
+  <h2>Where it is kept, and for how long</h2>
+  <p>App data is stored with Supabase (database and file storage). Notifications are delivered through Expo, Apple and Google.</p>
+  <p>Travel documents are erased by the couple's team once travel is complete, and no later than {{DOCS_DATE}}. We plan to delete all other app data by {{ALL_DATE}}, after guests have had time to save their photos.</p>
+
+  <h2>Children</h2>
+  <p>The app is for invited wedding guests. A parent or guardian should join on behalf of a child.</p>
+
+  <h2>Contact</h2>
+  <p>{{CONTACT}}</p>
+
+  <footer>
+    <p>Last updated {{UPDATED}}. <a href="/">Back to the wedding website</a></p>
+  </footer>
+</main>
+</body>
+</html>
